@@ -1,0 +1,82 @@
+# Netlify deployment
+
+PRIFYN keeps its existing Vinext build for Cloudflare/Sites and provides a separate native Next.js build for Netlify.
+
+## Build settings
+
+Netlify reads these settings from `netlify.toml`:
+
+- Build command: `npm run build:netlify`
+- Publish directory: `.next`
+- Node.js: `22.13.0`
+
+Connect the `rakhaviantoni/prifyn` repository in Netlify. If Netlify asks for a base directory, leave it empty because `package.json` and `netlify.toml` are in the repository root.
+
+## Production environment variables
+
+Add secrets through **Site configuration → Environment variables**. Do not commit their real values.
+
+| Variable | Production value |
+| --- | --- |
+| `NEXT_PUBLIC_APP_URL` | The public HTTPS origin, such as `https://prifyn.netlify.app` or `https://app.prifyn.com` |
+| `DATABASE_URL` | Supabase pooled PostgreSQL connection string |
+| `BETTER_AUTH_URL` | The same public HTTPS origin as `NEXT_PUBLIC_APP_URL` |
+| `BETTER_AUTH_SECRET` | A high-entropy secret of at least 32 characters |
+| `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated exact HTTPS origins allowed to call auth |
+| `GOOGLE_CLIENT_ID` | Google OAuth web client ID |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `SUMOPOD_BASE_URL` | `https://ai.sumopod.com/v1` unless the provider specifies another endpoint |
+| `SUMOPOD_API_KEY` | SumoPod API key |
+| `SUMOPOD_MODEL` | Enabled model identifier |
+
+Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash.
+
+### Before a custom domain
+
+For a Netlify site named `prifyn-growth-os`:
+
+```text
+NEXT_PUBLIC_APP_URL=https://prifyn-growth-os.netlify.app
+BETTER_AUTH_URL=https://prifyn-growth-os.netlify.app
+BETTER_AUTH_TRUSTED_ORIGINS=https://prifyn-growth-os.netlify.app
+```
+
+### After adding a custom domain
+
+If the application is served from `app.prifyn.com`:
+
+```text
+NEXT_PUBLIC_APP_URL=https://app.prifyn.com
+BETTER_AUTH_URL=https://app.prifyn.com
+BETTER_AUTH_TRUSTED_ORIGINS=https://app.prifyn.com,https://prifyn-growth-os.netlify.app
+```
+
+Use the exact domain Netlify shows. The temporary `netlify.app` hostname may remain trusted during rollout, or be removed after all traffic is forced to the custom domain.
+
+## Google OAuth
+
+In the Google Cloud OAuth web client, add:
+
+```text
+Authorized JavaScript origin:
+https://app.prifyn.com
+
+Authorized redirect URI:
+https://app.prifyn.com/api/auth/callback/google
+```
+
+Before the custom domain is active, use the equivalent `https://<site-name>.netlify.app` URLs. Google does not accept wildcard redirect URIs, so do not enable Google OAuth on arbitrary Deploy Preview URLs. Test OAuth on the production hostname or a dedicated stable branch domain.
+
+## Database
+
+Run the checked-in Drizzle migrations against the production database before enabling sign-up:
+
+```bash
+npm run db:migrate
+```
+
+Use Supabase's pooled connection string for serverless production traffic. Keep the service role and database credentials server-only.
+
+## Deploy Preview policy
+
+Deploy Previews can render public pages without production secrets. If previews need application data, create a separate preview database and preview-scoped credentials. Do not reuse production OAuth or production database credentials on untrusted branches.
