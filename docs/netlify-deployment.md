@@ -10,6 +10,11 @@ Netlify reads these settings from `netlify.toml`:
 - Publish directory: `.next`
 - Node.js: `22.13.0`
 
+The default `npm run build` script is also Netlify-aware. When Netlify's
+Dashboard overrides the repository command with `npm run build`, it detects
+Netlify and still produces the required `.next` output. Outside Netlify, the
+same command preserves the existing Vinext build.
+
 Connect the `rakhaviantoni/prifyn` repository in Netlify. If Netlify asks for a base directory, leave it empty because `package.json` and `netlify.toml` are in the repository root.
 
 ## Production environment variables
