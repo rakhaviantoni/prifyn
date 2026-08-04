@@ -3,7 +3,7 @@ import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { Brand } from "./brand";
 
 const groups = [
-  ["Product", [["Features", "/features"], ["Pricing", "/pricing"], ["For Ads", "/ads"], ["Growth OS", "/app"]]],
+  ["Product", [["Features", "/features"], ["Pricing", "/pricing"], ["Growth Intelligence", "/growth"], ["Growth OS", "/app"]]],
   ["Company", [["Vision", "/#vision"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
   ["Access", [["Sign in", "/auth/sign-in"], ["Create account", "/auth/sign-up"], ["Product preview", "/app"]]],
 ];

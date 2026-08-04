@@ -1,11 +1,11 @@
-import Image from "next/image";
+/* eslint-disable @next/next/no-img-element -- Vinext's local image optimizer has no asset binding in local development. */
 import Link from "next/link";
 
 export function Brand({ href = "/", inverse = false, compact = false }: { href?: string; inverse?: boolean; compact?: boolean }) {
   return (
-    <Link href={href} className={`brand-lockup ${inverse ? "inverse" : ""}`} aria-label="PRIFYN home">
-      <span className="brand-image"><Image src="/prifyn-mark.png" alt="" width={64} height={64} priority /></span>
-      {!compact && <span>PRIFYN</span>}
+    <Link href={href} className={`brand-lockup ${inverse ? "inverse" : ""} ${compact ? "compact" : ""}`} aria-label="PRIFYN home">
+      <span className="brand-image"><img src="/prifyn-mark.png" alt="" width="64" height="64" /></span>
+      <span>PRIFYN</span>
     </Link>
   );
 }

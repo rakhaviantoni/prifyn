@@ -5,11 +5,12 @@ import { ArrowRight, List, X } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { Brand } from "./brand";
+import { LanguageToggle } from "./language";
 
 const navigation = [
   ["Features", "/features"],
   ["Pricing", "/pricing"],
-  ["For Ads", "/ads"],
+  ["Growth Intelligence", "/growth"],
 ];
 
 export function MarketingHeader() {
@@ -23,11 +24,13 @@ export function MarketingHeader() {
         <nav className={`marketing-nav ${open ? "open" : ""}`} aria-label="Marketing navigation">
           {navigation.map(([label, href]) => <Link key={href} href={href} className={pathname === href ? "active" : ""} onClick={() => setOpen(false)}>{label}</Link>)}
           <div className="mobile-nav-actions">
+            <LanguageToggle inverse />
             <Link href="/auth/sign-in">Sign in</Link>
             <Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link>
           </div>
         </nav>
         <div className="header-actions">
+          <LanguageToggle inverse />
           <Link href="/auth/sign-in">Sign in</Link>
           <Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link>
         </div>

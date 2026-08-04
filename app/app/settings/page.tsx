@@ -1,3 +1,16 @@
-import { CheckCircle } from "@phosphor-icons/react/dist/ssr";
+"use client";
 
-export default function SettingsPage() { return <div className="app-content"><header className="app-page-head"><div><span>Workspace governance</span><h1>Settings</h1><p>Configuration is environment-aware and safe to prepare before credentials arrive.</p></div></header><div className="feature-blocks"><section className="surface" style={{ padding: 22 }}><div className="field-row"><div><h2 style={{ margin: 0, fontSize: 13 }}>Authentication</h2><p style={{ color: "#69736e", fontSize: 9, lineHeight: 1.6 }}>Better Auth with Google OAuth, email/password, organizations, members, and role-ready schema.</p></div><span className="status-pill warning">Awaiting Google credentials</span></div></section><section className="surface" style={{ padding: 22 }}><div className="field-row"><div><h2 style={{ margin: 0, fontSize: 13 }}>AI provider</h2><p style={{ color: "#69736e", fontSize: 9, lineHeight: 1.6 }}>OpenAI-compatible provider boundary prepared for SumoPod with configurable model and base URL.</p></div><span className="status-pill"><CheckCircle weight="fill" /> Demo fallback active</span></div></section><section className="surface" style={{ padding: 22 }}><div className="field-row"><div><h2 style={{ margin: 0, fontSize: 13 }}>Database</h2><p style={{ color: "#69736e", fontSize: 9, lineHeight: 1.6 }}>PostgreSQL and Drizzle schema prepared for Supabase with generated SQL migrations.</p></div><span className="status-pill neutral">Awaiting DATABASE_URL</span></div></section></div></div>; }
+import { Bell, CheckCircle, Database, ShieldCheck, UsersThree } from "@phosphor-icons/react";
+import { useState } from "react";
+
+const settings = [
+  { icon: UsersThree, title: "Team & access", copy: "Invite teammates, assign workspace roles, and keep sensitive decisions with the right people.", status: "4 members", tone: "" },
+  { icon: Database, title: "Data readiness", copy: "Review source coverage and freshness before PRIFYN uses evidence in a recommendation.", status: "86% ready", tone: "" },
+  { icon: ShieldCheck, title: "AI recommendations", copy: "Require visible evidence, confidence, and human confirmation before any action is recorded.", status: "Human review on", tone: "" },
+  { icon: Bell, title: "Decision notifications", copy: "Choose which risks, approvals, and weekly reviews should reach your team.", status: "3 rules active", tone: "neutral" },
+];
+
+export default function SettingsPage() {
+  const [active, setActive] = useState<string | null>(null);
+  return <div className="app-content"><header className="app-page-head"><div><span>Workspace governance</span><h1>Settings</h1><p>Shape how your team works, reviews evidence, and receives decisions.</p></div></header><div className="settings-grid">{settings.map(({ icon: Icon, title, copy, status, tone }) => <section className={`surface settings-card ${active === title ? "selected" : ""}`} key={title}><span className="settings-icon"><Icon weight="duotone" /></span><div><h2>{title}</h2><p>{copy}</p>{active === title && <p className="settings-confirmation" role="status">This control is ready. Changes will become editable when your workspace is connected.</p>}</div><span className={`status-pill ${tone}`}><CheckCircle weight="fill" /> {status}</span><button className="button button-outline" type="button" aria-expanded={active === title} onClick={() => setActive(active === title ? null : title)}>{active === title ? "Close" : "Manage"}</button></section>)}</div></div>;
+}

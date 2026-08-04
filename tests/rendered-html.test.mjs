@@ -21,7 +21,7 @@ const routes = [
   ["/", "Know what moves"],
   ["/features", "Every growth signal"],
   ["/pricing", "Start with decisions"],
-  ["/ads", "Stop optimizing ads"],
+  ["/growth", "See the whole growth system"],
   ["/auth/sign-in", "Welcome back"],
   ["/auth/sign-up", "Create your workspace"],
   ["/app", "Decision inbox"],
@@ -44,6 +44,12 @@ test("server-renders every public and product route", async () => {
     assert.match(html, /PRIFYN/, path);
     assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/, path);
   }
+});
+
+test("legacy ads page redirects to the broader growth story", async () => {
+  const response = await request("/ads", { redirect: "manual" });
+  assert.equal(response.status, 307);
+  assert.equal(new URL(response.headers.get("location")).pathname, "/growth");
 });
 
 test("AI endpoint provides an explainable safe demo without credentials", async () => {
