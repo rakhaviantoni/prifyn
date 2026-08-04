@@ -25,6 +25,8 @@ const routes = [
   ["/auth/sign-in", "Welcome back"],
   ["/auth/sign-up", "Create your workspace"],
   ["/app", "Decision inbox"],
+  ["/app/ads-window", "One Ads Window"],
+  ["/app/kol-window", "One KOL Window"],
   ["/app/campaigns", "Campaign operations"],
   ["/app/creators", "Creator intelligence"],
   ["/app/reports", "Weekly review"],
@@ -72,11 +74,12 @@ test("auth endpoint fails safely until credentials are supplied", async () => {
   assert.deepEqual(await response.json(), { configured: false });
 });
 
-test("ships requested foundation packages and schema migration", async () => {
-  const [packageJson, schema, migration, envExample] = await Promise.all([
+test("ships requested foundation packages and schema migrations", async () => {
+  const [packageJson, schema, migration, workflowMigration, envExample] = await Promise.all([
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0001_large_lester.sql", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
   assert.match(packageJson, /@phosphor-icons\/react/);
@@ -85,6 +88,10 @@ test("ships requested foundation packages and schema migration", async () => {
   assert.match(schema, /insightEvidence/);
   assert.match(migration, /CREATE TABLE "workspaces"/);
   assert.doesNotMatch(migration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(workflowMigration, /CREATE TABLE "ads_campaign_configs"/);
+  assert.match(workflowMigration, /CREATE TABLE "kol_campaign_configs"/);
+  assert.match(workflowMigration, /CREATE TABLE "platform_campaign_refs"/);
+  assert.doesNotMatch(workflowMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
   assert.match(envExample, /SUMOPOD_API_KEY/);
 });

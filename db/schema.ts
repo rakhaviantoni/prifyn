@@ -22,6 +22,10 @@ export const participantStatus = pgEnum("participant_status", ["invited", "appli
 export const deliverableStatus = pgEnum("deliverable_status", ["planned", "awaiting_submission", "in_review", "revision_requested", "approved", "rejected"]);
 export const importStatus = pgEnum("import_status", ["uploaded", "validating", "needs_mapping", "processing", "completed", "failed"]);
 export const insightStatus = pgEnum("insight_status", ["draft", "published", "accepted", "edited", "dismissed", "expired"]);
+export const campaignKind = pgEnum("campaign_kind", ["ads", "kol", "hybrid"]);
+export const platformConnectionStatus = pgEnum("platform_connection_status", ["disconnected", "pending", "connected", "error"]);
+export const platformCampaignStatus = pgEnum("platform_campaign_status", ["draft", "syncing", "ready", "running", "paused", "rejected", "completed", "error"]);
+export const reportBreakdown = pgEnum("report_breakdown", ["performance", "audience", "location", "creative", "user_journey"]);
 
 // Better Auth core. IDs remain text because Better Auth generates them.
 export const user = pgTable("users", {
@@ -186,6 +190,10 @@ export const creators = pgTable("creators", {
   bio: text("bio"),
   status: text("status").default("active").notNull(),
   verificationStatus: text("verification_status").default("unverified").notNull(),
+  kolLevel: text("kol_level"),
+  rateCardMinor: integer("rate_card_minor"),
+  primaryNiche: text("primary_niche"),
+  source: text("source").default("manual").notNull(),
   createdAt,
   updatedAt,
   archivedAt: timestamp("archived_at", { withTimezone: true }),
@@ -238,6 +246,7 @@ export const campaigns = pgTable("campaigns", {
   workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
   organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
+  kind: campaignKind("kind").default("kol").notNull(),
   ownerUserId: text("owner_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
   status: campaignStatus("status").default("draft").notNull(),
   startAt: timestamp("start_at", { withTimezone: true }),
@@ -250,6 +259,98 @@ export const campaigns = pgTable("campaigns", {
   updatedAt,
   archivedAt: timestamp("archived_at", { withTimezone: true }),
 }, (table) => [index("campaigns_organization_status_idx").on(table.organizationId, table.status), index("campaigns_workspace_dates_idx").on(table.workspaceId, table.startAt, table.endAt)]);
+
+export const adsCampaignConfigs = pgTable("ads_campaign_configs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  objective: text("objective").notNull(),
+  conversionType: text("conversion_type"),
+  budgetType: text("budget_type").default("lifetime").notNull(),
+  audience: jsonb("audience").$type<Record<string, unknown>>().default({}).notNull(),
+  placements: jsonb("placements").$type<string[]>().default([]).notNull(),
+  dayparting: jsonb("dayparting").$type<Record<string, unknown>>(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("ads_campaign_configs_campaign_uidx").on(table.campaignId)]);
+
+export const adCreatives = pgTable("ad_creatives", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  profileName: text("profile_name").notNull(),
+  assetType: text("asset_type").notNull(),
+  assetUrl: text("asset_url").notNull(),
+  copy: text("copy"),
+  keywords: jsonb("keywords").$type<string[]>().default([]).notNull(),
+  landingPageUrl: text("landing_page_url"),
+  trackingConfig: jsonb("tracking_config").$type<Record<string, unknown>>().default({}).notNull(),
+  status: text("status").default("draft").notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [index("ad_creatives_campaign_idx").on(table.campaignId)]);
+
+export const platformConnections = pgTable("platform_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(),
+  externalAccountId: text("external_account_id"),
+  displayName: text("display_name"),
+  status: platformConnectionStatus("status").default("disconnected").notNull(),
+  encryptedCredentialRef: text("encrypted_credential_ref"),
+  tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  errorCode: text("error_code"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("platform_connections_org_platform_account_uidx").on(table.organizationId, table.platform, table.externalAccountId), index("platform_connections_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const platformCampaignRefs = pgTable("platform_campaign_refs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  connectionId: uuid("connection_id").references(() => platformConnections.id, { onDelete: "set null" }),
+  platform: text("platform").notNull(),
+  externalCampaignId: text("external_campaign_id"),
+  externalAdGroupIds: jsonb("external_ad_group_ids").$type<string[]>().default([]).notNull(),
+  externalAdIds: jsonb("external_ad_ids").$type<string[]>().default([]).notNull(),
+  status: platformCampaignStatus("status").default("draft").notNull(),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  syncError: text("sync_error"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("platform_campaign_refs_campaign_platform_uidx").on(table.campaignId, table.platform), index("platform_campaign_refs_status_idx").on(table.workspaceId, table.status)]);
+
+export const adsReportSnapshots = pgTable("ads_report_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(),
+  breakdown: reportBreakdown("breakdown").notNull(),
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  dimensions: jsonb("dimensions").$type<Record<string, unknown>>().default({}).notNull(),
+  metrics: jsonb("metrics").$type<Record<string, number>>().default({}).notNull(),
+  sourceFreshnessAt: timestamp("source_freshness_at", { withTimezone: true }).notNull(),
+  createdAt,
+}, (table) => [index("ads_report_snapshots_campaign_period_idx").on(table.campaignId, table.periodStart), index("ads_report_snapshots_breakdown_idx").on(table.workspaceId, table.breakdown)]);
+
+export const kolCampaignConfigs = pgTable("kol_campaign_configs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  objective: text("objective").notNull(),
+  kolLevels: jsonb("kol_levels").$type<string[]>().default([]).notNull(),
+  detailBrief: text("detail_brief").notNull(),
+  briefAssetUrl: text("brief_asset_url"),
+  platforms: jsonb("platforms").$type<string[]>().default([]).notNull(),
+  kpis: jsonb("kpis").$type<Array<{ metric: string; target: number; unit: string }>>().default([]).notNull(),
+  maxRevisionRounds: integer("max_revision_rounds").default(3).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("kol_campaign_configs_campaign_uidx").on(table.campaignId)]);
 
 export const campaignBriefs = pgTable("campaign_briefs", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -296,6 +397,9 @@ export const deliverables = pgTable("deliverables", {
   platform: text("platform").notNull(),
   contentType: text("content_type").notNull(),
   dueAt: timestamp("due_at", { withTimezone: true }),
+  publishScheduledAt: timestamp("publish_scheduled_at", { withTimezone: true }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  publishedUrl: text("published_url"),
   requirements: jsonb("requirements").$type<Record<string, unknown>>().default({}).notNull(),
   status: deliverableStatus("status").default("planned").notNull(),
   version: integer("version").default(1).notNull(),
@@ -325,6 +429,24 @@ export const submissionReviews = pgTable("submission_reviews", {
   decidedAt: timestamp("decided_at", { withTimezone: true }).defaultNow().notNull(),
   createdAt,
 }, (table) => [index("submission_reviews_submission_idx").on(table.submissionId)]);
+
+export const kolPerformanceReports = pgTable("kol_performance_reports", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorId: uuid("creator_id").notNull().references(() => creators.id, { onDelete: "restrict" }),
+  platform: text("platform").notNull(),
+  views: integer("views").default(0).notNull(),
+  clicks: integer("clicks").default(0).notNull(),
+  conversions: numeric("conversions", { precision: 18, scale: 4 }).default("0").notNull(),
+  attributedRevenueMinor: integer("attributed_revenue_minor").default(0).notNull(),
+  totalCostMinor: integer("total_cost_minor").default(0).notNull(),
+  roas: numeric("roas", { precision: 12, scale: 4 }),
+  source: text("source").default("manual").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("kol_performance_campaign_creator_platform_uidx").on(table.campaignId, table.creatorId, table.platform), index("kol_performance_workspace_observed_idx").on(table.workspaceId, table.observedAt)]);
 
 export const rewards = pgTable("rewards", {
   id: uuid("id").defaultRandom().primaryKey(),
