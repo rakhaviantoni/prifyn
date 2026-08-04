@@ -2,15 +2,12 @@ import Link from "next/link";
 import {
   ArrowRight,
   CheckCircle,
-  ChartLineUp,
   CursorClick,
   Database,
-  Lightbulb,
   ShieldCheck,
   Sparkle,
-  Target,
-  UsersThree,
 } from "@phosphor-icons/react/dist/ssr";
+import { GrowthBento } from "@/components/growth-bento";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingHeader } from "@/components/marketing-header";
 import { ProductPreview } from "@/components/product-preview";
@@ -74,12 +71,7 @@ export default function LandingPage() {
             <h2>From signal to decision<br />in one connected system.</h2>
             <p>Everything in PRIFYN is designed around a simple question: what should the team do next?</p>
           </div>
-          <div className="marketing-container capability-grid">
-            <Capability icon={<Target />} index="01" title="Plan with intent" text="Turn business outcomes into clear objectives, budgets, briefs, and measurable success criteria." />
-            <Capability icon={<UsersThree />} index="02" title="Execute with control" text="Coordinate creators, deliverables, reviews, revisions, and payments without spreadsheet drift." />
-            <Capability icon={<ChartLineUp />} index="03" title="Measure the outcome" text="Connect spend, creator performance, conversions, and revenue with transparent attribution." />
-            <Capability icon={<Lightbulb />} index="04" title="Decide with evidence" text="Receive diagnoses and actions with the why, evidence, confidence, and limitations attached." />
-          </div>
+          <GrowthBento />
         </section>
 
         <section className="section section-dark decision-section">
@@ -143,8 +135,4 @@ export default function LandingPage() {
 
 function ProblemCard({ number, title, text }: { number: string; title: string; text: string }) {
   return <article className="problem-card"><span>{number}</span><h3>{title}</h3><p>{text}</p></article>;
-}
-
-function Capability({ icon, index, title, text }: { icon: React.ReactNode; index: string; title: string; text: string }) {
-  return <article className="capability-card"><div className="capability-top"><span className="capability-icon">{icon}</span><b>{index}</b></div><h3>{title}</h3><p>{text}</p></article>;
 }
