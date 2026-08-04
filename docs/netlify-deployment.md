@@ -24,6 +24,7 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | Variable | Production value |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | The public HTTPS origin, such as `https://prifyn.netlify.app` or `https://app.prifyn.com` |
+| `PRIFYN_APP_HOSTNAME` | App subdomain hostname without protocol or path, such as `app.prifyn.rakhaviantoni.com` |
 | `DATABASE_URL` | Supabase pooled PostgreSQL connection string |
 | `BETTER_AUTH_URL` | The same public HTTPS origin as `NEXT_PUBLIC_APP_URL` |
 | `BETTER_AUTH_SECRET` | A high-entropy secret of at least 32 characters |
@@ -57,6 +58,19 @@ BETTER_AUTH_TRUSTED_ORIGINS=https://app.prifyn.com,https://prifyn-growth-os.netl
 ```
 
 Use the exact domain Netlify shows. The temporary `netlify.app` hostname may remain trusted during rollout, or be removed after all traffic is forced to the custom domain.
+
+## App subdomain
+
+Add `app.prifyn.rakhaviantoni.com` as a custom domain alias for the same Netlify
+site. At the DNS provider for `rakhaviantoni.com`, create the CNAME record shown
+by Netlify (normally host `app.prifyn` pointing to the site's `netlify.app`
+hostname). Do not guess the target; copy the exact value from Netlify's domain
+setup screen.
+
+The application routing is hostname-aware. On the app subdomain, `/` renders
+the workspace while public URLs such as `/app/reports` are redirected to the
+clean `/reports` form. The primary marketing domain continues to use `/app` so
+existing links and development URLs remain compatible.
 
 ## Google OAuth
 
