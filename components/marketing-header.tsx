@@ -1,41 +1,50 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, List, X } from "@phosphor-icons/react";
+import { ArrowRight, Briefcase, CaretDown, ChartLineUp, List, Newspaper, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Brand } from "./brand";
 import { LanguageToggle } from "./language";
 
-const navigation = [
-  ["Features", "/features"],
-  ["Pricing", "/pricing"],
-  ["Growth Intelligence", "/growth"],
-];
+const menus = [
+  { label: "Product", items: [
+    { label: "Growth OS overview", copy: "See how campaigns, creators, and decisions connect.", href: "/growth", icon: ChartLineUp },
+    { label: "Features", copy: "Explore the workflows available today.", href: "/features", icon: Briefcase },
+    { label: "Pricing", copy: "Start focused and expand when ready.", href: "/pricing", icon: Storefront },
+  ] },
+  { label: "Solutions", items: [
+    { label: "For Brands", copy: "Run accountable growth with one team rhythm.", href: "/solutions/brands", icon: Storefront },
+    { label: "For Agencies", copy: "Operate multiple clients without data overlap.", href: "/solutions/agencies", icon: UsersThree },
+    { label: "For Creators", copy: "Find aligned work and manage delivery clearly.", href: "/solutions/creators", icon: UserCircle },
+  ] },
+  { label: "Resources", items: [
+    { label: "Blog", copy: "Practical thinking for better growth operations.", href: "/blog", icon: Newspaper },
+    { label: "Case Studies", copy: "See operating problems translated into decisions.", href: "/case-studies", icon: ChartLineUp },
+  ] },
+] as const;
 
 export function MarketingHeader() {
-  const [open, setOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState<string | null>(null);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
+  useEffect(() => { const update = () => setScrolled(window.scrollY > 12); update(); window.addEventListener("scroll", update, { passive: true }); return () => window.removeEventListener("scroll", update); }, []);
+  const isGroupActive = (items: typeof menus[number]["items"]) => items.some(item => pathname === item.href || pathname.startsWith(`${item.href}/`));
+  const closeNavigation = () => { setMobileOpen(false); setActiveMenu(null); };
 
-  return (
-    <header className="marketing-header">
-      <div className="marketing-container header-inner">
-        <Brand inverse />
-        <nav className={`marketing-nav ${open ? "open" : ""}`} aria-label="Marketing navigation">
-          {navigation.map(([label, href]) => <Link key={href} href={href} className={pathname === href ? "active" : ""} onClick={() => setOpen(false)}>{label}</Link>)}
-          <div className="mobile-nav-actions">
-            <LanguageToggle inverse />
-            <Link href="/auth/sign-in">Sign in</Link>
-            <Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link>
-          </div>
-        </nav>
-        <div className="header-actions">
-          <LanguageToggle inverse />
-          <Link href="/auth/sign-in">Sign in</Link>
-          <Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link>
-        </div>
-        <button className="menu-button" type="button" aria-label={open ? "Close navigation" : "Open navigation"} aria-expanded={open} onClick={() => setOpen(!open)}>{open ? <X /> : <List />}</button>
-      </div>
-    </header>
-  );
+  return <header className={`marketing-header ${scrolled ? "scrolled" : ""}`} onMouseLeave={() => setActiveMenu(null)}>
+    <div className="marketing-container header-inner">
+      <Brand inverse />
+      <nav className={`marketing-nav ${mobileOpen ? "open" : ""}`} aria-label="Marketing navigation">
+        {menus.map(menu => <div className={`nav-group ${activeMenu === menu.label ? "open" : ""}`} key={menu.label}>
+          <button type="button" className={isGroupActive(menu.items) ? "active" : ""} aria-expanded={activeMenu === menu.label} onClick={() => setActiveMenu(activeMenu === menu.label ? null : menu.label)} onMouseEnter={() => setActiveMenu(menu.label)}>{menu.label}<CaretDown /></button>
+          <div className="nav-dropdown">{menu.items.map(({ label, copy, href, icon: Icon }) => <Link href={href} key={href} onClick={closeNavigation} className={pathname === href || pathname.startsWith(`${href}/`) ? "active" : ""}><span><Icon weight="duotone" /></span><div><strong>{label}</strong><small>{copy}</small></div><ArrowRight /></Link>)}</div>
+        </div>)}
+        <div className="mobile-nav-actions"><LanguageToggle inverse /><Link href="/auth/sign-in" onClick={closeNavigation}>Sign in</Link><Link className="button button-light" href="/auth/sign-up" onClick={closeNavigation}>Start free <ArrowRight weight="bold" /></Link></div>
+      </nav>
+      <div className="header-actions"><LanguageToggle inverse /><Link href="/auth/sign-in">Sign in</Link><Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link></div>
+      <button className="menu-button" type="button" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>{mobileOpen ? <X /> : <List />}</button>
+    </div>
+  </header>;
 }

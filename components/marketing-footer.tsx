@@ -3,9 +3,9 @@ import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { Brand } from "./brand";
 
 const groups = [
-  ["Product", [["Features", "/features"], ["Pricing", "/pricing"], ["Growth Intelligence", "/growth"], ["Growth OS", "/app"]]],
-  ["Company", [["Vision", "/#vision"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
-  ["Access", [["Sign in", "/auth/sign-in"], ["Create account", "/auth/sign-up"], ["Product preview", "/app"]]],
+  ["Product", [["Growth OS overview", "/growth"], ["Features", "/features"], ["Pricing", "/pricing"], ["Product preview", "/app"]]],
+  ["Solutions", [["For Brands", "/solutions/brands"], ["For Agencies", "/solutions/agencies"], ["For Creators", "/solutions/creators"]]],
+  ["Resources", [["Blog", "/blog"], ["Case Studies", "/case-studies"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
 ];
 
 export function MarketingFooter() {
