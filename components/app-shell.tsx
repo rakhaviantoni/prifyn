@@ -23,8 +23,8 @@ import { LanguageToggle } from "./language";
 
 const mainNav = [
   ["Today", "/app", House],
-  ["Ads Window", "/app/ads-window", Megaphone],
-  ["KOL Window", "/app/kol-window", UsersThree],
+  ["Ads Manager", "/app/ads-window", Megaphone],
+  ["KOL Campaigns", "/app/kol-window", UsersThree],
   ["Campaigns", "/app/campaigns", CirclesFour],
   ["Reports", "/app/reports", ChartLine],
 ] as const;

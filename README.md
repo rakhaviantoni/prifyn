@@ -2,10 +2,10 @@
 
 PRIFYN is an AI-native growth operating system for SMEs. The MVP is organized around two connected workflows:
 
-- **One Ads Window:** campaign setup, creative, cross-platform execution, reporting, user journey, and ROAS.
-- **One KOL Window:** brief, KOL selection, submissions, revision/approval, publish scheduling, performance, and ROAS.
+- **Ads Manager:** campaign setup, creative, cross-platform launch, reporting, user journey, and ROAS.
+- **KOL Campaigns:** brief, KOL selection, submissions, revision/approval, publish scheduling, performance, and ROAS.
 
-Both workflows follow the same operating rhythm: **Input → Execution → Post**.
+Both workflows follow the same operating rhythm: **Setup → Launch/Collaboration → Results**.
 
 ## Run locally
 
