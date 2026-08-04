@@ -29,9 +29,20 @@ const routes = [
   ["/app/kol-window", "KOL Campaigns"],
   ["/app/campaigns", "Campaign operations"],
   ["/app/creators", "Creator intelligence"],
+  ["/app/creators/nabila-putri", "Nabila Putri"],
+  ["/app/talent-pipeline", "Talent Pipeline"],
   ["/app/reports", "Weekly review"],
   ["/app/copilot", "Ask PRIFYN"],
   ["/app/settings", "Workspace governance"],
+  ["/app/settings/team", "Company owners can invite users"],
+  ["/creator", "Creator command center"],
+  ["/creator/onboarding", "Creator onboarding"],
+  ["/creator/profile", "Creator identity"],
+  ["/creator/opportunities", "Matched opportunities"],
+  ["/creator/applications", "Application tracking"],
+  ["/creator/campaigns", "Active collaboration"],
+  ["/creator/payments", "Track every agreed fee"],
+  ["/creator/performance", "Performance intelligence"],
   ["/privacy", "Privacy by design"],
   ["/terms", "Product preview terms"],
 ];
@@ -75,11 +86,12 @@ test("auth endpoint fails safely until credentials are supplied", async () => {
 });
 
 test("ships requested foundation packages and schema migrations", async () => {
-  const [packageJson, schema, migration, workflowMigration, envExample] = await Promise.all([
+  const [packageJson, schema, migration, workflowMigration, creatorMigration, envExample] = await Promise.all([
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0001_large_lester.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0002_regular_polaris.sql", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
   assert.match(packageJson, /@phosphor-icons\/react/);
@@ -92,6 +104,20 @@ test("ships requested foundation packages and schema migrations", async () => {
   assert.match(workflowMigration, /CREATE TABLE "kol_campaign_configs"/);
   assert.match(workflowMigration, /CREATE TABLE "platform_campaign_refs"/);
   assert.doesNotMatch(workflowMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(creatorMigration, /CREATE TABLE "creator_profiles"/);
+  assert.match(creatorMigration, /CREATE TABLE "creator_applications"/);
+  assert.match(creatorMigration, /CREATE TABLE "creator_scores"/);
+  assert.match(creatorMigration, /CREATE TABLE "creator_payment_milestones"/);
+  assert.doesNotMatch(creatorMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
   assert.match(envExample, /SUMOPOD_API_KEY/);
+});
+
+test("Creator Intelligence exposes honest connector readiness", async () => {
+  const response = await request("/api/creator-intelligence/configured", { headers: { accept: "application/json" } });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.configured, true);
+  assert.equal(body.connectors.payments.mode, "status-tracking");
+  assert.equal(body.connectors.social.tiktok.mode, "public-link");
 });

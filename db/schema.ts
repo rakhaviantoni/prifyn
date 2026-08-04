@@ -659,3 +659,198 @@ export const auditEvents = pgTable("audit_events", {
   ipAddress: text("ip_address"),
   occurredAt: timestamp("occurred_at", { withTimezone: true }).defaultNow().notNull(),
 }, (table) => [index("audit_events_workspace_resource_idx").on(table.workspaceId, table.resourceType, table.resourceId), index("audit_events_actor_idx").on(table.actorUserId, table.occurredAt)]);
+
+// Creator Intelligence is separated from the brand-owned creator directory. A creator
+// can own one portable identity while each workspace keeps its own governed relationship.
+export const creatorProfiles = pgTable("creator_profiles", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  displayName: text("display_name").notNull(),
+  username: text("username").notNull().unique(),
+  location: text("location"),
+  languages: jsonb("languages").$type<string[]>().default([]).notNull(),
+  bio: text("bio"),
+  categories: jsonb("categories").$type<string[]>().default([]).notNull(),
+  niches: jsonb("niches").$type<string[]>().default([]).notNull(),
+  collaborationPreferences: jsonb("collaboration_preferences").$type<string[]>().default([]).notNull(),
+  rateCard: jsonb("rate_card").$type<Record<string, unknown>>(),
+  availability: jsonb("availability").$type<Record<string, unknown>>(),
+  onboardingStatus: text("onboarding_status").default("draft").notNull(),
+  visibility: text("visibility").default("invite_only").notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("creator_profiles_user_uidx").on(table.userId)]);
+
+export const creatorSocialAccounts = pgTable("creator_social_accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  platform: text("platform").notNull(),
+  handle: text("handle").notNull(),
+  profileUrl: text("profile_url").notNull(),
+  externalAccountId: text("external_account_id"),
+  connectionStatus: text("connection_status").default("public_link").notNull(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("creator_social_profile_platform_uidx").on(table.creatorProfileId, table.platform), index("creator_social_handle_idx").on(table.platform, table.handle)]);
+
+export const creatorMetricSnapshots = pgTable("creator_metric_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  socialAccountId: uuid("social_account_id").notNull().references(() => creatorSocialAccounts.id, { onDelete: "cascade" }),
+  metrics: jsonb("metrics").$type<Record<string, number>>().default({}).notNull(),
+  source: text("source").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  createdAt,
+}, (table) => [index("creator_metric_account_observed_idx").on(table.socialAccountId, table.observedAt)]);
+
+export const creatorAudienceSnapshots = pgTable("creator_audience_snapshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  socialAccountId: uuid("social_account_id").notNull().references(() => creatorSocialAccounts.id, { onDelete: "cascade" }),
+  locations: jsonb("locations").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  ageBands: jsonb("age_bands").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  gender: jsonb("gender").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  sampleSize: integer("sample_size"),
+  source: text("source").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  createdAt,
+}, (table) => [index("creator_audience_account_observed_idx").on(table.socialAccountId, table.observedAt)]);
+
+export const creatorPortfolioItems = pgTable("creator_portfolio_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  type: text("type").notNull(),
+  title: text("title").notNull(),
+  publicUrl: text("public_url"),
+  storageKey: text("storage_key"),
+  brandName: text("brand_name"),
+  resultSnapshot: jsonb("result_snapshot").$type<Record<string, unknown>>(),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [index("creator_portfolio_profile_idx").on(table.creatorProfileId, table.createdAt)]);
+
+export const creatorAnalysisRuns = pgTable("creator_analysis_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  purpose: text("purpose").notNull(),
+  provider: text("provider"),
+  model: text("model"),
+  policyVersion: text("policy_version").notNull(),
+  evidenceCutoff: timestamp("evidence_cutoff", { withTimezone: true }).notNull(),
+  status: text("status").default("pending").notNull(),
+  createdAt,
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+}, (table) => [index("creator_analysis_profile_idx").on(table.creatorProfileId, table.createdAt)]);
+
+export const creatorScores = pgTable("creator_scores", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  analysisRunId: uuid("analysis_run_id").notNull().references(() => creatorAnalysisRuns.id, { onDelete: "cascade" }),
+  dimension: text("dimension").notNull(),
+  score: numeric("score", { precision: 6, scale: 3 }).notNull(),
+  confidence: numeric("confidence", { precision: 5, scale: 4 }).notNull(),
+  reason: text("reason").notNull(),
+  improvementSuggestion: text("improvement_suggestion"),
+  limitations: jsonb("limitations").$type<string[]>().default([]).notNull(),
+  createdAt,
+}, (table) => [uniqueIndex("creator_scores_run_dimension_uidx").on(table.analysisRunId, table.dimension)]);
+
+export const creatorScoreEvidence = pgTable("creator_score_evidence", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  creatorScoreId: uuid("creator_score_id").notNull().references(() => creatorScores.id, { onDelete: "cascade" }),
+  sourceType: text("source_type").notNull(),
+  sourceReference: text("source_reference").notNull(),
+  label: text("label").notNull(),
+  observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
+  createdAt,
+}, (table) => [index("creator_score_evidence_score_idx").on(table.creatorScoreId)]);
+
+export const campaignCreatorCriteria = pgTable("campaign_creator_criteria", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  locations: jsonb("locations").$type<string[]>().default([]).notNull(),
+  niches: jsonb("niches").$type<string[]>().default([]).notNull(),
+  platforms: jsonb("platforms").$type<string[]>().default([]).notNull(),
+  creatorLevels: jsonb("creator_levels").$type<string[]>().default([]).notNull(),
+  contentTypes: jsonb("content_types").$type<string[]>().default([]).notNull(),
+  creatorsNeeded: integer("creators_needed").default(1).notNull(),
+  applicationDeadline: timestamp("application_deadline", { withTimezone: true }),
+  visibility: text("visibility").default("invite_only").notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("campaign_creator_criteria_campaign_uidx").on(table.campaignId)]);
+
+export const campaignInvitations = pgTable("campaign_creator_invitations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  invitedByUserId: text("invited_by_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+  message: text("message"),
+  status: text("status").default("sent").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+  createdAt,
+  respondedAt: timestamp("responded_at", { withTimezone: true }),
+}, (table) => [uniqueIndex("campaign_creator_invitation_uidx").on(table.campaignId, table.creatorProfileId), index("campaign_invitations_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const creatorApplications = pgTable("creator_applications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  proposal: text("proposal").notNull(),
+  proposedRateMinor: integer("proposed_rate_minor"),
+  currency: text("currency").default("IDR").notNull(),
+  answers: jsonb("answers").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  portfolioItemIds: jsonb("portfolio_item_ids").$type<string[]>().default([]).notNull(),
+  status: text("status").default("submitted").notNull(),
+  submittedAt: timestamp("submitted_at", { withTimezone: true }).defaultNow().notNull(),
+  updatedAt,
+}, (table) => [uniqueIndex("creator_applications_campaign_profile_uidx").on(table.campaignId, table.creatorProfileId), index("creator_applications_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const applicationReviews = pgTable("creator_application_reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  applicationId: uuid("application_id").notNull().references(() => creatorApplications.id, { onDelete: "cascade" }),
+  reviewerUserId: text("reviewer_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+  decision: text("decision").notNull(),
+  reason: text("reason"),
+  scoreSnapshot: jsonb("score_snapshot").$type<Record<string, unknown>>(),
+  createdAt,
+}, (table) => [index("application_reviews_application_idx").on(table.applicationId)]);
+
+export const collaborationConversations = pgTable("collaboration_conversations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "cascade" }),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("collaboration_conversation_campaign_creator_uidx").on(table.campaignId, table.creatorProfileId)]);
+
+export const collaborationMessages = pgTable("collaboration_messages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  conversationId: uuid("conversation_id").notNull().references(() => collaborationConversations.id, { onDelete: "cascade" }),
+  senderUserId: text("sender_user_id").notNull().references(() => user.id, { onDelete: "restrict" }),
+  body: text("body").notNull(),
+  attachmentKeys: jsonb("attachment_keys").$type<string[]>().default([]).notNull(),
+  createdAt,
+  readAt: timestamp("read_at", { withTimezone: true }),
+}, (table) => [index("collaboration_messages_conversation_idx").on(table.conversationId, table.createdAt)]);
+
+export const creatorPaymentMilestones = pgTable("creator_payment_milestones", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorProfileId: uuid("creator_profile_id").notNull().references(() => creatorProfiles.id, { onDelete: "restrict" }),
+  label: text("label").notNull(),
+  amountMinor: integer("amount_minor").notNull(),
+  currency: text("currency").default("IDR").notNull(),
+  triggerType: text("trigger_type").notNull(),
+  status: text("status").default("pending").notNull(),
+  providerReference: text("provider_reference"),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  approvedAt: timestamp("approved_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [index("creator_payment_workspace_status_idx").on(table.workspaceId, table.status), index("creator_payment_creator_idx").on(table.creatorProfileId, table.createdAt)]);

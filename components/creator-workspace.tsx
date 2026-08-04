@@ -1,34 +1,47 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, SealCheck, X } from "@phosphor-icons/react";
-
-type Creator = { name: string; handle: string; channels: string; fit: string; roas: string; verification: "Verified" | "Review" | "Unverified"; shortlisted: boolean };
-type Filter = "All creators" | "Verified" | "Shortlisted" | "Needs review";
-
-const initialCreators: Creator[] = [
-  { name: "Nabila Putri", handle: "@nabilaeats", channels: "TikTok · Instagram", fit: "87%", roas: "2.8×", verification: "Verified", shortlisted: true },
-  { name: "Ardian Prakoso", handle: "@ardianfamily", channels: "Instagram · YouTube", fit: "81%", roas: "3.1×", verification: "Verified", shortlisted: false },
-  { name: "Dimas Wibowo", handle: "@dimastries", channels: "TikTok", fit: "76%", roas: "2.2×", verification: "Review", shortlisted: true },
-  { name: "Sarah Amalia", handle: "@sarahcooks", channels: "TikTok · Instagram", fit: "74%", roas: "—", verification: "Unverified", shortlisted: false },
-];
-
-const filters: Filter[] = ["All creators", "Verified", "Shortlisted", "Needs review"];
+import Link from "next/link";
+import { useMemo, useState } from "react";
+import { ArrowsLeftRight, Check, Funnel, MagnifyingGlass, Plus, SealCheck, Sparkle, UsersThree, X } from "@phosphor-icons/react";
+import { creatorProfiles } from "@/lib/creator-intelligence-data";
 
 export function CreatorWorkspace() {
-  const [creators, setCreators] = useState(initialCreators);
-  const [filter, setFilter] = useState<Filter>("All creators");
+  const [query, setQuery] = useState("");
+  const [platform, setPlatform] = useState("All platforms");
+  const [shortlist, setShortlist] = useState<string[]>(["nabila-putri"]);
+  const [compare, setCompare] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
-  const visible = creators.filter(item => filter === "All creators" || (filter === "Verified" ? item.verification === "Verified" : filter === "Shortlisted" ? item.shortlisted : item.verification !== "Verified"));
+  const [notice, setNotice] = useState<string | null>(null);
+  const visible = useMemo(() => creatorProfiles.filter(creator => {
+    const haystack = `${creator.name} ${creator.handle} ${creator.location} ${creator.niches.join(" ")}`.toLowerCase();
+    return haystack.includes(query.toLowerCase()) && (platform === "All platforms" || creator.platforms.includes(platform));
+  }), [query, platform]);
+  const showNotice = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(null), 2400); };
+  const toggleShortlist = (id: string) => setShortlist(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
+  const toggleCompare = (id: string) => setCompare(current => current.includes(id) ? current.filter(item => item !== id) : current.length < 3 ? [...current, id] : current);
 
-  function createCreator(form: FormData) {
-    const name = String(form.get("name") || "").trim();
-    const handle = String(form.get("handle") || "").trim();
-    if (!name || !handle) return;
-    setCreators(current => [{ name, handle, channels: "Not connected", fit: "Pending", roas: "—", verification: "Review", shortlisted: false }, ...current]);
-    setFilter("All creators");
-    setCreating(false);
-  }
-
-  return <div className="app-content"><header className="app-page-head"><div><span>Creator intelligence</span><h1>Creators</h1><p>Understand fit, evidence, history, and risk before you invite.</p></div><button className="button button-dark" type="button" onClick={() => setCreating(true)}><Plus weight="bold" /> Add creator</button></header><div className="page-tabs" role="tablist" aria-label="Creator filters">{filters.map(item => <button key={item} type="button" role="tab" aria-selected={filter === item} className={filter === item ? "active" : ""} onClick={() => setFilter(item)}>{item}</button>)}</div><section className="surface table-wrap"><table className="data-table"><thead><tr><th>Creator</th><th>Channels</th><th>Campaign fit</th><th>Historical ROAS</th><th>Verification</th></tr></thead><tbody>{visible.map(row => <tr key={row.handle}><td><strong>{row.name}</strong><small>{row.handle}</small></td><td>{row.channels}</td><td><strong>{row.fit}</strong><small>For Ramadan Made Simple</small></td><td>{row.roas}</td><td><span className={`status-pill ${row.verification !== "Verified" ? "neutral" : ""}`}>{row.verification === "Verified" && <SealCheck weight="fill" />} {row.verification}</span></td></tr>)}</tbody></table></section>{creating && <div className="dialog-backdrop" role="presentation" onMouseDown={() => setCreating(false)}><section className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="creator-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setCreating(false)}><X /></button><span className="section-kicker">Creator profile</span><h2 id="creator-dialog-title">Add a creator for review</h2><p>Add their identity first. Social connections, verification, and match evidence can follow.</p><form action={createCreator} className="dialog-form"><label className="field"><span>Creator name</span><input name="name" required autoFocus placeholder="e.g. Alya Pratama" /></label><label className="field"><span>Primary handle</span><input name="handle" required placeholder="e.g. @alyacooks" /></label><div className="dialog-actions"><button type="button" className="button button-outline" onClick={() => setCreating(false)}>Cancel</button><button type="submit" className="button button-dark">Add for review</button></div></form></section></div>}</div>;
+  return <div className="app-content creator-intelligence-page">
+    <header className="app-page-head"><div><span>Creator intelligence</span><h1>Find creators with evidence.</h1><p>Discover, evaluate, compare, and recruit the right talent—without a marketplace feed.</p></div><button className="button button-dark" type="button" onClick={() => setCreating(true)}><Plus weight="bold" /> Add creator</button></header>
+    <section className="creator-command surface">
+      <label><MagnifyingGlass /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search creator, niche, or location" aria-label="Search creators" /></label>
+      <div className="creator-filter"><Funnel /><select value={platform} onChange={event => setPlatform(event.target.value)} aria-label="Filter by platform"><option>All platforms</option><option>TikTok</option><option>Instagram</option><option>YouTube</option></select></div>
+      <button type="button" className="button button-outline" onClick={() => { setQuery(""); setPlatform("All platforms"); }}>Reset</button>
+    </section>
+    <section className="creator-stats" aria-label="Creator intelligence summary"><article><UsersThree /><div><strong>{creatorProfiles.length}</strong><span>evaluated creators</span></div></article><article><Sparkle /><div><strong>91%</strong><span>average AI confidence</span></div></article><article><SealCheck /><div><strong>{creatorProfiles.filter(item => item.verification !== "Review").length}</strong><span>identity-verified</span></div></article></section>
+    <div className="creator-results-head"><div><strong>{visible.length} creators</strong><span>Ranked for Ramadan Made Simple</span></div><span>AI scores are recommendations—not automatic decisions.</span></div>
+    <section className="creator-card-grid">
+      {visible.map(creator => <article className="creator-card surface" key={creator.id}>
+        <div className="creator-card-top"><span className="creator-avatar">{creator.initials}</span><div><h2>{creator.name} {creator.verification !== "Review" && <SealCheck weight="fill" />}</h2><p>{creator.handle} · {creator.location}</p></div><span className="fit-score"><b>{creator.fit}%</b> fit</span></div>
+        <div className="creator-tags">{creator.platforms.map(item => <span key={item}>{item}</span>)}{creator.niches.slice(0, 2).map(item => <span key={item}>{item}</span>)}</div>
+        <p className="creator-summary">{creator.summary}</p>
+        <div className="creator-proof"><Sparkle weight="fill" /><div><strong>Why this match</strong><p>{creator.strengths.slice(0, 2).join(" · ")}</p></div><span>Confidence 91%</span></div>
+        <div className="creator-metrics"><div><span>Audience</span><strong>{creator.followers}</strong></div><div><span>Avg. views</span><strong>{creator.averageViews}</strong></div><div><span>Engagement</span><strong>{creator.engagement}</strong></div></div>
+        <div className="creator-card-actions"><button type="button" className={`button ${shortlist.includes(creator.id) ? "button-soft" : "button-outline"}`} onClick={() => toggleShortlist(creator.id)}>{shortlist.includes(creator.id) ? <Check weight="bold" /> : <Plus />} {shortlist.includes(creator.id) ? "Shortlisted" : "Shortlist"}</button><button className={`icon-button ${compare.includes(creator.id) ? "selected" : ""}`} type="button" aria-label={`Compare ${creator.name}`} onClick={() => toggleCompare(creator.id)}><ArrowsLeftRight /></button><Link className="button button-dark" href={`/app/creators/${creator.id}`}>View intelligence</Link></div>
+      </article>)}
+    </section>
+    {visible.length === 0 && <section className="surface empty-state"><MagnifyingGlass /><h2>No creators match yet</h2><p>Try a broader platform or search term. Filters never change the underlying creator evidence.</p></section>}
+    {compare.length > 0 && <div className="compare-tray"><div><ArrowsLeftRight weight="bold" /><span><strong>Compare creators</strong>{compare.map(id => creatorProfiles.find(item => item.id === id)?.name).join(" · ")}</span></div><button type="button" className="button button-dark" onClick={() => showNotice("Comparison workspace prepared for these creators.")}>Compare {compare.length}</button><button type="button" className="dialog-close" aria-label="Clear comparison" onClick={() => setCompare([])}><X /></button></div>}
+    {creating && <div className="dialog-backdrop" role="presentation" onMouseDown={() => setCreating(false)}><section className="dialog-card" role="dialog" aria-modal="true" aria-labelledby="creator-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setCreating(false)}><X /></button><span className="section-kicker">Creator profile</span><h2 id="creator-dialog-title">Add a creator for review</h2><p>Start with identity and a public social link. AI analysis remains pending until evidence is available.</p><form className="dialog-form" onSubmit={event => { event.preventDefault(); setCreating(false); showNotice("Creator added to the review queue."); }}><label className="field"><span>Creator name</span><input required autoFocus placeholder="e.g. Alya Pratama" /></label><label className="field"><span>Public profile URL</span><input type="url" required placeholder="https://tiktok.com/@creator" /></label><div className="dialog-actions"><button type="button" className="button button-outline" onClick={() => setCreating(false)}>Cancel</button><button type="submit" className="button button-dark">Add for review</button></div></form></section></div>}
+    {notice && <div className="toast" role="status"><Sparkle weight="fill" />{notice}</div>}
+  </div>;
 }

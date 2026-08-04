@@ -15,6 +15,13 @@
       "when": 1785829636319,
       "tag": "0001_large_lester",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785832842844,
+      "tag": "0002_regular_polaris",
+      "breakpoints": true
     }
   ]
 }
