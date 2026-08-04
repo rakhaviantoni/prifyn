@@ -2,43 +2,83 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function render() {
+async function loadWorker() {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+  return (await import(workerUrl.href)).default;
+}
 
+async function request(path, init = {}) {
+  const worker = await loadWorker();
   return worker.fetch(
-    new Request("http://localhost/", { headers: { accept: "text/html" } }),
+    new Request(`http://localhost${path}`, { headers: { accept: "text/html", ...init.headers }, ...init }),
     { ASSETS: { fetch: async () => new Response("Not found", { status: 404 }) } },
     { waitUntil() {}, passThroughOnException() {} },
   );
 }
 
-test("server-renders the PRIFYN decision workspace", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+const routes = [
+  ["/", "Know what moves"],
+  ["/features", "Every growth signal"],
+  ["/pricing", "Start with decisions"],
+  ["/ads", "Stop optimizing ads"],
+  ["/auth/sign-in", "Welcome back"],
+  ["/auth/sign-up", "Create your workspace"],
+  ["/app", "Decision inbox"],
+  ["/app/campaigns", "Campaign operations"],
+  ["/app/creators", "Creator intelligence"],
+  ["/app/reports", "Weekly review"],
+  ["/app/copilot", "Ask PRIFYN"],
+  ["/app/settings", "Workspace governance"],
+  ["/privacy", "Privacy by design"],
+  ["/terms", "Product preview terms"],
+];
 
-  const html = await response.text();
-  assert.match(html, /<title>PRIFYN — Growth OS<\/title>/i);
-  assert.match(html, /Decision inbox/);
-  assert.match(html, /Growth decisions, made clear/);
-  assert.match(html, /Ramadan Made Simple/);
-  assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/);
+test("server-renders every public and product route", async () => {
+  for (const [path, marker] of routes) {
+    const response = await request(path);
+    assert.equal(response.status, 200, path);
+    assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i, path);
+    const html = await response.text();
+    assert.match(html, new RegExp(marker, "i"), path);
+    assert.match(html, /PRIFYN/, path);
+    assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/, path);
+  }
 });
 
-test("keeps product metadata and starter artifacts removed", async () => {
-  const [layout, page, dashboard, packageJson] = await Promise.all([
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/dashboard.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-  ]);
+test("AI endpoint provides an explainable safe demo without credentials", async () => {
+  const response = await request("/api/ai/insights", {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({ question: "Why did ROAS decline this week?" }),
+  });
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.mode, "demo");
+  assert.equal(body.confidence, "high");
+  assert.match(body.answer, /amplification/i);
+  assert.match(body.why, /cost/i);
+});
 
-  assert.match(layout, /PRIFYN — Growth OS/);
-  assert.match(layout, /og\.png/);
-  assert.match(page, /<Dashboard \/>/);
-  assert.match(dashboard, /Decision inbox/);
-  assert.doesNotMatch(packageJson, /react-loading-skeleton/);
-  assert.doesNotMatch(`${layout}${page}${dashboard}`, /codex-preview|_sites-preview/);
+test("auth endpoint fails safely until credentials are supplied", async () => {
+  const response = await request("/api/auth/configured", { headers: { accept: "application/json" } });
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { configured: false });
+});
+
+test("ships requested foundation packages and schema migration", async () => {
+  const [packageJson, schema, migration, envExample] = await Promise.all([
+    readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
+    readFile(new URL("../.env.example", import.meta.url), "utf8"),
+  ]);
+  assert.match(packageJson, /@phosphor-icons\/react/);
+  assert.match(packageJson, /better-auth/);
+  assert.match(schema, /campaigns/);
+  assert.match(schema, /insightEvidence/);
+  assert.match(migration, /CREATE TABLE "workspaces"/);
+  assert.doesNotMatch(migration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(envExample, /GOOGLE_CLIENT_ID/);
+  assert.match(envExample, /SUMOPOD_API_KEY/);
 });

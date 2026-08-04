@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import "@fontsource-variable/manrope";
+import "@fontsource-variable/newsreader";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -10,9 +12,9 @@ export async function generateMetadata(): Promise<Metadata> {
 
   return {
     metadataBase,
-    title: "PRIFYN — Growth OS",
+    title: { default: "PRIFYN — Growth OS", template: "%s · PRIFYN" },
     description: "A decision-first operating system for confident, measurable growth.",
-    icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
+    icons: { icon: "/prifyn-mark.png", shortcut: "/prifyn-mark.png", apple: "/prifyn-mark.png" },
     openGraph: {
       title: "PRIFYN — Growth decisions, made clear.",
       description: "A decision-first operating system for confident, measurable growth.",
