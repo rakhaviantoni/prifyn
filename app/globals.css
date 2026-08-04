@@ -401,6 +401,17 @@ img { max-width: 100%; }
 .empty-state h2 { margin: 15px 0 7px; font-family: var(--font-serif); font-size: 25px; font-weight: 480; }
 .empty-state p { max-width: 440px; margin: 0 auto 20px; color: var(--muted); font-size: 9px; line-height: 1.6; }
 
+.theme-dark .app-layout { --ink: #edf4ef; --paper: #131b17; --paper-2: #1c2621; --white: #1a241f; --line: rgba(237,244,239,.11); --muted: #9ba9a1; --sage-2: #263c31; background: #111814; color: #edf4ef; }
+.theme-dark .app-sidebar { background: #0c120f; }
+.theme-dark .app-topbar { background: rgba(17,24,20,.9); }
+.theme-dark .app-search input, .theme-dark .icon-button { background: rgba(255,255,255,.04); color: #edf4ef; }
+.theme-dark .button-dark { background: var(--sage); color: #142019; }
+.theme-dark .button-outline { color: #edf4ef; }
+.theme-dark .visual-card, .theme-dark .prompt-grid button, .theme-dark .chat-composer input { background: #202b25; color: #edf4ef; }
+.theme-dark .page-tabs { background: #0f1612; }
+.theme-dark .page-tabs button.active { background: #27352e; color: #fff; }
+.theme-dark .status-pill.neutral { background: #303a35; color: #bdc7c1; }
+
 @media (max-width: 1000px) {
   .hero-grid { grid-template-columns: 1fr; padding: 120px 0 130px; }
   .hero-section { min-height: auto; }
