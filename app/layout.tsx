@@ -5,6 +5,15 @@ import "@fontsource-variable/newsreader";
 import "./globals.css";
 import { LanguageProvider } from "@/components/language";
 
+const themeBootScript = `
+  try {
+    document.documentElement.classList.toggle(
+      "theme-dark",
+      localStorage.getItem("prifyn-theme") === "dark"
+    );
+  } catch (_) {}
+`;
+
 export async function generateMetadata(): Promise<Metadata> {
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "localhost:3000";
@@ -37,7 +46,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head><script dangerouslySetInnerHTML={{ __html: themeBootScript }} /></head>
       <body><LanguageProvider>{children}</LanguageProvider></body>
     </html>
   );
