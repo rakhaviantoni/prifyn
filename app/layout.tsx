@@ -15,7 +15,7 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase,
     title: { default: "PRIFYN — Growth OS", template: "%s · PRIFYN" },
     description: "A decision-first operating system for confident, measurable growth.",
-    icons: { icon: "/prifyn-mark.png", shortcut: "/prifyn-mark.png", apple: "/prifyn-mark.png" },
+    icons: { icon: "/favicon.png", shortcut: "/favicon.png", apple: "/prifyn-mark-v2.png" },
     openGraph: {
       title: "PRIFYN — Growth decisions, made clear.",
       description: "A decision-first operating system for confident, measurable growth.",
