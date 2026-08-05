@@ -1,10 +1,10 @@
 "use client";
 
-import Link from "next/link";
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { ArrowLeft, CalendarCheck, ChartLineUp, CheckCircle, ClockCounterClockwise, Info, PaperPlaneTilt, SealCheck, ShieldCheck, Sparkle, Star, TrendUp, X } from "@phosphor-icons/react";
 import type { CreatorProfile } from "@/lib/creator-intelligence-data";
+import { WorkspaceLink } from "./workspace-link";
 
 const tabs = ["Overview", "Portfolio", "Audience", "Performance", "Reviews", "History"];
 
@@ -17,7 +17,7 @@ export function CreatorProfileView({ creator }: { creator: CreatorProfile }) {
   const [notice, setNotice] = useState<string | null>(null);
   const notify = (message: string) => { setNotice(message); window.setTimeout(() => setNotice(null), 2500); };
   return <div className="app-content creator-profile-page">
-    <Link className="back-link" href="/app/creators"><ArrowLeft /> Creator discovery</Link>
+    <WorkspaceLink className="back-link" href="/app/creators"><ArrowLeft /> Creator discovery</WorkspaceLink>
     <header className="profile-hero surface"><div className="profile-identity"><span className="creator-avatar large">{creator.initials}</span><div><span className="profile-eyebrow">{creator.verification} <SealCheck weight="fill" /></span><h1>{creator.name}</h1><p>{creator.handle} · {creator.location} · {creator.languages.join(" / ")}</p><div className="creator-tags">{creator.niches.map(item => <span key={item}>{item}</span>)}</div></div></div><div className="profile-actions"><button className={`button ${shortlisted ? "button-soft" : "button-outline"}`} type="button" onClick={() => { setShortlisted(value => !value); notify(shortlisted ? "Creator removed from the shortlist." : "Creator saved to your Ramadan shortlist."); }}><CheckCircle weight={shortlisted ? "fill" : "regular"} /> {shortlisted ? "Shortlisted" : "Shortlist"}</button><button className="button button-dark" type="button" onClick={() => invited ? notify("Invitation is already in Talent Pipeline.") : setInviting(true)}><PaperPlaneTilt /> {invited ? "Invitation sent" : "Invite to campaign"}</button></div></header>
     <nav className="page-tabs profile-tabs" aria-label="Creator profile sections">{tabs.map(item => <button key={item} className={tab === item ? "active" : ""} type="button" onClick={() => setTab(item)}>{item}</button>)}</nav>
     {tab === "Overview" ? <div className="profile-layout"><div className="profile-main">

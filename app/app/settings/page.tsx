@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { Bell, CheckCircle, Database, ShieldCheck, UsersThree } from "@phosphor-icons/react";
 import { useState } from "react";
+import { WorkspaceLink } from "@/components/workspace-link";
 
 const settings = [
   { icon: UsersThree, title: "Team & access", copy: "Invite teammates, assign workspace roles, and keep sensitive decisions with the right people.", status: "4 members", tone: "" },
@@ -13,5 +13,5 @@ const settings = [
 
 export default function SettingsPage() {
   const [active, setActive] = useState<string | null>(null);
-  return <div className="app-content"><header className="app-page-head"><div><span>Workspace governance</span><h1>Settings</h1><p>Shape how your team works, reviews evidence, and receives decisions.</p></div></header><div className="settings-grid">{settings.map(({ icon: Icon, title, copy, status, tone }) => <section className={`surface settings-card ${active === title ? "selected" : ""}`} key={title}><span className="settings-icon"><Icon weight="duotone" /></span><div><h2>{title}</h2><p>{copy}</p>{active === title && <p className="settings-confirmation" role="status">This control is ready. Changes will become editable when your workspace is connected.</p>}</div><span className={`status-pill ${tone}`}><CheckCircle weight="fill" /> {status}</span>{title === "Team & access" ? <Link className="button button-outline" href="/app/settings/team">Manage</Link> : <button className="button button-outline" type="button" aria-expanded={active === title} onClick={() => setActive(active === title ? null : title)}>{active === title ? "Close" : "Manage"}</button>}</section>)}</div></div>;
+  return <div className="app-content"><header className="app-page-head"><div><span>Workspace governance</span><h1>Settings</h1><p>Shape how your team works, reviews evidence, and receives decisions.</p></div></header><div className="settings-grid">{settings.map(({ icon: Icon, title, copy, status, tone }) => <section className={`surface settings-card ${active === title ? "selected" : ""}`} key={title}><span className="settings-icon"><Icon weight="duotone" /></span><div><h2>{title}</h2><p>{copy}</p>{active === title && <p className="settings-confirmation" role="status">This control is ready. Changes will become editable when your workspace is connected.</p>}</div><span className={`status-pill ${tone}`}><CheckCircle weight="fill" /> {status}</span>{title === "Team & access" ? <WorkspaceLink className="button button-outline" href="/app/settings/team">Manage</WorkspaceLink> : <button className="button button-outline" type="button" aria-expanded={active === title} onClick={() => setActive(active === title ? null : title)}>{active === title ? "Close" : "Manage"}</button>}</section>)}</div></div>;
 }
