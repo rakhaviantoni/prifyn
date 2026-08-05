@@ -49,6 +49,11 @@ export function AppShell({ children }: { children: ReactNode }) {
     document.documentElement.classList.toggle("theme-dark", enabled);
     queueMicrotask(() => setDark(enabled));
   }, []);
+  useEffect(() => {
+    if (workspaceHome !== "/" || !pathname.startsWith("/app")) return;
+    const cleanPath = pathname.replace(/^\/app(?=\/|$)/, "") || "/";
+    window.history.replaceState(window.history.state, "", `${cleanPath}${window.location.search}${window.location.hash}`);
+  }, [pathname, workspaceHome]);
   const toggleTheme = () => {
     const next = !dark;
     setDark(next);
