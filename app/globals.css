@@ -972,6 +972,7 @@ img { max-width: 100%; }
 .connection-card > header { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; }
 .connection-provider-mark { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--green); }
 .connection-provider-mark svg { width: 20px; height: 20px; }
+.connection-provider-mark img { width: 22px; height: 22px; object-fit: contain; }
 .connection-card h3 { margin: 0; font-size: 13px; }
 .connection-card header small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
 .connection-state { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 99px; background: var(--paper-2); color: var(--muted); font-size: 8px; font-weight: 750; white-space: nowrap; }
@@ -1158,6 +1159,7 @@ img { max-width: 100%; }
 .theme-dark .page-tabs button.active { background: #27352e; color: #fff; }
 .theme-dark .status-pill.neutral { background: #303a35; color: #bdc7c1; }
 .theme-dark .connection-card, .theme-dark .connection-provider-mark { background: #1a241f; }
+.theme-dark .provider-tiktok, .theme-dark .provider-posthog { color: #fff; }
 .theme-dark .connection-state.ready { background: #263447; color: #91b8ef; }
 .theme-dark .connection-state.attention { background: #3b2d1a; color: #e6b976; }
 .theme-dark .results-command select,
