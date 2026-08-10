@@ -54,7 +54,7 @@ export default function LandingPage() {
               <h2>Growth creates complexity.<br /><em>PRIFYN creates clarity.</em></h2>
             </div>
             <div className="intro-copy">
-              <p>Most SMEs can create demand. The real constraint appears after the campaign works: disconnected data, overloaded teams, uncertain attribution, and decisions made too late.</p>
+              <p>Growing businesses and multi-brand teams can create demand. The real constraint appears after the campaign works: disconnected data, overloaded teams, uncertain attribution, and decisions made too late.</p>
               <Link href="/features" className="text-link">See how the system works <ArrowRight weight="bold" /></Link>
             </div>
           </div>
