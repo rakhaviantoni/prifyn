@@ -26,6 +26,9 @@ export const campaignKind = pgEnum("campaign_kind", ["ads", "kol", "hybrid"]);
 export const platformConnectionStatus = pgEnum("platform_connection_status", ["disconnected", "pending", "connected", "error"]);
 export const platformCampaignStatus = pgEnum("platform_campaign_status", ["draft", "syncing", "ready", "running", "paused", "rejected", "completed", "error"]);
 export const reportBreakdown = pgEnum("report_breakdown", ["performance", "audience", "location", "creative", "user_journey"]);
+export const billingInterval = pgEnum("billing_interval", ["monthly", "annual"]);
+export const subscriptionStatus = pgEnum("subscription_status", ["trialing", "active", "past_due", "cancelled", "paused"]);
+export const invoiceStatus = pgEnum("invoice_status", ["draft", "open", "paid", "void", "uncollectible"]);
 
 // Better Auth core. IDs remain text because Better Auth generates them.
 export const user = pgTable("users", {
@@ -86,6 +89,58 @@ export const organization = pgTable("workspaces", {
   defaultCurrency: text("default_currency").default("IDR").notNull(),
   timezone: text("timezone").default("Asia/Jakarta").notNull(),
 });
+
+export const workspaceSubscriptions = pgTable("workspace_subscriptions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  planCode: text("plan_code").notNull(),
+  status: subscriptionStatus("status").default("trialing").notNull(),
+  interval: billingInterval("interval").default("monthly").notNull(),
+  includedBrands: integer("included_brands").notNull(),
+  includedMembers: integer("included_members"),
+  includedAiActions: integer("included_ai_actions").default(0).notNull(),
+  additionalBrandSlots: integer("additional_brand_slots").default(0).notNull(),
+  providerCustomerId: text("provider_customer_id"),
+  providerSubscriptionId: text("provider_subscription_id"),
+  currentPeriodStart: timestamp("current_period_start", { withTimezone: true }),
+  currentPeriodEnd: timestamp("current_period_end", { withTimezone: true }),
+  cancelAtPeriodEnd: boolean("cancel_at_period_end").default(false).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("workspace_subscriptions_workspace_uidx").on(table.workspaceId), uniqueIndex("workspace_subscriptions_provider_uidx").on(table.providerSubscriptionId)]);
+
+export const billingUsage = pgTable("billing_usage", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  metric: text("metric").notNull(),
+  quantity: integer("quantity").default(0).notNull(),
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  providerMeterEventId: text("provider_meter_event_id"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("billing_usage_workspace_metric_period_uidx").on(table.workspaceId, table.metric, table.periodStart), index("billing_usage_workspace_period_idx").on(table.workspaceId, table.periodEnd)]);
+
+export const billingInvoices = pgTable("billing_invoices", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  invoiceNumber: text("invoice_number").notNull(),
+  status: invoiceStatus("status").default("draft").notNull(),
+  currency: text("currency").default("IDR").notNull(),
+  subtotalMinor: integer("subtotal_minor").notNull(),
+  taxMinor: integer("tax_minor").default(0).notNull(),
+  totalMinor: integer("total_minor").notNull(),
+  lineItems: jsonb("line_items").$type<Array<{ label: string; amountMinor: number; quantity?: number }>>().default([]).notNull(),
+  providerInvoiceId: text("provider_invoice_id"),
+  hostedInvoiceUrl: text("hosted_invoice_url"),
+  invoicePdfUrl: text("invoice_pdf_url"),
+  periodStart: timestamp("period_start", { withTimezone: true }).notNull(),
+  periodEnd: timestamp("period_end", { withTimezone: true }).notNull(),
+  dueAt: timestamp("due_at", { withTimezone: true }),
+  paidAt: timestamp("paid_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("billing_invoices_workspace_number_uidx").on(table.workspaceId, table.invoiceNumber), uniqueIndex("billing_invoices_provider_uidx").on(table.providerInvoiceId), index("billing_invoices_workspace_status_idx").on(table.workspaceId, table.status)]);
 
 export const member = pgTable("workspace_members", {
   id: text("id").primaryKey(),

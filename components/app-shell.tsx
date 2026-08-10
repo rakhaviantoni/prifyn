@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import {
-  Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, GearSix, House, IdentificationBadge,
+  Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, GearSix, House, IdentificationBadge,
   List, MagnifyingGlass, Megaphone, Moon, Plus, Sparkle, Sun, UsersThree, X,
 } from "@phosphor-icons/react";
 import { ReactNode, useEffect, useState } from "react";
@@ -32,6 +32,7 @@ const brands = [
 const intelligenceNav = [
   ["Ask PRIFYN", "/app/copilot", Sparkle],
   ["Team & Access", "/app/settings/team", UsersThree],
+  ["Billing & Usage", "/app/settings/billing", CreditCard],
   ["Settings", "/app/settings", GearSix],
 ] as const;
 

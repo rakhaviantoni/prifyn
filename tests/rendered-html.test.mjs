@@ -42,6 +42,7 @@ const routes = [
   ["/app/copilot", "Ask PRIFYN"],
   ["/app/settings", "Workspace governance"],
   ["/app/settings/team", "Company owners can invite users"],
+  ["/app/settings/billing", "Workspace billing"],
   ["/creator", "Creator command center"],
   ["/creator/onboarding", "Creator onboarding"],
   ["/creator/profile", "Creator identity"],
@@ -93,12 +94,13 @@ test("auth endpoint fails safely until credentials are supplied", async () => {
 });
 
 test("ships requested foundation packages and schema migrations", async () => {
-  const [packageJson, schema, migration, workflowMigration, creatorMigration, envExample] = await Promise.all([
+  const [packageJson, schema, migration, workflowMigration, creatorMigration, billingMigration, envExample] = await Promise.all([
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0001_large_lester.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_regular_polaris.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0003_flashy_saracen.sql", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
   assert.match(packageJson, /@phosphor-icons\/react/);
@@ -116,6 +118,10 @@ test("ships requested foundation packages and schema migrations", async () => {
   assert.match(creatorMigration, /CREATE TABLE "creator_scores"/);
   assert.match(creatorMigration, /CREATE TABLE "creator_payment_milestones"/);
   assert.doesNotMatch(creatorMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(billingMigration, /CREATE TABLE "workspace_subscriptions"/);
+  assert.match(billingMigration, /CREATE TABLE "billing_invoices"/);
+  assert.match(billingMigration, /CREATE TABLE "billing_usage"/);
+  assert.doesNotMatch(billingMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
   assert.match(envExample, /SUMOPOD_API_KEY/);
 });
