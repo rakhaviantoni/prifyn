@@ -532,6 +532,10 @@ img { max-width: 100%; }
 .icon-button { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: rgba(255,255,255,.55); color: var(--ink); cursor: pointer; }
 .icon-button svg { width: 15px; }
 .app-content { max-width: 1250px; margin: 0 auto; padding: 38px 38px 60px; }
+.app-alert { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 14px; margin-bottom: 18px; border-color: rgba(176, 87, 62, .24); background: #fff8f4; }
+.app-alert > svg { width: 22px; height: 22px; color: #b0573e; }
+.app-alert strong { display: block; color: var(--ink); font-size: 12px; }
+.app-alert p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
 .app-page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 20px; margin-bottom: 28px; }
 .app-page-head > div > span { color: var(--green); font-size: 8px; font-weight: 780; letter-spacing: .12em; text-transform: uppercase; }
 .app-page-head h1 { margin: 6px 0 0; font-family: var(--font-serif); font-size: 37px; font-weight: 480; letter-spacing: -.035em; }
@@ -1162,6 +1166,8 @@ img { max-width: 100%; }
 .theme-dark .provider-tiktok, .theme-dark .provider-posthog { color: #fff; }
 .theme-dark .connection-state.ready { background: #263447; color: #91b8ef; }
 .theme-dark .connection-state.attention { background: #3b2d1a; color: #e6b976; }
+.theme-dark .app-alert { background: #2c1f1b; border-color: rgba(230, 151, 118, .28); }
+.theme-dark .app-alert strong { color: var(--text); }
 .theme-dark .results-command select,
 .theme-dark .performance-layout > section,
 .theme-dark .performance-diagnosis,
@@ -1292,6 +1298,8 @@ img { max-width: 100%; }
   .creator-topbar-title { min-width: 0; }
   .creator-topbar-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .app-content { padding: 26px 15px 45px; }
+  .app-alert { grid-template-columns: auto 1fr; align-items: start; }
+  .app-alert .button { grid-column: 1 / -1; width: 100%; justify-content: center; }
   .app-page-head { align-items: flex-start; flex-direction: column; }
   .stack { grid-template-columns: 1fr; }
   .stack > :first-child { grid-column: auto; }

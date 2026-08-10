@@ -29,6 +29,7 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | `BETTER_AUTH_URL` | The same public HTTPS origin as `NEXT_PUBLIC_APP_URL` |
 | `BETTER_AUTH_SECRET` | A high-entropy secret of at least 32 characters |
 | `BETTER_AUTH_TRUSTED_ORIGINS` | Comma-separated exact HTTPS origins allowed to call auth |
+| `BETTER_AUTH_ALLOWED_HOSTS` | Optional comma-separated hostnames when one deploy serves multiple domains |
 | `GOOGLE_CLIENT_ID` | Google OAuth web client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
 | `SUMOPOD_BASE_URL` | `https://ai.sumopod.com/v1` unless the provider specifies another endpoint |
@@ -45,16 +46,29 @@ For a Netlify site named `prifyn-growth-os`:
 NEXT_PUBLIC_APP_URL=https://prifyn-growth-os.netlify.app
 BETTER_AUTH_URL=https://prifyn-growth-os.netlify.app
 BETTER_AUTH_TRUSTED_ORIGINS=https://prifyn-growth-os.netlify.app
+BETTER_AUTH_ALLOWED_HOSTS=prifyn-growth-os.netlify.app
 ```
 
 ### After adding a custom domain
 
-If the application is served from `app.prifyn.com`:
+For the current app domain:
+
+```text
+NEXT_PUBLIC_APP_URL=https://app.prifyn.rakhaviantoni.com
+BETTER_AUTH_URL=https://app.prifyn.rakhaviantoni.com
+BETTER_AUTH_TRUSTED_ORIGINS=https://app.prifyn.rakhaviantoni.com,https://prifyn-growth-os.netlify.app
+BETTER_AUTH_ALLOWED_HOSTS=app.prifyn.rakhaviantoni.com,prifyn-growth-os.netlify.app
+PRIFYN_APP_HOSTNAME=app.prifyn.rakhaviantoni.com
+NEXT_PUBLIC_PRIFYN_APP_HOSTNAME=app.prifyn.rakhaviantoni.com
+```
+
+If the application is later served from `app.prifyn.com`:
 
 ```text
 NEXT_PUBLIC_APP_URL=https://app.prifyn.com
 BETTER_AUTH_URL=https://app.prifyn.com
 BETTER_AUTH_TRUSTED_ORIGINS=https://app.prifyn.com,https://prifyn-growth-os.netlify.app
+BETTER_AUTH_ALLOWED_HOSTS=app.prifyn.com,prifyn-growth-os.netlify.app
 ```
 
 Use the exact domain Netlify shows. The temporary `netlify.app` hostname may remain trusted during rollout, or be removed after all traffic is forced to the custom domain.
@@ -78,10 +92,10 @@ In the Google Cloud OAuth web client, add:
 
 ```text
 Authorized JavaScript origin:
-https://app.prifyn.com
+https://app.prifyn.rakhaviantoni.com
 
 Authorized redirect URI:
-https://app.prifyn.com/api/auth/callback/google
+https://app.prifyn.rakhaviantoni.com/api/auth/callback/google
 ```
 
 Before the custom domain is active, use the equivalent `https://<site-name>.netlify.app` URLs. Google does not accept wildcard redirect URIs, so do not enable Google OAuth on arbitrary Deploy Preview URLs. Test OAuth on the production hostname or a dedicated stable branch domain.

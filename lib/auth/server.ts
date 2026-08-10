@@ -3,6 +3,7 @@ import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization as organizationPlugin } from "better-auth/plugins";
 import { getDb } from "@/db";
 import * as schema from "@/db/schema";
+import { getAuthAllowedHosts, getAuthFallbackOrigin, getAuthTrustedOrigins } from "./url";
 
 export function isAuthConfigured() {
   return Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
@@ -15,7 +16,11 @@ export function isGoogleAuthConfigured() {
 function createAuth() {
   return betterAuth({
     appName: "PRIFYN",
-    baseURL: process.env.BETTER_AUTH_URL,
+    baseURL: {
+      allowedHosts: getAuthAllowedHosts(),
+      fallback: getAuthFallbackOrigin(),
+      protocol: "auto",
+    },
     secret: process.env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(getDb(), {
       provider: "pg",
@@ -29,7 +34,7 @@ function createAuth() {
       },
     } : {},
     plugins: [organizationPlugin()],
-    trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "http://localhost:3000").split(",").map(value => value.trim()),
+    trustedOrigins: getAuthTrustedOrigins(),
   });
 }
 

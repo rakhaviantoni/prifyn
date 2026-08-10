@@ -7,6 +7,15 @@ import { FormEvent, useState } from "react";
 
 type AccountType = "brand" | "agency" | "creator";
 
+function getProductionCallbackUrl() {
+  if (typeof window === "undefined") return "/app";
+  const url = new URL("/app", window.location.origin);
+  if (window.location.hostname === process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME || window.location.hostname.startsWith("app.")) {
+    url.pathname = "/";
+  }
+  return url.toString();
+}
+
 export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
@@ -25,7 +34,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         throw new Error("Google sign-in credentials are not configured for this domain yet.");
       }
       const { authClient } = await import("@/lib/auth/auth-client");
-      const result = await authClient.signIn.social({ provider: "google", callbackURL: "/app" });
+      const result = await authClient.signIn.social({ provider: "google", callbackURL: getProductionCallbackUrl() });
       if (result.error) throw new Error(result.error.message || "Google sign-in could not be started.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Google sign-in could not be started. Please try again.");
