@@ -45,7 +45,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    window.setTimeout(() => router.push(accountType === "creator" ? "/creator/onboarding?mode=preview" : "/app?mode=preview"), 450);
+    window.setTimeout(() => router.push("/demo"), 450);
   }
 
   const identityField = accountType === "creator"

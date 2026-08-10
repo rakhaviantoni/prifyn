@@ -1,5 +1,6 @@
-import { redirect } from "next/navigation";
+import { AppShell } from "@/components/app-shell";
+import { TodayDashboard } from "@/components/today-dashboard";
 
 export default function DemoPage() {
-  redirect("/app?mode=preview");
+  return <AppShell><TodayDashboard previewMode /></AppShell>;
 }

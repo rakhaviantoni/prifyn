@@ -31,6 +31,12 @@ const routes = [
   ["/case-studies/restaurant-campaign-readiness", "Why the existing workflow broke down"],
   ["/auth/sign-in", "Welcome back"],
   ["/auth/sign-up", "Create your workspace"],
+  ["/demo", "Preview sandbox"],
+  ["/privacy", "Privacy by design"],
+  ["/terms", "Product preview terms"],
+];
+
+const privateRoutes = [
   ["/app", "Decision inbox"],
   ["/app/ads-window", "Ads Manager"],
   ["/app/kol-window", "KOL Campaigns"],
@@ -52,8 +58,6 @@ const routes = [
   ["/creator/campaigns", "Active collaboration"],
   ["/creator/payments", "Track every agreed fee"],
   ["/creator/performance", "Performance intelligence"],
-  ["/privacy", "Privacy by design"],
-  ["/terms", "Product preview terms"],
 ];
 
 test("server-renders every public and product route", async () => {
@@ -66,6 +70,22 @@ test("server-renders every public and product route", async () => {
     assert.match(html, /PRIFYN/, path);
     assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/, path);
   }
+});
+
+test("private workspaces require authentication", async () => {
+  for (const [path] of privateRoutes) {
+    const response = await request(path, { redirect: "manual" });
+    assert.equal(response.status, 307, path);
+    const location = new URL(response.headers.get("location"), "http://localhost");
+    assert.equal(location.pathname, "/auth/sign-in", path);
+    assert.match(location.searchParams.get("returnTo") ?? "", /^\/(app|creator)$/, path);
+  }
+});
+
+test("preview route redirects to the demo sandbox", async () => {
+  const response = await request("/preview", { redirect: "manual" });
+  assert.equal(response.status, 307);
+  assert.equal(new URL(response.headers.get("location"), "http://localhost").pathname, "/demo");
 });
 
 test("legacy ads page redirects to the broader growth story", async () => {
