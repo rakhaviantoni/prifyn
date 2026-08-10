@@ -38,7 +38,7 @@ const routes = [
   ["/app/creators", "Creator intelligence"],
   ["/app/creators/nabila-putri", "Nabila Putri"],
   ["/app/talent-pipeline", "Talent Pipeline"],
-  ["/app/reports", "Weekly review"],
+  ["/app/reports", "Reports"],
   ["/app/copilot", "Ask PRIFYN"],
   ["/app/settings", "Workspace governance"],
   ["/app/settings/connections", "Connected systems and permissions"],
