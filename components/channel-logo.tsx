@@ -9,6 +9,6 @@ export function ChannelLogo({ channel }: { channel: string }) {
   if (channel === "Shopee") return <SiShopee {...iconProps} color="#EE4D2D" />;
   // The official Tokopedia wordmark is not included in Simple Icons.
   // eslint-disable-next-line @next/next/no-img-element
-  if (channel === "Tokopedia") return <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/Tokopedia.svg" alt="" />;
+  if (channel === "Tokopedia") return <img src="/tokopedia.svg" alt="" />;
   return <span aria-hidden="true">{channel.slice(0, 2).toUpperCase()}</span>;
 }
