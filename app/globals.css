@@ -952,6 +952,80 @@ img { max-width: 100%; }
 .billing-plan-options article > strong small { color: var(--muted); font-size: 7px; font-weight: 500; }
 .billing-plan-options article p { min-height: 50px; margin: 9px 0; color: var(--muted); font-size: 7px; line-height: 1.55; }
 .billing-plan-options .button { width: 100%; }
+.connections-center { display: grid; gap: 16px; }
+.connections-head { margin-bottom: 0; }
+.connections-overview { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.connection-summary { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: center; padding: 16px; }
+.connection-summary > span { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 11px; background: var(--paper-2); color: var(--green); }
+.connection-summary.primary > span { background: var(--green); color: #fff; }
+.connection-summary svg { width: 21px; }
+.connection-summary small, .connection-summary strong { display: block; }
+.connection-summary small { color: var(--muted); font-size: 9px; }
+.connection-summary strong { margin-top: 4px; font-size: 15px; }
+.connection-summary p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.connections-workspace { overflow: hidden; }
+.connections-toolbar { display: flex; align-items: flex-end; justify-content: space-between; gap: 22px; padding: 18px; border-bottom: 1px solid var(--line); }
+.connections-toolbar h2 { margin: 4px 0 0; font-family: var(--font-serif); font-size: 23px; font-weight: 500; }
+.connections-tabs { flex-wrap: wrap; justify-content: flex-end; }
+.connection-card-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 14px; }
+.connection-card { display: flex; flex-direction: column; min-height: 300px; padding: 16px; border: 1px solid var(--line); border-radius: 11px; background: var(--paper); }
+.connection-card > header { display: grid; grid-template-columns: 38px 1fr auto; gap: 10px; align-items: center; }
+.connection-provider-mark { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--green); }
+.connection-provider-mark svg { width: 20px; height: 20px; }
+.connection-card h3 { margin: 0; font-size: 13px; }
+.connection-card header small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; }
+.connection-state { display: inline-flex; align-items: center; gap: 6px; padding: 6px 8px; border-radius: 99px; background: var(--paper-2); color: var(--muted); font-size: 8px; font-weight: 750; white-space: nowrap; }
+.connection-state i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.connection-state.healthy { background: var(--sage-2); color: var(--green); }
+.connection-state.ready { background: #e8eef8; color: #426ca6; }
+.connection-state.attention { background: #f6ead6; color: #996120; }
+.connection-card > p { min-height: 42px; margin: 16px 0 12px; color: var(--muted); font-size: 10px; line-height: 1.55; }
+.connection-account { display: grid; grid-template-columns: 25px 1fr; gap: 9px; align-items: center; padding: 11px; border-radius: 8px; background: var(--paper-2); }
+.connection-account > span { color: var(--green); }
+.connection-account svg { width: 18px; }
+.connection-account strong, .connection-account small { display: block; }
+.connection-account strong { font-size: 10px; }
+.connection-account small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.connection-capabilities { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.connection-capabilities span { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 8px; }
+.connection-capabilities svg { width: 12px; color: var(--green); }
+.connection-card > footer { display: flex; justify-content: flex-end; gap: 7px; margin-top: auto; padding-top: 18px; }
+.connections-lower-grid { display: grid; grid-template-columns: 1.2fr .8fr; gap: 12px; }
+.data-health-panel, .connection-guardrails { padding: 18px; }
+.data-health-panel > header, .connection-guardrails > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 11px; }
+.data-health-panel h2, .connection-guardrails h2 { margin: 4px 0 0; font-family: var(--font-serif); font-size: 21px; font-weight: 500; }
+.data-health-panel > article { display: grid; grid-template-columns: minmax(140px, 1fr) 1fr 38px; gap: 12px; align-items: center; padding: 12px 0; border-top: 1px solid var(--line); }
+.data-health-panel strong, .data-health-panel small { display: block; }
+.data-health-panel strong { font-size: 10px; }
+.data-health-panel small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.data-health-panel article > i { height: 6px; overflow: hidden; border-radius: 99px; background: var(--paper-2); }
+.data-health-panel article > i b { display: block; height: 100%; border-radius: inherit; background: var(--green); }
+.data-health-panel article > span { color: var(--muted); font-size: 9px; text-align: right; }
+.connection-guardrails > header { justify-content: flex-start; }
+.connection-guardrails > header > svg { width: 33px; color: var(--green); }
+.connection-guardrails > div { padding: 12px 0; border-top: 1px solid var(--line); }
+.connection-guardrails strong { font-size: 10px; }
+.connection-guardrails p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.connection-dialog > .connection-provider-mark { margin-bottom: 14px; }
+.connection-dialog-facts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; margin-top: 18px; }
+.connection-dialog-facts > div { padding: 10px; border-radius: 8px; background: var(--paper-2); }
+.connection-dialog-facts span, .connection-dialog-facts strong { display: block; }
+.connection-dialog-facts span { color: var(--muted); font-size: 8px; }
+.connection-dialog-facts strong { margin-top: 4px; font-size: 9px; }
+.connection-dialog-scope { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-top: 12px; }
+.connection-dialog-scope span { display: flex; align-items: center; gap: 6px; color: var(--muted); font-size: 9px; }
+.connection-dialog-scope svg { width: 14px; color: var(--green); }
+.connection-account-picker { display: grid; gap: 7px; margin-top: 14px; }
+.connection-account-picker > strong { font-size: 9px; }
+.connection-account-picker article { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); border-radius: 8px; }
+.connection-account-picker b, .connection-account-picker small { display: block; }
+.connection-account-picker b { font-size: 9px; }
+.connection-account-picker small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.connection-dialog > aside { display: grid; grid-template-columns: 18px 1fr; gap: 8px; margin-top: 17px; padding: 12px; border-radius: 8px; background: var(--sage-2); color: var(--green); }
+.connection-dialog > aside svg { width: 17px; }
+.connection-dialog > aside p { margin: 0; color: inherit; font-size: 9px; line-height: 1.5; }
+.spinning { animation: spin .7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
 .connection-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 8px; }
 .connection-grid article { min-height: 125px; display: flex; flex-direction: column; justify-content: space-between; gap: 15px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); }
 .connection-grid article.disabled { opacity: .45; }
@@ -1083,6 +1157,9 @@ img { max-width: 100%; }
 .theme-dark .page-tabs { background: #0f1612; }
 .theme-dark .page-tabs button.active { background: #27352e; color: #fff; }
 .theme-dark .status-pill.neutral { background: #303a35; color: #bdc7c1; }
+.theme-dark .connection-card, .theme-dark .connection-provider-mark { background: #1a241f; }
+.theme-dark .connection-state.ready { background: #263447; color: #91b8ef; }
+.theme-dark .connection-state.attention { background: #3b2d1a; color: #e6b976; }
 .theme-dark .results-command select,
 .theme-dark .performance-layout > section,
 .theme-dark .performance-diagnosis,
@@ -1117,6 +1194,9 @@ img { max-width: 100%; }
   .app-grid { grid-template-columns: 1fr; }
   .stack { grid-template-columns: 1fr 1fr; }
   .stack > :first-child { grid-column: 1 / -1; }
+  .connections-overview { grid-template-columns: 1fr 1fr; }
+  .connections-overview > :last-child { grid-column: 1 / -1; }
+  .connections-lower-grid { grid-template-columns: 1fr; }
   .results-kpi-grid { grid-template-columns: repeat(3, 1fr); }
   .performance-layout, .location-layout, .journey-layout { grid-template-columns: 1fr; }
   .audience-summary-grid { grid-template-columns: 1.2fr .8fr; }
@@ -1223,6 +1303,17 @@ img { max-width: 100%; }
   .data-table { min-width: 680px; }
   .surface.table-wrap { overflow-x: auto; }
   .settings-grid { grid-template-columns: 1fr; }
+  .connections-toolbar { align-items: stretch; flex-direction: column; }
+  .connections-tabs { width: 100%; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; }
+  .connections-tabs button { white-space: nowrap; }
+  .connections-overview, .connection-card-grid { grid-template-columns: 1fr; }
+  .connections-overview > :last-child { grid-column: auto; }
+  .connection-card > header { grid-template-columns: 38px 1fr; }
+  .connection-state { grid-column: 2; justify-self: start; }
+  .data-health-panel > article { grid-template-columns: 1fr 45px; }
+  .data-health-panel article > i { grid-column: 1 / -1; grid-row: 2; }
+  .data-health-panel article > span { grid-column: 2; grid-row: 1; }
+  .connection-dialog-facts, .connection-dialog-scope { grid-template-columns: 1fr; }
   .billing-overview, .billing-usage-grid, .billing-plan-options { grid-template-columns: 1fr; }
   .billing-entitlements { grid-template-columns: 1fr; }
   .add-on-card { align-items: stretch; flex-direction: column; }

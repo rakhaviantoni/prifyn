@@ -41,6 +41,7 @@ const routes = [
   ["/app/reports", "Weekly review"],
   ["/app/copilot", "Ask PRIFYN"],
   ["/app/settings", "Workspace governance"],
+  ["/app/settings/connections", "Connected systems and permissions"],
   ["/app/settings/team", "Company owners can invite users"],
   ["/app/settings/billing", "Workspace billing"],
   ["/creator", "Creator command center"],
@@ -94,13 +95,14 @@ test("auth endpoint fails safely until credentials are supplied", async () => {
 });
 
 test("ships requested foundation packages and schema migrations", async () => {
-  const [packageJson, schema, migration, workflowMigration, creatorMigration, billingMigration, envExample] = await Promise.all([
+  const [packageJson, schema, migration, workflowMigration, creatorMigration, billingMigration, integrationMigration, envExample] = await Promise.all([
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0001_large_lester.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0002_regular_polaris.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0003_flashy_saracen.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0004_sour_mephistopheles.sql", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
   assert.match(packageJson, /@phosphor-icons\/react/);
@@ -122,6 +124,10 @@ test("ships requested foundation packages and schema migrations", async () => {
   assert.match(billingMigration, /CREATE TABLE "billing_invoices"/);
   assert.match(billingMigration, /CREATE TABLE "billing_usage"/);
   assert.doesNotMatch(billingMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(integrationMigration, /CREATE TABLE "provider_authorizations"/);
+  assert.match(integrationMigration, /CREATE TABLE "brand_account_bindings"/);
+  assert.match(integrationMigration, /CREATE TABLE "channel_publishing_jobs"/);
+  assert.doesNotMatch(integrationMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
   assert.match(envExample, /SUMOPOD_API_KEY/);
 });

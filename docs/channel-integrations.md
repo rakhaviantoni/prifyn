@@ -30,3 +30,16 @@ The UI preview must never be treated as a production connection. A real connecti
 - All provider callbacks require nonce/state verification, replay protection, audit events, and organization-role checks.
 
 The existing `platform_connections` and `platform_campaign_refs` tables already provide the core brand/account and remote campaign mapping. Provider-specific account metadata and granted scopes can be kept in an encrypted secret payload or a future normalized connection-account table.
+
+## Implemented integration foundation
+
+PRIFYN now separates the provider grant, discovered external accounts, operating-brand assignments, capabilities, sync state, audit events, and per-channel publishing jobs. The legacy `platform_connections` table remains for migration compatibility; new connector work should use the normalized tables.
+
+Google Ads uses these routes:
+
+- `GET /api/integrations/google/connect` — owner/admin authorization start with a single-use database state.
+- `GET /api/integrations/google/callback` — token exchange, AES-GCM encrypted credential storage, accessible-customer discovery, and audit recording.
+- `GET /api/integrations/connections` — credential-free connection/account/binding summaries for the signed-in workspace.
+- `POST /api/integrations/accounts/{accountId}/assign` — assign a discovered account to an operating brand. Reporting defaults on; publishing defaults off.
+
+Production Google Ads activation requires `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_DEVELOPER_TOKEN`, `INTEGRATION_TOKEN_ENCRYPTION_KEY`, and the exact callback URI registered in Google Cloud. Applying migration `0004_sour_mephistopheles.sql` is required before using the connector.

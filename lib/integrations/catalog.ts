@@ -8,7 +8,7 @@ export const integrationCatalog = {
   google: {
     label: "Google Ads",
     auth: "OAuth 2.0 multi-user flow",
-    credentials: ["GOOGLE_ADS_CLIENT_ID", "GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_ADS_DEVELOPER_TOKEN"],
+    credentials: ["GOOGLE_ADS_CLIENT_ID", "GOOGLE_ADS_CLIENT_SECRET", "GOOGLE_ADS_DEVELOPER_TOKEN", "INTEGRATION_TOKEN_ENCRYPTION_KEY"],
     capabilities: ["Customer accounts", "Campaign publishing", "Conversion actions", "Reporting"],
   },
   tiktok: {

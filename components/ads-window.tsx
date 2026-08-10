@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import {
   ArrowRight, Broadcast, ChartBar, Check, CheckCircle, CloudArrowUp, Eye,
   ImageSquare, LinkSimple, LockSimple, PaperPlaneTilt, Play, Target,
@@ -46,8 +46,27 @@ export function AdsWindow() {
   const [published, setPublished] = useState(false);
   const [deliveryStatus, setDeliveryStatus] = useState<DeliveryStatus>("In review");
   const [report, setReport] = useState("Performance");
+  const [productionConnections, setProductionConnections] = useState<string[] | null>(null);
   const reportReady = deliveryStatus === "Completed";
-  const channelsReady = selectedPlatforms.length > 0 && selectedPlatforms.every(platform => connected.includes(platform));
+  const readyConnections = productionConnections ?? connected;
+  const channelsReady = selectedPlatforms.length > 0 && selectedPlatforms.every(platform => readyConnections.includes(platform));
+
+  useEffect(() => {
+    fetch("/api/integrations/connections").then(response => response.ok ? response.json() : Promise.reject()).then((body: { connections?: Array<{ provider: string; accounts: Array<{ id: string; displayName: string | null }>; bindings: Array<{ providerAccountId: string; publishingEnabled: boolean }> }> }) => {
+      const providerLabels: Record<string, string> = { meta: "Meta", google: "Google", tiktok: "TikTok", tokopedia: "Tokopedia", shopee: "Shopee" };
+      const ready: string[] = [];
+      const accountSelections: Record<string, string> = {};
+      for (const connection of body.connections ?? []) {
+        const binding = connection.bindings.find(item => item.publishingEnabled);
+        const account = binding ? connection.accounts.find(item => item.id === binding.providerAccountId) : undefined;
+        const label = providerLabels[connection.provider];
+        if (label && account) { ready.push(label); accountSelections[label] = account.displayName ?? account.id; }
+      }
+      setProductionConnections(ready);
+      setConnected(ready);
+      setSelectedAccounts(current => ({ ...current, ...accountSelections }));
+    }).catch(() => setProductionConnections(null));
+  }, []);
 
   function togglePlatform(platform: string) {
     setSelectedPlatforms(current => current.includes(platform) ? current.filter(item => item !== platform) : [...current, platform]);
@@ -94,7 +113,7 @@ export function AdsWindow() {
       </section>
     </form>}
 
-    {stage === "channels" && <div className="workflow-stack"><section className="surface workflow-card"><div className="workflow-card-head"><span><LinkSimple weight="duotone" /></span><div><small>Channel & account</small><h2>Choose where—and under which account—the ad will run</h2><p>Demo accounts are marked clearly. Production connections require an approved provider app and encrypted token storage.</p></div></div><fieldset className="field platform-picker channel-picker"><legend>Selected channels</legend>{platforms.map(platform => <label key={platform} className={selectedPlatforms.includes(platform) ? "selected" : ""}><input type="checkbox" checked={selectedPlatforms.includes(platform)} onChange={() => togglePlatform(platform)} /><span className="platform-option"><ChannelLogo channel={platform} />{platform}</span></label>)}</fieldset><div className="account-connection-list">{platforms.map(platform => { const selected = selectedPlatforms.includes(platform); const isConnected = connected.includes(platform); return <article key={platform} className={!selected ? "disabled" : ""}><div className="channel-account-head"><span className="channel-logo"><ChannelLogo channel={platform} /></span><div><strong>{platform}</strong><small>{!selected ? "Not selected" : isConnected ? "Demo connection · choose the publishing identity" : "Provider app setup required"}</small></div><button type="button" className={`button ${isConnected ? "button-outline" : "button-dark"}`} disabled={!selected} onClick={() => { setConnected(current => isConnected ? current.filter(item => item !== platform) : [...current, platform]); setChannelsSaved(false); }}>{isConnected ? <><CheckCircle weight="fill" /> Demo connected</> : "Preview connection"}</button></div>{selected && isConnected && <label className="field"><span>Publishing account</span><select value={selectedAccounts[platform]} onChange={event => setSelectedAccounts(current => ({ ...current, [platform]: event.target.value }))}>{accounts[platform].map(account => <option key={account}>{account}</option>)}</select></label>}</article>; })}</div></section><section className="surface channel-ready-card"><div><CheckCircle weight="fill" /><span><strong>{channelsReady ? "All selected channels have an account." : "Connect every selected channel to continue."}</strong>{selectedPlatforms.length} selected · {selectedPlatforms.filter(item => connected.includes(item)).length} ready</span></div><button type="button" className="button button-dark" disabled={!channelsReady} onClick={saveChannels}>Review campaign <ArrowRight /></button></section></div>}
+    {stage === "channels" && <div className="workflow-stack"><section className="surface workflow-card"><div className="workflow-card-head"><span><LinkSimple weight="duotone" /></span><div><small>Channel & account</small><h2>Choose where—and under which account—the ad will run</h2><p>{productionConnections === null ? "Preview accounts are clearly marked. Production authorization is managed in Settings." : "Only brand-assigned accounts with publishing permission can continue."}</p></div></div><fieldset className="field platform-picker channel-picker"><legend>Selected channels</legend>{platforms.map(platform => <label key={platform} className={selectedPlatforms.includes(platform) ? "selected" : ""}><input type="checkbox" checked={selectedPlatforms.includes(platform)} onChange={() => togglePlatform(platform)} /><span className="platform-option"><ChannelLogo channel={platform} />{platform}</span></label>)}</fieldset><div className="account-connection-list">{platforms.map(platform => { const selected = selectedPlatforms.includes(platform); const isConnected = connected.includes(platform); return <article key={platform} className={!selected ? "disabled" : ""}><div className="channel-account-head"><span className="channel-logo"><ChannelLogo channel={platform} /></span><div><strong>{platform}</strong><small>{!selected ? "Not selected" : isConnected ? productionConnections === null ? "Preview connection · choose the publishing identity" : "Authorized for this operating brand" : productionConnections === null ? "Provider app setup required" : "No publishing-ready account assigned"}</small></div><button type="button" className={`button ${isConnected ? "button-outline" : "button-dark"}`} disabled={!selected} onClick={() => { if (productionConnections !== null) { window.location.assign("/app/settings/connections"); return; } setConnected(current => isConnected ? current.filter(item => item !== platform) : [...current, platform]); setChannelsSaved(false); }}>{isConnected ? <><CheckCircle weight="fill" /> {productionConnections === null ? "Preview connected" : "Publishing ready"}</> : productionConnections === null ? "Preview connection" : "Manage connection"}</button></div>{selected && isConnected && <label className="field"><span>Publishing account</span><select value={selectedAccounts[platform]} onChange={event => setSelectedAccounts(current => ({ ...current, [platform]: event.target.value }))}>{productionConnections === null ? accounts[platform].map(account => <option key={account}>{account}</option>) : <option>{selectedAccounts[platform]}</option>}</select></label>}</article>; })}</div></section><section className="surface channel-ready-card"><div><CheckCircle weight="fill" /><span><strong>{channelsReady ? "All selected channels have a publishing-ready account." : "Assign publishing access for every selected channel to continue."}</strong>{selectedPlatforms.length} selected · {selectedPlatforms.filter(item => connected.includes(item)).length} ready</span></div><button type="button" className="button button-dark" disabled={!channelsReady} onClick={saveChannels}>Review campaign <ArrowRight /></button></section></div>}
 
     {stage === "channels" && <aside className="surface google-connection-note"><span className="channel-logo"><ChannelLogo channel="Google" /></span><div><strong>Google sign-in and Google Ads access are separate.</strong><p>Signing in creates your PRIFYN identity only. Connecting Google Ads requires another approval for the adwords permission, followed by customer-account selection.</p></div><span className="status-pill neutral">Additional permission</span></aside>}
 

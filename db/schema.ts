@@ -25,6 +25,11 @@ export const insightStatus = pgEnum("insight_status", ["draft", "published", "ac
 export const campaignKind = pgEnum("campaign_kind", ["ads", "kol", "hybrid"]);
 export const platformConnectionStatus = pgEnum("platform_connection_status", ["disconnected", "pending", "connected", "error"]);
 export const platformCampaignStatus = pgEnum("platform_campaign_status", ["draft", "syncing", "ready", "running", "paused", "rejected", "completed", "error"]);
+export const providerAuthorizationStatus = pgEnum("provider_authorization_status", ["pending", "connected", "needs_attention", "revoked", "error"]);
+export const providerAccountStatus = pgEnum("provider_account_status", ["available", "connected", "restricted", "inactive", "revoked"]);
+export const connectionCapabilityStatus = pgEnum("connection_capability_status", ["available", "granted", "missing", "restricted"]);
+export const integrationSyncStatus = pgEnum("integration_sync_status", ["idle", "queued", "running", "completed", "delayed", "failed"]);
+export const publishingJobStatus = pgEnum("publishing_job_status", ["queued", "validating", "submitting", "in_review", "succeeded", "partially_succeeded", "failed", "cancelled"]);
 export const reportBreakdown = pgEnum("report_breakdown", ["performance", "audience", "location", "creative", "user_journey"]);
 export const billingInterval = pgEnum("billing_interval", ["monthly", "annual"]);
 export const subscriptionStatus = pgEnum("subscription_status", ["trialing", "active", "past_due", "cancelled", "paused"]);
@@ -362,6 +367,105 @@ export const platformConnections = pgTable("platform_connections", {
   updatedAt,
 }, (table) => [uniqueIndex("platform_connections_org_platform_account_uidx").on(table.organizationId, table.platform, table.externalAccountId), index("platform_connections_workspace_status_idx").on(table.workspaceId, table.status)]);
 
+// A provider authorization is the OAuth grant. It is deliberately separate from
+// the external accounts discovered through that grant and their operating-brand bindings.
+export const providerAuthorizations = pgTable("provider_authorizations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  connectedByUserId: text("connected_by_user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  status: providerAuthorizationStatus("status").default("pending").notNull(),
+  encryptedCredentialPayload: text("encrypted_credential_payload"),
+  grantedScopes: jsonb("granted_scopes").$type<string[]>().default([]).notNull(),
+  tokenExpiresAt: timestamp("token_expires_at", { withTimezone: true }),
+  lastRefreshedAt: timestamp("last_refreshed_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  lastErrorCode: text("last_error_code"),
+  lastErrorMessage: text("last_error_message"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("provider_authorizations_workspace_provider_user_uidx").on(table.workspaceId, table.provider, table.connectedByUserId), index("provider_authorizations_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const providerAccounts = pgTable("provider_accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  authorizationId: uuid("authorization_id").notNull().references(() => providerAuthorizations.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  externalAccountId: text("external_account_id").notNull(),
+  managerAccountId: text("manager_account_id"),
+  displayName: text("display_name"),
+  accountType: text("account_type").default("advertiser").notNull(),
+  currency: text("currency"),
+  timezone: text("timezone"),
+  status: providerAccountStatus("status").default("available").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  lastDiscoveredAt: timestamp("last_discovered_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("provider_accounts_authorization_external_uidx").on(table.authorizationId, table.externalAccountId), index("provider_accounts_provider_external_idx").on(table.provider, table.externalAccountId)]);
+
+export const brandAccountBindings = pgTable("brand_account_bindings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  providerAccountId: uuid("provider_account_id").notNull().references(() => providerAccounts.id, { onDelete: "cascade" }),
+  usageRole: text("usage_role").default("primary").notNull(),
+  reportingEnabled: boolean("reporting_enabled").default(true).notNull(),
+  publishingEnabled: boolean("publishing_enabled").default(false).notNull(),
+  selectedIdentityExternalId: text("selected_identity_external_id"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("brand_account_bindings_org_account_uidx").on(table.organizationId, table.providerAccountId), index("brand_account_bindings_workspace_org_idx").on(table.workspaceId, table.organizationId)]);
+
+export const connectionCapabilities = pgTable("connection_capabilities", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  providerAccountId: uuid("provider_account_id").notNull().references(() => providerAccounts.id, { onDelete: "cascade" }),
+  capability: text("capability").notNull(),
+  status: connectionCapabilityStatus("status").default("available").notNull(),
+  reason: text("reason"),
+  checkedAt: timestamp("checked_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("connection_capabilities_account_capability_uidx").on(table.providerAccountId, table.capability)]);
+
+export const connectionSyncStates = pgTable("connection_sync_states", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  providerAccountId: uuid("provider_account_id").notNull().references(() => providerAccounts.id, { onDelete: "cascade" }),
+  resourceType: text("resource_type").notNull(),
+  status: integrationSyncStatus("status").default("idle").notNull(),
+  cursor: text("cursor"),
+  lastStartedAt: timestamp("last_started_at", { withTimezone: true }),
+  lastCompletedAt: timestamp("last_completed_at", { withTimezone: true }),
+  nextSyncAt: timestamp("next_sync_at", { withTimezone: true }),
+  consecutiveFailures: integer("consecutive_failures").default(0).notNull(),
+  lastErrorCode: text("last_error_code"),
+  lastErrorMessage: text("last_error_message"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("connection_sync_states_account_resource_uidx").on(table.providerAccountId, table.resourceType), index("connection_sync_states_status_next_idx").on(table.status, table.nextSyncAt)]);
+
+export const integrationOauthStates = pgTable("integration_oauth_states", {
+  stateHash: text("state_hash").primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  returnTo: text("return_to").default("/app/settings/connections").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  usedAt: timestamp("used_at", { withTimezone: true }),
+  createdAt,
+}, (table) => [index("integration_oauth_states_expiry_idx").on(table.expiresAt)]);
+
+export const integrationAuditEvents = pgTable("integration_audit_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").references(() => businessOrganizations.id, { onDelete: "set null" }),
+  providerAccountId: uuid("provider_account_id").references(() => providerAccounts.id, { onDelete: "set null" }),
+  actorUserId: text("actor_user_id").references(() => user.id, { onDelete: "set null" }),
+  action: text("action").notNull(),
+  metadata: jsonb("metadata").$type<Record<string, unknown>>().default({}).notNull(),
+  createdAt,
+}, (table) => [index("integration_audit_events_workspace_created_idx").on(table.workspaceId, table.createdAt), index("integration_audit_events_account_idx").on(table.providerAccountId)]);
+
 export const platformCampaignRefs = pgTable("platform_campaign_refs", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
@@ -377,6 +481,26 @@ export const platformCampaignRefs = pgTable("platform_campaign_refs", {
   createdAt,
   updatedAt,
 }, (table) => [uniqueIndex("platform_campaign_refs_campaign_platform_uidx").on(table.campaignId, table.platform), index("platform_campaign_refs_status_idx").on(table.workspaceId, table.status)]);
+
+export const channelPublishingJobs = pgTable("channel_publishing_jobs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  platformCampaignRefId: uuid("platform_campaign_ref_id").references(() => platformCampaignRefs.id, { onDelete: "set null" }),
+  providerAccountId: uuid("provider_account_id").references(() => providerAccounts.id, { onDelete: "set null" }),
+  platform: text("platform").notNull(),
+  operation: text("operation").default("publish").notNull(),
+  status: publishingJobStatus("status").default("queued").notNull(),
+  externalJobId: text("external_job_id"),
+  attempts: integer("attempts").default(0).notNull(),
+  requestSummary: jsonb("request_summary").$type<Record<string, unknown>>().default({}).notNull(),
+  lastErrorCode: text("last_error_code"),
+  lastErrorMessage: text("last_error_message"),
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [index("channel_publishing_jobs_campaign_status_idx").on(table.campaignId, table.status), index("channel_publishing_jobs_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
 export const adsReportSnapshots = pgTable("ads_report_snapshots", {
   id: uuid("id").defaultRandom().primaryKey(),
