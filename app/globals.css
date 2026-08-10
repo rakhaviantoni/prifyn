@@ -649,6 +649,10 @@ img { max-width: 100%; }
 .creative-fields { margin-top: 15px; }
 .channel-picker { margin-bottom: 16px; }
 .account-connection-list { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.google-connection-note { display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center; margin-top: 13px; padding: 13px; border-color: rgba(66,133,244,.22); background: rgba(66,133,244,.055); }
+.google-connection-note strong { display: block; font-size: 10px; }
+.google-connection-note p { margin: 4px 0 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+.theme-dark .google-connection-note { background: rgba(66,133,244,.09); }
 .account-connection-list article { display: grid; gap: 11px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: var(--paper); }
 .account-connection-list article.disabled { opacity: .48; }
 .channel-account-head { display: grid; grid-template-columns: 36px 1fr auto; gap: 10px; align-items: center; }
@@ -1241,6 +1245,8 @@ img { max-width: 100%; }
   .creative-source-picker, .account-connection-list, .preview-facts, .publish-checklist, .ad-preview-grid { grid-template-columns: 1fr; }
   .channel-account-head { grid-template-columns: 36px 1fr; }
   .channel-account-head .button { grid-column: 1 / -1; width: 100%; }
+  .google-connection-note { grid-template-columns: 36px 1fr; }
+  .google-connection-note > .status-pill { grid-column: 2; justify-self: start; }
   .channel-ready-card, .publish-bar, .delivery-status-card { align-items: stretch; flex-direction: column; }
   .publish-bar > div:last-child { width: 100%; flex-wrap: wrap; }
   .publish-bar .button { flex: 1; }

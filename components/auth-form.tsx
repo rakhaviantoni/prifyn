@@ -15,13 +15,20 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
 
   async function useGoogle() {
     setLoading(true);
+    setMessage(null);
     try {
       const response = await fetch("/api/auth/configured");
-      if (!response.ok) throw new Error();
+      const readiness = await response.json().catch(() => ({})) as { reason?: string };
+      if (!response.ok) {
+        if (readiness.reason === "database") throw new Error("PRIFYN cannot reach the authentication database. Check DATABASE_URL in the deployed environment.");
+        if (readiness.reason === "migrations") throw new Error("The authentication schema is not installed yet. Run the checked-in database migrations once, then try again.");
+        throw new Error("Google sign-in credentials are not configured for this domain yet.");
+      }
       const { authClient } = await import("@/lib/auth/auth-client");
-      await authClient.signIn.social({ provider: "google", callbackURL: "/app" });
-    } catch {
-      setMessage("Google OAuth is prepared but not connected yet. Add your client ID and secret to enable it.");
+      const result = await authClient.signIn.social({ provider: "google", callbackURL: "/app" });
+      if (result.error) throw new Error(result.error.message || "Google sign-in could not be started.");
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Google sign-in could not be started. Please try again.");
       setLoading(false);
     }
   }

@@ -5,7 +5,11 @@ import { getDb } from "@/db";
 import * as schema from "@/db/schema";
 
 export function isAuthConfigured() {
-  return Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET && process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+  return Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
+}
+
+export function isGoogleAuthConfigured() {
+  return Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 }
 
 function createAuth() {
@@ -18,12 +22,12 @@ function createAuth() {
       schema,
     }),
     emailAndPassword: { enabled: true, minPasswordLength: 8 },
-    socialProviders: {
+    socialProviders: isGoogleAuthConfigured() ? {
       google: {
         clientId: process.env.GOOGLE_CLIENT_ID!,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       },
-    },
+    } : {},
     plugins: [organizationPlugin()],
     trustedOrigins: (process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? "http://localhost:3000").split(",").map(value => value.trim()),
   });
