@@ -14,8 +14,8 @@ const mainNav = [
   ["Today", "/app", House],
   ["Ads Manager", "/app/ads-window", Megaphone],
   ["KOL Campaigns", "/app/kol-window", UsersThree],
-  ["Creator Discovery", "/app/creators", IdentificationBadge],
   ["Talent Pipeline", "/app/talent-pipeline", UsersThree],
+  ["Creator Discovery", "/app/creators", IdentificationBadge],
   ["Campaigns", "/app/campaigns", CirclesFour],
   ["Reports", "/app/reports", ChartLine],
 ] as const;
