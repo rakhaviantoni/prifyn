@@ -40,7 +40,7 @@ export function CreatorShell({ children, currentUser }: { children: ReactNode; c
   const signOut = async () => {
     const { authClient } = await import("@/lib/auth/auth-client");
     await authClient.signOut();
-    window.location.assign("/auth/sign-in");
+    window.location.assign(new URL("/auth/sign-in", window.location.origin).toString());
   };
 
   return <div className="app-layout creator-layout">

@@ -56,9 +56,19 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         if (readiness.reason === "migrations") throw new Error("The authentication schema is not installed yet. Run the checked-in database migrations once, then try again.");
         throw new Error("Google sign-in credentials are not configured for this domain yet.");
       }
-      const { authClient } = await import("@/lib/auth/auth-client");
-      const result = await authClient.signIn.social({ provider: "google", callbackURL: getProductionCallbackUrl(mode === "sign-up" ? accountType : undefined) });
-      if (result.error) throw new Error(result.error.message || "Google sign-in could not be started.");
+      const oauth = await fetch("/api/auth/sign-in/social", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          provider: "google",
+          callbackURL: getProductionCallbackUrl(mode === "sign-up" ? accountType : undefined),
+          disableRedirect: true,
+        }),
+      });
+      const result = await oauth.json().catch(() => ({})) as { url?: string; error?: { message?: string }; message?: string };
+      if (!oauth.ok || !result.url) throw new Error(result.error?.message || result.message || "Google sign-in could not be started.");
+      window.location.assign(result.url);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Google sign-in could not be started. Please try again.");
       setLoading(false);

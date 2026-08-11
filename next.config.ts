@@ -22,6 +22,18 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
+        source: "/",
+        has: [...appHost, { type: "query", key: "code" }, { type: "query", key: "state" }],
+        destination: "/api/auth/callback/google",
+        permanent: false,
+      },
+      {
+        source: "/",
+        has: [...creatorHost, { type: "query", key: "code" }, { type: "query", key: "state" }],
+        destination: "/api/auth/callback/google",
+        permanent: false,
+      },
+      {
         source: "/app",
         has: appHost,
         destination: "/",

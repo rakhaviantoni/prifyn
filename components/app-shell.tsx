@@ -112,7 +112,7 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
   const signOut = async () => {
     const { authClient } = await import("@/lib/auth/auth-client");
     await authClient.signOut();
-    window.location.assign("/auth/sign-in");
+    window.location.assign(new URL("/auth/sign-in", window.location.origin).toString());
   };
   const persistBrands = (next: OperatingBrand[]) => {
     setBrands(next);
