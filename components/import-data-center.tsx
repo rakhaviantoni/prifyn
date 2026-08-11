@@ -9,6 +9,7 @@ import type JSZip from "jszip";
 import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } from "@/lib/imports/metric-mapping";
 
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
+type ImportBatch = { id: string; fileName: string; source: string; rows: number; importedAt: string; status: string };
 
 const reportPatterns = [
   ["Funnel journey", "Impressions → clicks → landing views → leads/orders → revenue → repeat purchase"],
@@ -81,6 +82,15 @@ export function ImportDataCenter() {
   const [preview, setPreview] = useState<ParsedPreview | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [importedBatches, setImportedBatches] = useState<ImportBatch[]>(() => {
+    if (typeof window === "undefined") return [];
+    try {
+      return JSON.parse(window.localStorage.getItem("prifyn-import-batches") ?? "[]") as ImportBatch[];
+    } catch {
+      return [];
+    }
+  });
   const detected = useMemo(() => preview ? detectImportTemplate(preview.headers) : null, [preview]);
   const mapping = useMemo(() => detected && preview ? mapHeaders(preview.headers, detected.template) : null, [detected, preview]);
 
@@ -110,6 +120,35 @@ export function ImportDataCenter() {
     }
   }
 
+  function clearPreview() {
+    setPreview(null);
+    setMessage(null);
+  }
+
+  function finishImport() {
+    if (!preview || !detected || !mapping) {
+      setMessage("Map this file to a supported source before importing it to the workspace.");
+      return;
+    }
+    setImporting(true);
+    window.setTimeout(() => {
+      const batch: ImportBatch = {
+        id: `imp_${Date.now()}`,
+        fileName: preview.fileName ?? "Imported export",
+        source: detected.template.label,
+        rows: preview.totalRows,
+        importedAt: new Date().toISOString(),
+        status: "Imported · ready for report mapping",
+      };
+      const next = [batch, ...importedBatches].slice(0, 6);
+      setImportedBatches(next);
+      window.localStorage.setItem("prifyn-import-batches", JSON.stringify(next));
+      setImporting(false);
+      setPreview(null);
+      setMessage(`${batch.fileName} imported to this workspace. Reports can now use the mapped ${batch.source} fields as evidence.`);
+    }, 450);
+  }
+
   function downloadTemplate() {
     const headers = importTemplates[0].requiredColumns.concat(importTemplates[0].optionalColumns.filter(column => !importTemplates[0].requiredColumns.includes(column)));
     const sample = [
@@ -132,17 +171,18 @@ export function ImportDataCenter() {
       <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>{isReading ? "Reading export…" : "Drop or choose CSV/XLSX export"}</strong><span>Preview rows, detect the source, then map metrics before importing.</span></label>
     </section>
 
-    {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
+    {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : message.includes("imported to this workspace") ? "Import complete" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
 
     <section className="import-grid">
       <div className="stack">
         <section className="surface import-preview-card">
-          <div className="surface-head"><h2>Uploaded file</h2>{preview && <button type="button" onClick={() => setPreview(null)}>Clear</button>}</div>
+          <div className="surface-head"><h2>Uploaded file</h2>{preview && <button type="button" onClick={clearPreview}>Clear</button>}</div>
           {!preview ? <div className="import-empty"><Database weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see how PRIFYN maps fields.</p></div> : <div className="import-file-summary">
             <span>{preview.extension === ".xlsx" ? <FileXls /> : <FileCsv />}</span><div><strong>{preview.fileName}</strong><small>{preview.extension?.toUpperCase()} · {preview.totalRows ? `${preview.totalRows} rows detected` : "Ready to map"}</small></div>
             <b className={`status-pill ${detected ? "" : "warning"}`}>{detected ? "Template detected" : "Needs mapping"}</b>
           </div>}
           {preview?.headers.length ? <div className="import-table-wrap"><table className="data-table"><thead><tr>{preview.headers.slice(0, 8).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.slice(0, 4).map((row, index) => <tr key={index}>{preview.headers.slice(0, 8).map((header, cellIndex) => <td key={header}>{row[cellIndex] || "-"}</td>)}</tr>)}</tbody></table></div> : null}
+          {preview?.headers.length ? <div className="import-finish-bar"><div><strong>Ready to finish import?</strong><span>{detected ? `${detected.template.label} detected. ${preview.totalRows} rows will be added to the workspace import history.` : "Choose a supported mapping before importing."}</span></div><button type="button" className="button button-dark" disabled={!detected || importing} onClick={finishImport}>{importing ? "Importing…" : "Import to workspace"} <ArrowRight /></button></div> : null}
         </section>
 
         <section className="surface import-mapping-card">
@@ -152,11 +192,13 @@ export function ImportDataCenter() {
       </div>
 
       <aside className="stack">
+        <section className="surface import-history-card"><div className="surface-head"><h2>Imported batches</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><Database weight="duotone" /><p>Finished imports will appear here with source, row count, and report-readiness status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Store raw export", "Detect source template", "Map platform columns", "Normalize rows and metric keys", "Create report facts with confidence"].map((item, index) => <div key={item}><b>{index + 1}</b><span>{item}</span></div>)}</section>
+        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Detect and review mapping", "Import to workspace", "Use evidence in reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
         <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>
     </section>
+    {importing && <div className="toast"><Database weight="duotone" />Importing mapped rows…</div>}
   </div>;
 }
