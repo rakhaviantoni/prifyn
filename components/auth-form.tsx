@@ -28,11 +28,12 @@ function subdomainPath(pathname: string, hostType: "app" | "creator") {
   return pathname;
 }
 
-function getProductionCallbackUrl() {
+function getProductionCallbackUrl(accountType?: AccountType) {
   if (typeof window === "undefined") return "/app";
   const requestedReturnTo = safeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
   const hostname = window.location.hostname;
-  const url = new URL(requestedReturnTo ?? (isCreatorHost(hostname) ? "/" : "/app"), window.location.origin);
+  const defaultPath = accountType === "creator" ? "/creator" : isCreatorHost(hostname) ? "/" : "/app";
+  const url = new URL(requestedReturnTo ?? defaultPath, window.location.origin);
   if (isAppHost(hostname)) url.pathname = subdomainPath(url.pathname, "app");
   if (isCreatorHost(hostname)) url.pathname = subdomainPath(url.pathname, "creator");
   return url.toString();
@@ -56,7 +57,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
         throw new Error("Google sign-in credentials are not configured for this domain yet.");
       }
       const { authClient } = await import("@/lib/auth/auth-client");
-      const result = await authClient.signIn.social({ provider: "google", callbackURL: getProductionCallbackUrl() });
+      const result = await authClient.signIn.social({ provider: "google", callbackURL: getProductionCallbackUrl(mode === "sign-up" ? accountType : undefined) });
       if (result.error) throw new Error(result.error.message || "Google sign-in could not be started.");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "Google sign-in could not be started. Please try again.");
@@ -76,7 +77,7 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
     void (async () => {
       try {
         const { authClient } = await import("@/lib/auth/auth-client");
-        const callbackURL = getProductionCallbackUrl();
+        const callbackURL = getProductionCallbackUrl(mode === "sign-up" ? accountType : undefined);
         const result = mode === "sign-in"
           ? await authClient.signIn.email({ email, password, callbackURL })
           : await authClient.signUp.email({ email, password, name: [firstName, lastName].filter(Boolean).join(" ") || email, callbackURL });

@@ -17,6 +17,7 @@ const createdAt = timestamp("created_at", { withTimezone: true }).defaultNow().n
 const updatedAt = timestamp("updated_at", { withTimezone: true }).defaultNow().notNull();
 
 export const workspaceStatus = pgEnum("workspace_status", ["active", "suspended", "archived"]);
+export const userAccountType = pgEnum("user_account_type", ["brand", "agency", "creator"]);
 export const campaignStatus = pgEnum("campaign_status", ["draft", "ready", "active", "paused", "completed", "archived"]);
 export const participantStatus = pgEnum("participant_status", ["invited", "applied", "approved", "active", "completed", "declined", "withdrawn"]);
 export const deliverableStatus = pgEnum("deliverable_status", ["planned", "awaiting_submission", "in_review", "revision_requested", "approved", "rejected"]);
@@ -45,6 +46,15 @@ export const user = pgTable("users", {
   createdAt,
   updatedAt,
 });
+
+export const userProfiles = pgTable("user_profiles", {
+  userId: text("user_id").primaryKey().references(() => user.id, { onDelete: "cascade" }),
+  accountType: userAccountType("account_type").notNull(),
+  displayName: text("display_name"),
+  onboardingStatus: text("onboarding_status").default("started").notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [index("user_profiles_account_type_idx").on(table.accountType)]);
 
 export const session = pgTable("sessions", {
   id: text("id").primaryKey(),

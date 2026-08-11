@@ -2,7 +2,7 @@ import { sql } from "drizzle-orm";
 import { getDb } from "@/db";
 import { isAuthConfigured, isGoogleAuthConfigured } from "@/lib/auth/server";
 
-const requiredTables = ["users", "sessions", "accounts", "verifications"];
+const requiredTables = ["users", "sessions", "accounts", "verifications", "user_profiles"];
 
 export async function GET() {
   if (!isAuthConfigured() || !isGoogleAuthConfigured()) {
@@ -14,7 +14,7 @@ export async function GET() {
       select table_name
       from information_schema.tables
       where table_schema = 'public'
-        and table_name in ('users', 'sessions', 'accounts', 'verifications')
+        and table_name in ('users', 'sessions', 'accounts', 'verifications', 'user_profiles')
     `);
     const rows = Array.isArray(result) ? result : [];
     const found = new Set(rows.map(row => row.table_name));

@@ -43,6 +43,13 @@
       "when": 1786432828673,
       "tag": "0005_wide_wolfpack",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1786455600000,
+      "tag": "0006_account_type_lock",
+      "breakpoints": true
     }
   ]
 }
