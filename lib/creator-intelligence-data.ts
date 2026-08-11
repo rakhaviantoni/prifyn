@@ -45,8 +45,8 @@ export const creatorProfiles: CreatorProfile[] = [
 ];
 
 export const creatorOpportunities = [
-  { id: "ramadan", title: "Ramadan Made Simple", brand: "Nusa Spice", fit: 96, budget: "Rp8–12 jt", deadline: "12 Aug", deliverable: "2 TikTok videos + 3 stories", status: "Open" },
-  { id: "lunch", title: "Weekday Lunch Reset", brand: "Dapur Saji", fit: 89, budget: "Rp5–8 jt", deadline: "16 Aug", deliverable: "1 Reel + usage rights", status: "Open" },
+  { id: "ramadan-made-simple", title: "Ramadan Made Simple", brand: "Nusa Spice", fit: 96, budget: "Rp8-12 jt", deadline: "12 Aug", deliverable: "2 TikTok videos + 3 stories", status: "Open" },
+  { id: "weekday-lunch-reset", title: "Weekday Lunch Reset", brand: "Dapur Saji", fit: 89, budget: "Rp5-8 jt", deadline: "16 Aug", deliverable: "1 Reel + usage rights", status: "Open" },
   { id: "workspace", title: "Work Better, Naturally", brand: "Kawan Office", fit: 82, budget: "Rp6–10 jt", deadline: "22 Aug", deliverable: "1 YouTube integration", status: "Invite only" },
 ];
 
