@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import {
@@ -25,6 +25,8 @@ const ImportPayload = z.object({
   totalRows: z.number().int().nonnegative(),
   mapping: z.record(z.string(), z.string().nullable()),
 });
+
+const requiredImportTables = ["workspaces", "workspace_members", "organizations", "organization_members", "import_jobs", "import_mappings", "import_rows", "performance_facts"];
 
 const numericMetrics = new Set([
   "results",
@@ -86,6 +88,35 @@ function rowObject(headers: string[], row: string[]) {
 function valueFor(mapping: Record<string, string | null>, raw: Record<string, string>, metric: string) {
   const column = mapping[metric];
   return column ? raw[column] : undefined;
+}
+
+function databaseErrorDetail(error: unknown) {
+  const chain: Array<{ code?: string; message?: string; detail?: string }> = [];
+  let current: unknown = error;
+  while (current && typeof current === "object") {
+    const item = current as { code?: string; message?: string; detail?: string; cause?: unknown };
+    chain.push({ code: item.code, message: item.message, detail: item.detail });
+    current = item.cause;
+  }
+  const code = chain.find(item => item.code)?.code;
+  const message = chain.map(item => item.message).find(Boolean) ?? "Database operation failed.";
+  const detail = chain.map(item => item.detail).find(Boolean);
+  const missingRelation = message.match(/relation "([^"]+)" does not exist/i)?.[1];
+  const missingType = message.match(/type "([^"]+)" does not exist/i)?.[1];
+  return { code, message, detail, missingRelation, missingType };
+}
+
+async function assertImportSchemaReady(db: ReturnType<typeof getDb>) {
+  const result = await db.execute(sql<{ table_name: string }>`
+    select table_name
+    from information_schema.tables
+    where table_schema = 'public'
+      and table_name in ('workspaces', 'workspace_members', 'organizations', 'organization_members', 'import_jobs', 'import_mappings', 'import_rows', 'performance_facts')
+  `);
+  const rows = Array.isArray(result) ? result : [];
+  const found = new Set(rows.map(row => row.table_name));
+  const missing = requiredImportTables.filter(table => !found.has(table));
+  return missing;
 }
 
 async function getWorkspaceContext(request: Request) {
@@ -208,6 +239,14 @@ export async function POST(request: Request) {
     if (!template) return Response.json({ error: "Unsupported import source." }, { status: 400 });
 
     const { db, session, membership, brand } = await getWorkspaceContext(request);
+    const missingTables = await assertImportSchemaReady(db);
+    if (missingTables.length) {
+      return Response.json({
+        error: `Database import schema is not ready. Missing table${missingTables.length === 1 ? "" : "s"}: ${missingTables.join(", ")}.`,
+        reason: "missing_import_schema",
+        missingTables,
+      }, { status: 503 });
+    }
     const checksum = hash({ fileName: payload.fileName, sourceType: payload.sourceType, rows: payload.rows });
     const existing = await db.select().from(importJobs).where(and(
       eq(importJobs.workspaceId, membership.organizationId),
@@ -265,6 +304,22 @@ export async function POST(request: Request) {
   } catch (error) {
     if (error instanceof Response) return error;
     if (error instanceof z.ZodError) return Response.json({ error: "Invalid import payload.", details: error.flatten() }, { status: 400 });
-    return Response.json({ error: "Import failed before rows were written.", reason: "database_unreachable" }, { status: 503 });
+    const detail = databaseErrorDetail(error);
+    if (detail.missingRelation || detail.missingType) {
+      return Response.json({
+        error: detail.missingRelation
+          ? `Database table "${detail.missingRelation}" is missing. Run the latest Drizzle migrations before importing.`
+          : `Database type "${detail.missingType}" is missing. Run the latest Drizzle migrations before importing.`,
+        reason: "missing_import_schema",
+        code: detail.code,
+        missingTables: detail.missingRelation ? [detail.missingRelation] : undefined,
+      }, { status: 503 });
+    }
+    return Response.json({
+      error: "Import reached the server but the database rejected it.",
+      reason: "database_write_failed",
+      code: detail.code,
+      detail: detail.detail ?? detail.message,
+    }, { status: 503 });
   }
 }

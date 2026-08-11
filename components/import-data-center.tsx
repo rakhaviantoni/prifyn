@@ -165,9 +165,15 @@ export function ImportDataCenter() {
           mapping,
         }),
       });
-      const data = await response.json().catch(() => ({})) as { import?: ImportBatch; duplicate?: boolean; error?: string; reason?: string };
+      const data = await response.json().catch(() => ({})) as { import?: ImportBatch; duplicate?: boolean; error?: string; reason?: string; missingTables?: string[]; detail?: string; code?: string };
       if (!response.ok || !data.import) {
-        throw new Error(data.error || (data.reason === "database_unreachable" ? "PRIFYN could not reach the database. Check DATABASE_URL and migrations before importing." : `Import failed before rows were written. HTTP ${response.status}`));
+        const schemaHelp = data.reason === "missing_import_schema" && data.missingTables?.length
+          ? ` Missing: ${data.missingTables.join(", ")}. Run drizzle/0005_wide_wolfpack.sql and newer migrations in Supabase.`
+          : "";
+        const databaseHelp = data.reason === "database_unreachable"
+          ? " PRIFYN could not reach the database. Check DATABASE_URL."
+          : data.reason === "database_write_failed" && data.detail ? ` Detail: ${data.detail}` : "";
+        throw new Error(`${data.error || `Import failed with HTTP ${response.status}.`}${schemaHelp}${databaseHelp}`);
       }
       setImportedBatches(current => [data.import!, ...current.filter(item => item.id !== data.import!.id)].slice(0, 8));
       setPreview(null);
