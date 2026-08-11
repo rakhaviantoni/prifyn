@@ -25,11 +25,21 @@ function toHost(value?: string | null) {
   }
 }
 
+function originFromHost(value?: string | null) {
+  const host = toHost(value);
+  if (!host) return null;
+  return `https://${host}`;
+}
+
 export function getAuthTrustedOrigins() {
   const origins = [
     ...DEFAULT_LOCAL_ORIGINS,
     toOrigin(process.env.BETTER_AUTH_URL),
     toOrigin(process.env.NEXT_PUBLIC_APP_URL),
+    originFromHost(process.env.PRIFYN_APP_HOSTNAME),
+    originFromHost(process.env.PRIFYN_CREATOR_HOSTNAME),
+    originFromHost(process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME),
+    originFromHost(process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME),
     ...splitList(process.env.BETTER_AUTH_TRUSTED_ORIGINS).map(value => toOrigin(value) ?? value.replace(/\/$/, "")),
   ].filter((value): value is string => Boolean(value));
 

@@ -7,15 +7,34 @@ import { FormEvent, useState } from "react";
 
 type AccountType = "brand" | "agency" | "creator";
 
+function isAppHost(hostname: string) {
+  const configured = process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME;
+  return hostname === configured || hostname.startsWith("app.");
+}
+
+function isCreatorHost(hostname: string) {
+  const configured = process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME;
+  return hostname === configured || hostname.startsWith("creator.");
+}
+
+function safeReturnTo(value: string | null) {
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/auth")) return null;
+  return value;
+}
+
+function subdomainPath(pathname: string, hostType: "app" | "creator") {
+  if (hostType === "app" && pathname.startsWith("/app")) return pathname.replace(/^\/app/, "") || "/";
+  if (hostType === "creator" && pathname.startsWith("/creator")) return pathname.replace(/^\/creator/, "") || "/";
+  return pathname;
+}
+
 function getProductionCallbackUrl() {
   if (typeof window === "undefined") return "/app";
-  const creatorHost = process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME;
-  const isCreatorHost = window.location.hostname === creatorHost || window.location.hostname.startsWith("creator.");
-  const url = new URL(isCreatorHost ? "/creator" : "/app", window.location.origin);
-  if (window.location.hostname === process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME || window.location.hostname.startsWith("app.")) {
-    url.pathname = "/";
-  }
-  if (isCreatorHost) url.pathname = "/";
+  const requestedReturnTo = safeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
+  const hostname = window.location.hostname;
+  const url = new URL(requestedReturnTo ?? (isCreatorHost(hostname) ? "/" : "/app"), window.location.origin);
+  if (isAppHost(hostname)) url.pathname = subdomainPath(url.pathname, "app");
+  if (isCreatorHost(hostname)) url.pathname = subdomainPath(url.pathname, "creator");
   return url.toString();
 }
 
