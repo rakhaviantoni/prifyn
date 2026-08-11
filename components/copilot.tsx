@@ -26,7 +26,7 @@ export function Copilot() {
       const response = await fetch("/api/ai/insights", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question, context: { brand, period: "Last 7 days", route: window.location.pathname } }) });
       if (!response.ok) throw new Error("AI request failed");
       const data = await response.json();
-      setMessages(current => [...current, { role: "assistant", content: data.answer, why: `${data.why} · ${data.confidence} confidence · ${data.mode === "demo" ? "Preview evidence" : "Live evidence"}` }]);
+      setMessages(current => [...current, { role: "assistant", content: data.answer, why: `${data.why} · ${data.confidence} confidence · ${data.mode === "demo" ? "Fallback demo answer" : "Live evidence"}` }]);
     } catch { setMessages(current => [...current, { role: "assistant", content: "I could not complete that analysis. Check the AI provider configuration and try again.", why: "No business record was changed." }]); }
     finally { setLoading(false); }
   }

@@ -9,10 +9,13 @@ type AccountType = "brand" | "agency" | "creator";
 
 function getProductionCallbackUrl() {
   if (typeof window === "undefined") return "/app";
-  const url = new URL("/app", window.location.origin);
+  const creatorHost = process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME;
+  const isCreatorHost = window.location.hostname === creatorHost || window.location.hostname.startsWith("creator.");
+  const url = new URL(isCreatorHost ? "/creator" : "/app", window.location.origin);
   if (window.location.hostname === process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME || window.location.hostname.startsWith("app.")) {
     url.pathname = "/";
   }
+  if (isCreatorHost) url.pathname = "/";
   return url.toString();
 }
 

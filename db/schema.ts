@@ -693,6 +693,36 @@ export const importJobs = pgTable("import_jobs", {
   updatedAt,
 }, (table) => [uniqueIndex("import_jobs_org_checksum_uidx").on(table.organizationId, table.sourceType, table.checksum), index("import_jobs_workspace_status_idx").on(table.workspaceId, table.status)]);
 
+export const importMappings = pgTable("import_mappings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  sourceType: text("source_type").notNull(),
+  name: text("name").notNull(),
+  mappingVersion: integer("mapping_version").default(1).notNull(),
+  supportedExtensions: jsonb("supported_extensions").$type<string[]>().default([]).notNull(),
+  requiredColumns: jsonb("required_columns").$type<string[]>().default([]).notNull(),
+  columnMap: jsonb("column_map").$type<Record<string, string>>().default({}).notNull(),
+  metricMap: jsonb("metric_map").$type<Record<string, string>>().default({}).notNull(),
+  notes: text("notes"),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("import_mappings_org_source_version_uidx").on(table.organizationId, table.sourceType, table.mappingVersion), index("import_mappings_workspace_source_idx").on(table.workspaceId, table.sourceType)]);
+
+export const importRows = pgTable("import_rows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  importJobId: uuid("import_job_id").notNull().references(() => importJobs.id, { onDelete: "cascade" }),
+  rowNumber: integer("row_number").notNull(),
+  subjectType: text("subject_type").notNull(),
+  subjectId: text("subject_id").notNull(),
+  dimensions: jsonb("dimensions").$type<Record<string, unknown>>().default({}).notNull(),
+  normalizedMetrics: jsonb("normalized_metrics").$type<Record<string, number>>().default({}).notNull(),
+  rowHash: text("row_hash").notNull(),
+  status: text("status").default("accepted").notNull(),
+  errors: jsonb("errors").$type<string[]>().default([]).notNull(),
+  createdAt,
+}, (table) => [uniqueIndex("import_rows_job_row_uidx").on(table.importJobId, table.rowNumber), index("import_rows_subject_idx").on(table.subjectType, table.subjectId)]);
+
 export const performanceFacts = pgTable("performance_facts", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),

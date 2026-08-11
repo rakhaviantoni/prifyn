@@ -48,6 +48,7 @@ const privateRoutes = [
   ["/app/copilot", "Ask PRIFYN"],
   ["/app/settings", "Workspace governance"],
   ["/app/settings/connections", "Connected systems and permissions"],
+  ["/app/settings/imports", "Data Imports"],
   ["/app/settings/team", "Company owners can invite users"],
   ["/app/settings/billing", "Workspace billing"],
   ["/creator", "Creator command center"],
@@ -80,6 +81,20 @@ test("private workspaces require authentication", async () => {
     assert.equal(location.pathname, "/auth/sign-in", path);
     assert.match(location.searchParams.get("returnTo") ?? "", /^\/(app|creator)$/, path);
   }
+});
+
+test("app and creator subdomain roots resolve to gated workspaces", async () => {
+  const appResponse = await request("/", { headers: { host: "app.prifyn.rakhaviantoni.com" }, redirect: "manual" });
+  assert.equal(appResponse.status, 307);
+  const appLocation = new URL(appResponse.headers.get("location"), "http://localhost");
+  assert.equal(appLocation.pathname, "/auth/sign-in");
+  assert.equal(appLocation.searchParams.get("returnTo"), "/app");
+
+  const creatorResponse = await request("/", { headers: { host: "creator.prifyn.rakhaviantoni.com" }, redirect: "manual" });
+  assert.equal(creatorResponse.status, 307);
+  const creatorLocation = new URL(creatorResponse.headers.get("location"), "http://localhost");
+  assert.equal(creatorLocation.pathname, "/auth/sign-in");
+  assert.equal(creatorLocation.searchParams.get("returnTo"), "/creator");
 });
 
 test("preview route redirects to the demo sandbox", async () => {
@@ -115,7 +130,7 @@ test("auth endpoint fails safely until credentials are supplied", async () => {
 });
 
 test("ships requested foundation packages and schema migrations", async () => {
-  const [packageJson, schema, migration, workflowMigration, creatorMigration, billingMigration, integrationMigration, envExample] = await Promise.all([
+  const [packageJson, schema, migration, workflowMigration, creatorMigration, billingMigration, integrationMigration, importMigration, envExample] = await Promise.all([
     readFile(new URL("../package.json", import.meta.url), "utf8"),
     readFile(new URL("../db/schema.ts", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0000_amusing_human_fly.sql", import.meta.url), "utf8"),
@@ -123,6 +138,7 @@ test("ships requested foundation packages and schema migrations", async () => {
     readFile(new URL("../drizzle/0002_regular_polaris.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0003_flashy_saracen.sql", import.meta.url), "utf8"),
     readFile(new URL("../drizzle/0004_sour_mephistopheles.sql", import.meta.url), "utf8"),
+    readFile(new URL("../drizzle/0005_wide_wolfpack.sql", import.meta.url), "utf8"),
     readFile(new URL("../.env.example", import.meta.url), "utf8"),
   ]);
   assert.match(packageJson, /@phosphor-icons\/react/);
@@ -148,7 +164,11 @@ test("ships requested foundation packages and schema migrations", async () => {
   assert.match(integrationMigration, /CREATE TABLE "brand_account_bindings"/);
   assert.match(integrationMigration, /CREATE TABLE "channel_publishing_jobs"/);
   assert.doesNotMatch(integrationMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
+  assert.match(importMigration, /CREATE TABLE "import_mappings"/);
+  assert.match(importMigration, /CREATE TABLE "import_rows"/);
+  assert.doesNotMatch(importMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
+  assert.match(envExample, /PRIFYN_CREATOR_HOSTNAME/);
   assert.match(envExample, /SUMOPOD_API_KEY/);
 });
 
