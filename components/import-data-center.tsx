@@ -10,6 +10,7 @@ import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } fr
 
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
 type ImportBatch = { id: string; fileName: string; source: string; rows: number; acceptedRows?: number; rejectedRows?: number; importedAt: string; status: string };
+type ImportFeedback = { tone: "info" | "success" | "error"; title: string; detail: string } | null;
 
 const reportPatterns = [
   ["Funnel journey", "Impressions → clicks → landing views → leads/orders → revenue → repeat purchase"],
@@ -81,6 +82,7 @@ function columnLettersToIndex(letters: string) {
 export function ImportDataCenter() {
   const [preview, setPreview] = useState<ParsedPreview | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<ImportFeedback>(null);
   const [isReading, setIsReading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importedBatches, setImportedBatches] = useState<ImportBatch[]>([]);
@@ -99,6 +101,7 @@ export function ImportDataCenter() {
   async function readFile(file: File) {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
     setIsReading(true);
+    setFeedback(null);
     try {
       if (extension === ".csv") {
         const text = await file.text();
@@ -125,18 +128,32 @@ export function ImportDataCenter() {
   function clearPreview() {
     setPreview(null);
     setMessage(null);
+    setFeedback(null);
   }
 
   async function finishImport() {
     if (!preview || !detected || !mapping) {
-      setMessage("Map this file to a supported source before importing it to the workspace.");
+      setFeedback({
+        tone: "error",
+        title: "Import belum bisa dilanjutkan",
+        detail: "File ini belum cocok dengan template import yang didukung. Upload export platform yang sesuai atau pakai template PRIFYN.",
+      });
       return;
     }
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20000);
     setImporting(true);
+    setMessage(null);
+    setFeedback({
+      tone: "info",
+      title: "Importing to database",
+      detail: `Writing ${preview.totalRows} mapped rows from ${preview.fileName ?? "this file"} into this workspace. Keep this tab open for a moment.`,
+    });
     try {
       const response = await fetch("/api/imports", {
         method: "POST",
         headers: { "content-type": "application/json" },
+        signal: controller.signal,
         body: JSON.stringify({
           fileName: preview.fileName,
           extension: preview.extension,
@@ -149,13 +166,25 @@ export function ImportDataCenter() {
         }),
       });
       const data = await response.json().catch(() => ({})) as { import?: ImportBatch; duplicate?: boolean; error?: string; reason?: string };
-      if (!response.ok || !data.import) throw new Error(data.error || (data.reason === "database_unreachable" ? "PRIFYN could not reach the database. Check DATABASE_URL and migrations before importing." : "Import failed before rows were written."));
+      if (!response.ok || !data.import) {
+        throw new Error(data.error || (data.reason === "database_unreachable" ? "PRIFYN could not reach the database. Check DATABASE_URL and migrations before importing." : `Import failed before rows were written. HTTP ${response.status}`));
+      }
       setImportedBatches(current => [data.import!, ...current.filter(item => item.id !== data.import!.id)].slice(0, 8));
       setPreview(null);
-      setMessage(data.duplicate ? `${data.import.fileName} was already imported. PRIFYN kept the existing database batch to avoid duplicate facts.` : `${data.import.fileName} imported to this workspace. ${data.import.acceptedRows ?? data.import.rows} rows are ready for reports as mapped ${data.import.source} evidence.`);
+      setFeedback({
+        tone: "success",
+        title: data.duplicate ? "File already imported" : "Import complete",
+        detail: data.duplicate
+          ? `${data.import.fileName} was already imported. PRIFYN kept the existing database batch to avoid duplicate facts.`
+          : `${data.import.fileName} imported successfully. ${data.import.acceptedRows ?? data.import.rows} of ${data.import.rows} rows are ready for dashboard metrics, campaign results, and reports.`,
+      });
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Import failed before rows were written.");
+      const detail = error instanceof DOMException && error.name === "AbortError"
+        ? "Import request timed out after 20 seconds. The database may be unreachable or the file is too large. Try again, or check DATABASE_URL and migrations."
+        : error instanceof Error ? error.message : "Import failed before rows were written.";
+      setFeedback({ tone: "error", title: "Import failed", detail });
     } finally {
+      window.clearTimeout(timeout);
       setImporting(false);
     }
   }
@@ -182,7 +211,12 @@ export function ImportDataCenter() {
       <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>{isReading ? "Reading export…" : "Drop or choose CSV/XLSX export"}</strong><span>Preview rows, detect the source, then map metrics before importing.</span></label>
     </section>
 
-    {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : message.includes("imported to this workspace") ? "Import complete" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
+    {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
+    {feedback && <div className={`import-feedback ${feedback.tone}`} role={feedback.tone === "error" ? "alert" : "status"}>
+      <span>{feedback.tone === "success" ? <CheckCircle weight="fill" /> : feedback.tone === "error" ? <Warning weight="fill" /> : <Database weight="duotone" />}</span>
+      <div><strong>{feedback.title}</strong><small>{feedback.detail}</small></div>
+      <button type="button" onClick={() => setFeedback(null)}>Dismiss</button>
+    </div>}
 
     <section className="import-grid">
       <div className="stack">
@@ -210,6 +244,5 @@ export function ImportDataCenter() {
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>
     </section>
-    {importing && <div className="toast"><Database weight="duotone" />Importing mapped rows…</div>}
   </div>;
 }

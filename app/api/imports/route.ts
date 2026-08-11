@@ -1,5 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import {
@@ -209,7 +209,12 @@ export async function POST(request: Request) {
 
     const { db, session, membership, brand } = await getWorkspaceContext(request);
     const checksum = hash({ fileName: payload.fileName, sourceType: payload.sourceType, rows: payload.rows });
-    const existing = await db.select().from(importJobs).where(eq(importJobs.checksum, checksum)).limit(1);
+    const existing = await db.select().from(importJobs).where(and(
+      eq(importJobs.workspaceId, membership.organizationId),
+      eq(importJobs.organizationId, brand.id),
+      eq(importJobs.sourceType, payload.sourceType),
+      eq(importJobs.checksum, checksum),
+    )).limit(1);
     if (existing[0]) return Response.json({ import: publicJob(existing[0], payload.sourceLabel), duplicate: true });
 
     const created = await db.transaction(async tx => {
