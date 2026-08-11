@@ -5,6 +5,7 @@ import {
   PlugsConnected, Table, Warning,
 } from "@phosphor-icons/react";
 import { useMemo, useState } from "react";
+import type JSZip from "jszip";
 import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } from "@/lib/imports/metric-mapping";
 
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
@@ -17,22 +18,96 @@ const reportPatterns = [
   ["Commerce outcome", "Orders, GMV/revenue, cancellations, product, marketplace source"],
 ];
 
+async function parseXlsxPreview(file: File): Promise<Omit<ParsedPreview, "fileName" | "extension">> {
+  const { default: JSZip } = await import("jszip");
+  const zip = await JSZip.loadAsync(await file.arrayBuffer());
+  const sharedStrings = await readSharedStrings(zip);
+  const sheetPath = await findFirstWorksheetPath(zip);
+  const sheetXml = await zip.file(sheetPath)?.async("text");
+  if (!sheetXml) throw new Error("Worksheet not found");
+
+  const xml = new DOMParser().parseFromString(sheetXml, "application/xml");
+  const rows = Array.from(xml.getElementsByTagName("row")).map(row => {
+    const cells = Array.from(row.getElementsByTagName("c"));
+    const values: string[] = [];
+    cells.forEach(cell => {
+      const reference = cell.getAttribute("r") ?? "";
+      const columnIndex = reference ? columnLettersToIndex(reference.replace(/\d+/g, "")) : values.length;
+      values[columnIndex] = readCellValue(cell, sharedStrings);
+    });
+    return values.map(value => value ?? "");
+  }).filter(row => row.some(Boolean));
+
+  const headers = rows[0]?.map((header, index) => header.trim() || `Column ${index + 1}`) ?? [];
+  return { headers, rows: rows.slice(1, 9), totalRows: Math.max(rows.length - 1, 0) };
+}
+
+async function readSharedStrings(zip: JSZip) {
+  const xmlText = await zip.file("xl/sharedStrings.xml")?.async("text");
+  if (!xmlText) return [];
+  const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+  return Array.from(xml.getElementsByTagName("si")).map(item => Array.from(item.getElementsByTagName("t")).map(node => node.textContent ?? "").join(""));
+}
+
+async function findFirstWorksheetPath(zip: JSZip) {
+  const workbookText = await zip.file("xl/workbook.xml")?.async("text");
+  const relsText = await zip.file("xl/_rels/workbook.xml.rels")?.async("text");
+  if (!workbookText || !relsText) return "xl/worksheets/sheet1.xml";
+
+  const workbook = new DOMParser().parseFromString(workbookText, "application/xml");
+  const firstSheet = workbook.getElementsByTagName("sheet")[0];
+  const relationshipId = firstSheet?.getAttribute("r:id");
+  if (!relationshipId) return "xl/worksheets/sheet1.xml";
+
+  const rels = new DOMParser().parseFromString(relsText, "application/xml");
+  const relationship = Array.from(rels.getElementsByTagName("Relationship")).find(item => item.getAttribute("Id") === relationshipId);
+  const target = relationship?.getAttribute("Target") ?? "worksheets/sheet1.xml";
+  return target.startsWith("/") ? target.slice(1) : `xl/${target.replace(/^xl\//, "")}`;
+}
+
+function readCellValue(cell: Element, sharedStrings: string[]) {
+  const type = cell.getAttribute("t");
+  if (type === "inlineStr") return Array.from(cell.getElementsByTagName("t")).map(node => node.textContent ?? "").join("");
+  const rawValue = cell.getElementsByTagName("v")[0]?.textContent ?? "";
+  if (type === "s") return sharedStrings[Number(rawValue)] ?? "";
+  return rawValue;
+}
+
+function columnLettersToIndex(letters: string) {
+  return letters.split("").reduce((total, letter) => total * 26 + letter.toUpperCase().charCodeAt(0) - 64, 0) - 1;
+}
+
 export function ImportDataCenter() {
   const [preview, setPreview] = useState<ParsedPreview | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [isReading, setIsReading] = useState(false);
   const detected = useMemo(() => preview ? detectImportTemplate(preview.headers) : null, [preview]);
   const mapping = useMemo(() => detected && preview ? mapHeaders(preview.headers, detected.template) : null, [detected, preview]);
 
   async function readFile(file: File) {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
-    if (extension === ".csv") {
-      const text = await file.text();
-      setPreview({ ...parseCsvPreview(text), fileName: file.name, extension });
-      setMessage("CSV preview generated. Review detected source and mapped metrics before importing.");
-      return;
+    setIsReading(true);
+    try {
+      if (extension === ".csv") {
+        const text = await file.text();
+        setPreview({ ...parseCsvPreview(text), fileName: file.name, extension });
+        setMessage("CSV preview generated. Review detected source and mapped metrics before importing.");
+        return;
+      }
+      if (extension === ".xlsx") {
+        const parsed = await parseXlsxPreview(file);
+        setPreview({ ...parsed, fileName: file.name, extension });
+        setMessage("XLSX preview generated. Review detected source and mapped metrics before importing.");
+        return;
+      }
+      setPreview(null);
+      setMessage("Upload a CSV or XLSX export from your ads, analytics, marketplace, or affiliate platform.");
+    } catch {
+      setPreview(null);
+      setMessage("PRIFYN could not read this file. Try exporting it again as CSV or XLSX, then upload the fresh file.");
+    } finally {
+      setIsReading(false);
     }
-    setPreview({ headers: [], rows: [], totalRows: 0, fileName: file.name, extension });
-    setMessage("XLSX upload is accepted by the import contract. Full row preview will run in the server import worker once storage is connected.");
   }
 
   function downloadTemplate() {
@@ -54,18 +129,18 @@ export function ImportDataCenter() {
 
     <section className="surface import-hero">
       <div><span className="section-kicker">Import-first growth data</span><h2>Upload exports from Meta, TikTok, Google, Shopee, Tokopedia, or affiliate sheets.</h2><p>This is the practical bridge before seamless integrations: export from the platform, import into PRIFYN, map fields, then reports can calculate performance, journey, location, creative, and ROAS with evidence labels.</p></div>
-      <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>Drop or choose CSV/XLSX export</strong><span>CSV previews immediately. XLSX is queued for the server parser contract.</span></label>
+      <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>{isReading ? "Reading export…" : "Drop or choose CSV/XLSX export"}</strong><span>Preview rows, detect the source, then map metrics before importing.</span></label>
     </section>
 
-    {message && <div className="report-explainer import-message" role="status"><strong>{preview?.extension === ".xlsx" ? "XLSX ready for worker" : "Import preview ready"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
+    {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
 
     <section className="import-grid">
       <div className="stack">
         <section className="surface import-preview-card">
           <div className="surface-head"><h2>Uploaded file</h2>{preview && <button type="button" onClick={() => setPreview(null)}>Clear</button>}</div>
           {!preview ? <div className="import-empty"><Database weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see how PRIFYN maps fields.</p></div> : <div className="import-file-summary">
-            <span>{preview.extension === ".xlsx" ? <FileXls /> : <FileCsv />}</span><div><strong>{preview.fileName}</strong><small>{preview.extension?.toUpperCase()} · {preview.totalRows ? `${preview.totalRows} rows detected` : "Stored for worker preview"}</small></div>
-            <b className={`status-pill ${detected ? "" : "warning"}`}>{detected ? "Template detected" : preview.extension === ".xlsx" ? "Worker required" : "Needs mapping"}</b>
+            <span>{preview.extension === ".xlsx" ? <FileXls /> : <FileCsv />}</span><div><strong>{preview.fileName}</strong><small>{preview.extension?.toUpperCase()} · {preview.totalRows ? `${preview.totalRows} rows detected` : "Ready to map"}</small></div>
+            <b className={`status-pill ${detected ? "" : "warning"}`}>{detected ? "Template detected" : "Needs mapping"}</b>
           </div>}
           {preview?.headers.length ? <div className="import-table-wrap"><table className="data-table"><thead><tr>{preview.headers.slice(0, 8).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.slice(0, 4).map((row, index) => <tr key={index}>{preview.headers.slice(0, 8).map((header, cellIndex) => <td key={header}>{row[cellIndex] || "-"}</td>)}</tr>)}</tbody></table></div> : null}
         </section>

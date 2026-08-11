@@ -620,11 +620,15 @@ img { max-width: 100%; }
 .campaign-detail-grid span, .campaign-detail-grid strong { display: block; }
 .campaign-detail-grid span { color: var(--muted); font-size: 7px; }
 .campaign-detail-grid strong { margin-top: 4px; font-size: 9px; }
-.campaign-next-action { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 11px; border-radius: 8px; background: var(--sage-2); }
+.campaign-next-action { display: grid; grid-template-columns: 26px 1fr; gap: 8px; padding: 11px; border-radius: 8px; background: var(--sage-2); color: var(--ink); }
+.campaign-next-action.actionable { grid-template-columns: 28px 1fr auto; align-items: center; border: 1px solid rgba(40,117,83,.16); text-decoration: none; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+.campaign-next-action.actionable:hover { transform: translateY(-1px); border-color: rgba(40,117,83,.35); background: #eef7ee; }
 .campaign-next-action > svg { width: 18px; color: var(--green); }
 .campaign-next-action strong, .campaign-next-action small { display: block; }
 .campaign-next-action strong { font-size: 9px; }
 .campaign-next-action small { margin-top: 3px; color: var(--muted); font-size: 7px; line-height: 1.45; }
+.campaign-next-action > b { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 8px; font-weight: 800; white-space: nowrap; }
+.campaign-next-action > b svg { width: 13px; }
 .campaign-launch-actions { display: grid; gap: 7px; }
 .campaign-launch-actions .button { width: 100%; justify-content: center; }
 .campaign-timeline-row { display: grid; grid-template-columns: 22px 1fr; gap: 8px; padding: 9px 0; border-top: 1px solid var(--line); }
@@ -1593,6 +1597,10 @@ img { max-width: 100%; }
 .decision-item small, .metric-box span, .metric-box small { font-size: 9px; }
 .decision-item strong { font-size: 11px; }
 .decision-item p { font-size: 10px; line-height: 1.45; }
+.campaign-mini strong, .campaign-next-action strong, .import-file-summary strong { font-size: 11px; }
+.campaign-mini span, .campaign-next-action small, .import-file-summary small, .import-dropzone span { font-size: 9px; line-height: 1.5; }
+.campaign-next-action > b { font-size: 10px; }
+.import-message strong, .import-message span { font-size: 11px; }
 .workflow-card-head p, .workflow-form-grid .field > span, .platform-picker legend { font-size: 10px; }
 .workflow-steps button strong { font-size: 11px; }
 .workflow-steps button small { font-size: 9px; }
