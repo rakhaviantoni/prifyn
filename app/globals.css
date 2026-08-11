@@ -482,9 +482,9 @@ img { max-width: 100%; }
 .workspace-switcher { position: relative; }
 .workspace-button > svg.rotated { transform: rotate(180deg); }
 .workspace-menu { position: absolute; z-index: 12; top: calc(100% + 7px); left: 0; right: 0; display: grid; gap: 3px; padding: 7px; border: 1px solid rgba(255,255,255,.12); border-radius: 10px; background: #1d2923; box-shadow: 0 18px 46px rgba(0,0,0,.28); }
-.workspace-menu button { display: grid; grid-template-columns: 30px 1fr 15px; gap: 8px; align-items: center; min-height: 49px; padding: 7px; border: 0; border-radius: 7px; background: transparent; color: #fff; cursor: pointer; text-align: left; }
-.workspace-menu button:hover, .workspace-menu button.active { background: rgba(255,255,255,.08); }
-.workspace-menu button > b { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 7px; background: rgba(165,227,190,.13); color: var(--sage); font-size: 7px; }
+.workspace-menu button, .workspace-menu a { display: grid; grid-template-columns: 30px 1fr 15px; gap: 8px; align-items: center; min-height: 49px; padding: 7px; border: 0; border-radius: 7px; background: transparent; color: #fff; cursor: pointer; text-align: left; text-decoration: none; }
+.workspace-menu button:hover, .workspace-menu button.active, .workspace-menu a:hover { background: rgba(255,255,255,.08); }
+.workspace-menu button > b, .workspace-menu a > b { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 7px; background: rgba(165,227,190,.13); color: var(--sage); font-size: 7px; }
 .workspace-menu strong, .workspace-menu small { display: block; }
 .workspace-menu strong { font-size: 8px; }
 .workspace-menu small { margin-top: 3px; color: rgba(255,255,255,.5); font-size: 6.5px; }

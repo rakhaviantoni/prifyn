@@ -9,10 +9,25 @@ import { LanguageToggle } from "./language";
 
 const nav = [["Home", "/creator", House], ["My profile", "/creator/profile", UserCircle], ["Opportunities", "/creator/opportunities", Briefcase], ["Applications", "/creator/applications", Notebook], ["Campaigns", "/creator/campaigns", Sparkle], ["Payments", "/creator/payments", CurrencyCircleDollar], ["Performance", "/creator/performance", ChartLineUp]] as const;
 
-export function CreatorShell({ children }: { children: ReactNode }) {
+type ShellUser = { name?: string | null; email?: string | null };
+
+function displayName(user?: ShellUser) {
+  return user?.name?.trim() || user?.email?.split("@")[0] || "Creator";
+}
+
+function initialsFrom(value?: string | null) {
+  const clean = (value ?? "").trim();
+  if (!clean) return "C";
+  const parts = clean.includes("@") ? [clean[0]] : clean.split(/\s+/).slice(0, 2);
+  return parts.map(part => part[0]).join("").toUpperCase();
+}
+
+export function CreatorShell({ children, currentUser }: { children: ReactNode; currentUser?: ShellUser }) {
   const pathname = usePathname();
   const [dark, setDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const userName = displayName(currentUser);
+  const userInitials = initialsFrom(userName);
   useEffect(() => { const enabled = window.localStorage.getItem("prifyn-theme") === "dark"; document.documentElement.classList.toggle("theme-dark", enabled); queueMicrotask(() => setDark(enabled)); }, []);
   useEffect(() => {
     document.body.classList.toggle("mobile-nav-open", mobileOpen);
@@ -29,9 +44,9 @@ export function CreatorShell({ children }: { children: ReactNode }) {
       <div className="creator-mode-badge"><IdentificationCard /><span><strong>Creator workspace</strong>Profile visible to invited brands</span></div>
       <div className="app-sidebar-scroll"><nav className="app-nav" aria-label="Creator navigation">{nav.map(([label, href, Icon]) => <Link key={href} href={href} onClick={closeMobile} className={pathname === href ? "active" : ""}><Icon weight={pathname === href ? "fill" : "regular"} /><span>{label}</span></Link>)}</nav></div>
       <div className="mobile-sidebar-actions"><Link className="button button-light" href="/creator/opportunities" onClick={closeMobile}><Briefcase /> Find opportunities</Link><div><LanguageToggle /><button className="icon-button theme-toggle" type="button" onClick={toggle} aria-label={dark ? "Use light theme" : "Use dark theme"}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications"><Bell /></button></div></div>
-      <div className="app-user"><b>NP</b><div><strong>Nabila Putri</strong><span>Top Creator · 92% complete</span></div></div>
+      <div className="app-user"><b>{userInitials}</b><div><strong>{userName}</strong><span>{currentUser?.email ?? "Signed in"}</span></div></div>
     </aside>
     {mobileOpen && <button className="mobile-sidebar-backdrop" type="button" aria-label="Close creator menu" onClick={closeMobile} />}
-    <main className="app-main"><header className="app-topbar creator-topbar"><button className="mobile-app-menu" type="button" aria-label="Open creator menu" aria-controls="creator-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><List /></button><div className="app-mobile-brand"><Brand href="/creator" compact /></div><div className="creator-topbar-title"><span>Creator OS</span><strong>Good morning, Nabila</strong></div><div className="topbar-actions"><LanguageToggle /><button className="icon-button theme-toggle" type="button" onClick={toggle} aria-label={dark ? "Use light theme" : "Use dark theme"}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications"><Bell /></button></div></header>{children}</main>
+    <main className="app-main"><header className="app-topbar creator-topbar"><button className="mobile-app-menu" type="button" aria-label="Open creator menu" aria-controls="creator-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><List /></button><div className="app-mobile-brand"><Brand href="/creator" compact /></div><div className="creator-topbar-title"><span>Creator OS</span><strong>Welcome back, {userName}</strong></div><div className="topbar-actions"><LanguageToggle /><button className="icon-button theme-toggle" type="button" onClick={toggle} aria-label={dark ? "Use light theme" : "Use dark theme"}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications"><Bell /></button></div></header>{children}</main>
   </div>;
 }

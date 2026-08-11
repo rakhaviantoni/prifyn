@@ -5,12 +5,13 @@ import { ArrowUp, Sparkle } from "@phosphor-icons/react";
 
 type Message = { role: "user" | "assistant"; content: string; why?: string };
 const prompts = ["Why did ROAS decline this week?", "Which creator performed best?", "What should I improve this month?", "Which campaign has the highest delivery risk?"];
+const DEFAULT_BRAND_CONTEXT = "Operating brand";
 
 export function Copilot() {
   const [value, setValue] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
-  const [brand, setBrand] = useState(() => typeof window === "undefined" ? "Nusa Spice Group" : window.localStorage.getItem("prifyn-active-brand") ?? "Nusa Spice Group");
+  const [brand, setBrand] = useState(() => typeof window === "undefined" ? DEFAULT_BRAND_CONTEXT : window.localStorage.getItem("prifyn-active-brand") ?? DEFAULT_BRAND_CONTEXT);
 
   useEffect(() => {
     const update = (event: Event) => setBrand((event as CustomEvent<string>).detail);
