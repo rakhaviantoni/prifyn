@@ -32,6 +32,7 @@ const routes = [
   ["/auth/sign-in", "Welcome back"],
   ["/auth/sign-up", "Create your workspace"],
   ["/demo", "Preview sandbox"],
+  ["/demo/creator", "Demo creator"],
   ["/privacy", "Privacy by design"],
   ["/terms", "Product preview terms"],
 ];
@@ -101,6 +102,14 @@ test("preview route redirects to the demo sandbox", async () => {
   const response = await request("/preview", { redirect: "manual" });
   assert.equal(response.status, 307);
   assert.equal(new URL(response.headers.get("location"), "http://localhost").pathname, "/demo");
+
+  const appResponse = await request("/preview/app", { redirect: "manual" });
+  assert.equal(appResponse.status, 307);
+  assert.equal(new URL(appResponse.headers.get("location"), "http://localhost").pathname, "/demo");
+
+  const creatorResponse = await request("/preview/creator", { redirect: "manual" });
+  assert.equal(creatorResponse.status, 307);
+  assert.equal(new URL(creatorResponse.headers.get("location"), "http://localhost").pathname, "/demo/creator");
 });
 
 test("legacy ads page redirects to the broader growth story", async () => {

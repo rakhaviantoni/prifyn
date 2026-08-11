@@ -67,7 +67,26 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
-    window.setTimeout(() => router.push("/demo"), 450);
+    setMessage(null);
+    const form = new FormData(event.currentTarget);
+    const email = String(form.get("email") || "");
+    const password = String(form.get("password") || "");
+    const firstName = String(form.get("firstName") || "").trim();
+    const lastName = String(form.get("lastName") || "").trim();
+    void (async () => {
+      try {
+        const { authClient } = await import("@/lib/auth/auth-client");
+        const callbackURL = getProductionCallbackUrl();
+        const result = mode === "sign-in"
+          ? await authClient.signIn.email({ email, password, callbackURL })
+          : await authClient.signUp.email({ email, password, name: [firstName, lastName].filter(Boolean).join(" ") || email, callbackURL });
+        if (result.error) throw new Error(result.error.message || "Authentication failed.");
+        router.push(new URL(callbackURL).pathname);
+      } catch (error) {
+        setMessage(error instanceof Error ? error.message : "Authentication failed. Please try again.");
+        setLoading(false);
+      }
+    })();
   }
 
   const identityField = accountType === "creator"

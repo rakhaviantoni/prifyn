@@ -3,7 +3,7 @@
 import { usePathname } from "next/navigation";
 import {
   Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, GearSix, House, IdentificationBadge,
-  List, MagnifyingGlass, Megaphone, Moon, PlugsConnected, Plus, Sparkle, Sun, Table, UsersThree, X,
+  List, MagnifyingGlass, Megaphone, Moon, PlugsConnected, Plus, SignOut, Sparkle, Sun, Table, UsersThree, X,
 } from "@phosphor-icons/react";
 import { ReactNode, useEffect, useState } from "react";
 import { Brand } from "./brand";
@@ -91,6 +91,11 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     document.documentElement.classList.toggle("theme-dark", next);
     window.localStorage.setItem("prifyn-theme", next ? "dark" : "light");
   };
+  const signOut = async () => {
+    const { authClient } = await import("@/lib/auth/auth-client");
+    await authClient.signOut();
+    window.location.assign("/auth/sign-in");
+  };
   const workspacePath = pathname === "/" ? "/app" : pathname.startsWith("/app") ? pathname : `/app${pathname}`;
   const isActive = (href: string) => {
     if (href === "/app" || href === "/app/settings") return workspacePath === href;
@@ -108,7 +113,7 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
         <nav className="app-nav" aria-label="Intelligence navigation">{intelligenceNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
       </div>
       <div className="mobile-sidebar-actions"><WorkspaceLink className="button button-light" href="/app/ads-window" onClick={closeMobile}><Plus weight="bold" /> New campaign</WorkspaceLink><div><LanguageToggle /><button className="icon-button theme-toggle" type="button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications" onClick={() => showNotice("You have three decisions requiring attention.")}><Bell /></button></div></div>
-      <div className="app-user"><b>{userInitials}</b><div><strong>{userName}</strong><span>{currentUser?.email ?? "Signed in"}</span></div></div>
+      <div className="app-user"><b>{userInitials}</b><div><strong>{userName}</strong><span>{currentUser?.email ?? "Signed in"}</span></div><button type="button" aria-label="Sign out" onClick={signOut}><SignOut /></button></div>
     </aside>
     {mobileOpen && <button className="mobile-sidebar-backdrop" type="button" aria-label="Close workspace menu" onClick={closeMobile} />}
     <main className="app-main"><header className="app-topbar"><button className="mobile-app-menu" type="button" aria-label="Open workspace menu" aria-controls="workspace-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><List /></button><div className="app-mobile-brand"><Brand href={workspaceHome} compact /></div><label className="app-search"><MagnifyingGlass /><input aria-label="Search workspace" placeholder="Search campaigns, creators, insights" onKeyDown={event => event.key === "Enter" && showNotice("Search is ready for database indexing.")} /></label><div className="topbar-actions"><LanguageToggle /><button className="icon-button theme-toggle" type="button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications" onClick={() => showNotice("You have three decisions requiring attention.")}><Bell /></button><WorkspaceLink className="button button-dark" href="/app/ads-window"><Plus weight="bold" /> New campaign</WorkspaceLink></div></header>{children}</main>

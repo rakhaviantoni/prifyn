@@ -522,6 +522,10 @@ img { max-width: 100%; }
 .app-user strong, .app-user span { display: block; }
 .app-user strong { font-size: 8px; }
 .app-user span { margin-top: 2px; color: rgba(255,255,255,.4); font-size: 7px; }
+.app-user div { min-width: 0; flex: 1; }
+.app-user button { width: 28px; height: 28px; display: grid; flex: none; place-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; background: rgba(255,255,255,.04); color: rgba(255,255,255,.62); cursor: pointer; }
+.app-user button:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; }
+.app-user button svg { width: 14px; height: 14px; }
 .app-main { min-width: 0; }
 .app-topbar { height: 63px; display: flex; align-items: center; gap: 14px; padding: 0 30px; border-bottom: 1px solid var(--line); background: rgba(247,246,241,.87); backdrop-filter: blur(12px); }
 .app-mobile-brand { display: none; }
