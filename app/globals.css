@@ -485,6 +485,7 @@ img { max-width: 100%; }
 .workspace-menu button, .workspace-menu a { display: grid; grid-template-columns: 30px 1fr 15px; gap: 8px; align-items: center; min-height: 49px; padding: 7px; border: 0; border-radius: 7px; background: transparent; color: #fff; cursor: pointer; text-align: left; text-decoration: none; }
 .workspace-menu button:hover, .workspace-menu button.active, .workspace-menu a:hover { background: rgba(255,255,255,.08); }
 .workspace-menu button > b, .workspace-menu a > b { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 7px; background: rgba(165,227,190,.13); color: var(--sage); font-size: 7px; }
+.workspace-menu b svg { width: 14px; height: 14px; }
 .workspace-menu strong, .workspace-menu small { display: block; }
 .workspace-menu strong { font-size: 8px; }
 .workspace-menu small { margin-top: 3px; color: rgba(255,255,255,.5); font-size: 6.5px; }
@@ -523,9 +524,9 @@ img { max-width: 100%; }
 .app-user strong { font-size: 8px; }
 .app-user span { margin-top: 2px; color: rgba(255,255,255,.4); font-size: 7px; }
 .app-user div { min-width: 0; flex: 1; }
-.app-user button { width: 28px; height: 28px; display: grid; flex: none; place-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; background: rgba(255,255,255,.04); color: rgba(255,255,255,.62); cursor: pointer; }
-.app-user button:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; }
-.app-user button svg { width: 14px; height: 14px; }
+.app-user button, .app-user > a { width: 28px; height: 28px; display: grid; flex: none; place-items: center; border: 1px solid rgba(255,255,255,.1); border-radius: 7px; background: rgba(255,255,255,.04); color: rgba(255,255,255,.62); cursor: pointer; }
+.app-user button:hover, .app-user > a:hover { border-color: rgba(255,255,255,.2); background: rgba(255,255,255,.08); color: #fff; }
+.app-user button svg, .app-user > a svg { width: 14px; height: 14px; }
 .app-main { min-width: 0; }
 .app-topbar { height: 63px; display: flex; align-items: center; gap: 14px; padding: 0 30px; border-bottom: 1px solid var(--line); background: rgba(247,246,241,.87); backdrop-filter: blur(12px); }
 .app-mobile-brand { display: none; }
@@ -614,6 +615,10 @@ img { max-width: 100%; }
 .data-table tr.selected-row td { background: var(--sage-2); }
 .table-action { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: 8px; font-weight: 750; }
 .table-action svg { width: 13px; }
+.team-scope { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); }
+.team-scope svg { width: 14px; color: var(--green); }
+.team-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.team-actions .table-action { padding: 0; }
 .campaign-layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px; align-items: start; }
 .campaign-detail-panel { position: sticky; top: 82px; padding: 20px; }
 .campaign-detail-panel h2 { margin: 6px 0 8px; font-family: var(--font-serif); font-size: 28px; font-weight: 500; }
@@ -1283,6 +1288,17 @@ img { max-width: 100%; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 5px; }
 .dialog-actions.stacked { display: grid; justify-content: stretch; }
 .dialog-actions.stacked .button { width: 100%; justify-content: center; }
+.dialog-actions.split { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; }
+.brand-dialog { width: min(560px, 100%); }
+.brand-dialog-list { display: grid; gap: 7px; margin: 18px 0 6px; }
+.brand-dialog-list article { display: grid; grid-template-columns: 34px 1fr auto; gap: 10px; align-items: center; padding: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); }
+.brand-dialog-list article.active { border-color: rgba(40,117,83,.32); background: var(--sage-2); }
+.brand-dialog-list article > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; background: var(--paper-2); color: var(--green); }
+.brand-dialog-list svg { width: 18px; }
+.brand-dialog-list strong, .brand-dialog-list small { display: block; }
+.brand-dialog-list strong { font-size: 10px; }
+.brand-dialog-list small { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.brand-dialog-list button { min-height: 30px; padding: 0 10px; border: 1px solid var(--line); border-radius: 7px; background: transparent; color: var(--green); cursor: pointer; font-size: 8px; font-weight: 760; }
 .revision-dialog { width: min(560px, 100%); }
 .copilot-layout { display: grid; grid-template-columns: minmax(0,1fr) 310px; gap: 18px; }
 .chat-surface { min-height: 570px; display: flex; flex-direction: column; }
@@ -1949,7 +1965,8 @@ img { max-width: 100%; }
 .member-cell { display: flex; gap: 9px; align-items: center; }
 .member-cell > b { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #15201b; color: var(--sage); font-size: 7px; }
 .team-table select { min-height: 32px; padding: 0 8px; border: 1px solid var(--line); border-radius: 7px; background: var(--paper); color: var(--ink); font-size: 8px; }
-.table-action { border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: 8px; font-weight: 700; }
+.table-action { display: inline-flex; align-items: center; gap: 5px; border: 0; background: transparent; color: var(--green); cursor: pointer; font-size: 8px; font-weight: 700; }
+.table-action svg { width: 13px; }
 .permission-note { display: flex; gap: 13px; margin-top: 14px; padding: 17px; }
 .permission-note svg { width: 23px; color: var(--green); }
 .permission-note h2 { margin: 0 0 4px; font-size: 10px; }
@@ -2239,6 +2256,9 @@ img { max-width: 100%; }
 .theme-dark .brand-review > span { background: #263c31; }
 .theme-dark .kol-candidates article.selected { background: var(--sage-2); }
 .theme-dark .app-user > b { background: #263c31; color: var(--sage); }
+.theme-dark .brand-dialog-list article { background: #1a241f; }
+.theme-dark .brand-dialog-list article.active { background: var(--sage-2); }
+.theme-dark .brand-dialog-list article > span { background: #223129; }
 .theme-dark .portfolio-uploader { border-color: #536159; }
 .theme-dark .dialog-backdrop { background: rgba(5,10,7,.76); }
 
