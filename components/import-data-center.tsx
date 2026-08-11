@@ -4,12 +4,12 @@ import {
   ArrowRight, CheckCircle, Database, FileArrowUp, FileCsv, FileXls, Info,
   PlugsConnected, Table, Warning,
 } from "@phosphor-icons/react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type JSZip from "jszip";
 import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } from "@/lib/imports/metric-mapping";
 
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
-type ImportBatch = { id: string; fileName: string; source: string; rows: number; importedAt: string; status: string };
+type ImportBatch = { id: string; fileName: string; source: string; rows: number; acceptedRows?: number; rejectedRows?: number; importedAt: string; status: string };
 
 const reportPatterns = [
   ["Funnel journey", "Impressions → clicks → landing views → leads/orders → revenue → repeat purchase"],
@@ -40,7 +40,7 @@ async function parseXlsxPreview(file: File): Promise<Omit<ParsedPreview, "fileNa
   }).filter(row => row.some(Boolean));
 
   const headers = rows[0]?.map((header, index) => header.trim() || `Column ${index + 1}`) ?? [];
-  return { headers, rows: rows.slice(1, 9), totalRows: Math.max(rows.length - 1, 0) };
+  return { headers, rows: rows.slice(1), totalRows: Math.max(rows.length - 1, 0) };
 }
 
 async function readSharedStrings(zip: JSZip) {
@@ -83,16 +83,18 @@ export function ImportDataCenter() {
   const [message, setMessage] = useState<string | null>(null);
   const [isReading, setIsReading] = useState(false);
   const [importing, setImporting] = useState(false);
-  const [importedBatches, setImportedBatches] = useState<ImportBatch[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      return JSON.parse(window.localStorage.getItem("prifyn-import-batches") ?? "[]") as ImportBatch[];
-    } catch {
-      return [];
-    }
-  });
+  const [importedBatches, setImportedBatches] = useState<ImportBatch[]>([]);
   const detected = useMemo(() => preview ? detectImportTemplate(preview.headers) : null, [preview]);
   const mapping = useMemo(() => detected && preview ? mapHeaders(preview.headers, detected.template) : null, [detected, preview]);
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/imports")
+      .then(response => response.ok ? response.json() : { imports: [] })
+      .then((data: { imports?: ImportBatch[] }) => { if (active) setImportedBatches(data.imports ?? []); })
+      .catch(() => { if (active) setImportedBatches([]); });
+    return () => { active = false; };
+  }, []);
 
   async function readFile(file: File) {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
@@ -125,28 +127,37 @@ export function ImportDataCenter() {
     setMessage(null);
   }
 
-  function finishImport() {
+  async function finishImport() {
     if (!preview || !detected || !mapping) {
       setMessage("Map this file to a supported source before importing it to the workspace.");
       return;
     }
     setImporting(true);
-    window.setTimeout(() => {
-      const batch: ImportBatch = {
-        id: `imp_${Date.now()}`,
-        fileName: preview.fileName ?? "Imported export",
-        source: detected.template.label,
-        rows: preview.totalRows,
-        importedAt: new Date().toISOString(),
-        status: "Imported · ready for report mapping",
-      };
-      const next = [batch, ...importedBatches].slice(0, 6);
-      setImportedBatches(next);
-      window.localStorage.setItem("prifyn-import-batches", JSON.stringify(next));
-      setImporting(false);
+    try {
+      const response = await fetch("/api/imports", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          fileName: preview.fileName,
+          extension: preview.extension,
+          sourceType: detected.template.id,
+          sourceLabel: detected.template.label,
+          headers: preview.headers,
+          rows: preview.rows,
+          totalRows: preview.totalRows,
+          mapping,
+        }),
+      });
+      const data = await response.json().catch(() => ({})) as { import?: ImportBatch; duplicate?: boolean; error?: string; reason?: string };
+      if (!response.ok || !data.import) throw new Error(data.error || (data.reason === "database_unreachable" ? "PRIFYN could not reach the database. Check DATABASE_URL and migrations before importing." : "Import failed before rows were written."));
+      setImportedBatches(current => [data.import!, ...current.filter(item => item.id !== data.import!.id)].slice(0, 8));
       setPreview(null);
-      setMessage(`${batch.fileName} imported to this workspace. Reports can now use the mapped ${batch.source} fields as evidence.`);
-    }, 450);
+      setMessage(data.duplicate ? `${data.import.fileName} was already imported. PRIFYN kept the existing database batch to avoid duplicate facts.` : `${data.import.fileName} imported to this workspace. ${data.import.acceptedRows ?? data.import.rows} rows are ready for reports as mapped ${data.import.source} evidence.`);
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Import failed before rows were written.");
+    } finally {
+      setImporting(false);
+    }
   }
 
   function downloadTemplate() {
@@ -194,7 +205,7 @@ export function ImportDataCenter() {
       <aside className="stack">
         <section className="surface import-history-card"><div className="surface-head"><h2>Imported batches</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><Database weight="duotone" /><p>Finished imports will appear here with source, row count, and report-readiness status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Detect and review mapping", "Import to workspace", "Use evidence in reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
+        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Detect and review mapping", "Write rows to database", "Use evidence in reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
         <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>
