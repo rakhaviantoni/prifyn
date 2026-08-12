@@ -39,8 +39,45 @@ export function LiveReportMetrics({ view = "Executive" }: { view?: "Executive" |
     ? "This workspace has imported media delivery data, but no creator-level rows yet."
     : view === "Journey" && !hasClicks
       ? "This import explains awareness delivery. Add click, landing, lead/order, or revenue evidence for a full journey view."
-      : `${summary.importCount} imported report${summary.importCount === 1 ? "" : "s"} are available for this view.`;
-  return <><section className="surface"><div className="surface-head"><div><h2>{view === "Attribution" ? "Available source coverage" : title}</h2><small>{copy}</small></div><WorkspaceLink href="/app/settings/imports">Add data</WorkspaceLink></div><div className="metric-grid">{view === "Creators" ? <><Metric label="Creator rows" value={hasCreator ? formatCompactNumber(summary.creator.trackedClicks) : "Not available"} change="Import creator/coupon/affiliate data" /><Metric label="Creator revenue" value={formatCurrency(summary.creator.revenue)} change="Creator-attributed" /><Metric label="Creator cost" value={formatCurrency(summary.creator.creatorCost)} change="Needed for KOL ROAS" /><Metric label="Creator ROAS" value={formatRatio(summary.creator.roas)} change="Revenue ÷ creator cost" /></> : view === "Journey" ? <><Metric label="Impressions" value={formatCompactNumber(summary.totals.impressions ?? 0)} change="Awareness step" /><Metric label="Reach" value={formatCompactNumber(summary.totals.reach ?? 0)} change="Audience exposure" /><Metric label="Clicks" value={formatCompactNumber(summary.totals.clicks ?? 0)} change={hasClicks ? "Imported" : "Add click data"} /><Metric label="Orders / revenue" value={hasRevenue ? formatCurrency(summary.totals.revenue_idr ?? 0) : "Not available"} change="Add conversion/order data" /></> : <><Metric label="Spend" value={formatCurrency(summary.totals.spend_idr ?? 0)} change={`CPC ${formatCurrency(summary.derived.cpc ?? 0)}`} /><Metric label="Impressions" value={formatCompactNumber(summary.totals.impressions ?? 0)} change={`CTR ${summary.derived.ctr === null ? "—" : `${(summary.derived.ctr * 100).toFixed(2)}%`}`} /><Metric label="Revenue" value={formatCurrency(summary.totals.revenue_idr ?? 0)} change={hasRevenue ? `ROAS ${formatRatio(summary.derived.roas)}` : "Add revenue data"} /><Metric label="Orders / results" value={formatCompactNumber(summary.totals.orders ?? summary.totals.results ?? 0)} change={`CVR ${summary.derived.cvr === null ? "—" : `${(summary.derived.cvr * 100).toFixed(2)}%`}`} /></>}</div></section>{summary.availableMetrics.length > 4 && <section className="surface available-metrics-card"><div className="surface-head"><h2>Available metrics in this import</h2><span>{summary.availableMetrics.length} mapped</span></div><div className="available-metrics-list">{summary.availableMetrics.map(metric => <article key={metric.key}><span>{metric.label}</span><strong>{metric.key.includes("idr") || metric.key.includes("cost") ? formatCurrency(metric.value) : formatCompactNumber(metric.value)}</strong></article>)}</div></section>}<section className="surface table-wrap" style={{ marginTop: 18 }}><div className="surface-head"><h2>{view === "Attribution" ? "Source coverage" : "Source performance"}</h2><span>{summary.sourceCount} source{summary.sourceCount === 1 ? "" : "s"}</span></div><table className="data-table"><thead><tr><th>Source</th><th>Spend</th><th>Revenue</th><th>Impressions</th><th>Clicks</th><th>Orders</th><th>ROAS</th></tr></thead><tbody>{summary.bySource.map(row => <tr key={row.source}><td><strong>{row.source}</strong></td><td>{formatCurrency(row.spend)}</td><td>{formatCurrency(row.revenue)}</td><td>{formatCompactNumber(row.impressions)}</td><td>{formatCompactNumber(row.clicks)}</td><td>{formatCompactNumber(row.orders)}</td><td><strong>{formatRatio(row.roas)}</strong></td></tr>)}</tbody></table></section></>;
+      : `${summary.importCount} imported report${summary.importCount === 1 ? " is" : "s are"} available for this view.`;
+  return <><section className="surface"><div className="surface-head"><div><h2>{view === "Attribution" ? "Source coverage" : title}</h2><small>{copy}</small></div><WorkspaceLink href="/app/settings/imports">Add data</WorkspaceLink></div><div className="metric-grid">{metricsForView(view, summary, { hasRevenue, hasClicks, hasCreator }).map(metric => <Metric key={metric.label} {...metric} />)}</div></section><section className="surface table-wrap" style={{ marginTop: 18 }}><div className="surface-head"><h2>{view === "Attribution" ? "Source coverage by channel" : view === "Campaigns" ? "Campaign / ad evidence" : "Source performance"}</h2><span>{summary.sourceCount} source{summary.sourceCount === 1 ? "" : "s"}</span></div><table className="data-table"><thead><tr><th>Source</th><th>Spend</th><th>Revenue</th><th>Impressions</th><th>Clicks</th><th>Orders</th><th>ROAS</th></tr></thead><tbody>{summary.bySource.map(row => <tr key={row.source}><td><strong>{row.source}</strong></td><td>{formatCurrency(row.spend)}</td><td>{formatCurrency(row.revenue)}</td><td>{formatCompactNumber(row.impressions)}</td><td>{formatCompactNumber(row.clicks)}</td><td>{formatCompactNumber(row.orders)}</td><td><strong>{formatRatio(row.roas)}</strong></td></tr>)}</tbody></table></section></>;
+}
+
+function metricsForView(view: "Executive" | "Campaigns" | "Creators" | "Attribution" | "Journey", summary: MetricSummary, flags: { hasRevenue: boolean; hasClicks: boolean; hasCreator: boolean }) {
+  const spend = summary.totals.spend_idr ?? 0;
+  const impressions = summary.totals.impressions ?? 0;
+  const reach = summary.totals.reach ?? 0;
+  const results = summary.totals.results ?? summary.totals.orders ?? summary.totals.conversions ?? 0;
+  if (view === "Creators") return [
+    { label: "Creator rows", value: flags.hasCreator ? formatCompactNumber(summary.creator.trackedClicks) : "Not available", change: "Import creator/coupon/affiliate data" },
+    { label: "Creator revenue", value: formatCurrency(summary.creator.revenue), change: "Creator-attributed" },
+    { label: "Creator cost", value: formatCurrency(summary.creator.creatorCost), change: "Needed for KOL ROAS" },
+    { label: "Creator ROAS", value: formatRatio(summary.creator.roas), change: "Revenue ÷ creator cost" },
+  ];
+  if (view === "Journey") return [
+    { label: "Impressions", value: formatCompactNumber(impressions), change: "Awareness step" },
+    { label: "Reach", value: formatCompactNumber(reach), change: "Audience exposure" },
+    { label: "Clicks", value: formatCompactNumber(summary.totals.clicks ?? 0), change: flags.hasClicks ? "Imported" : "Add click data" },
+    { label: "Orders / revenue", value: flags.hasRevenue ? formatCurrency(summary.totals.revenue_idr ?? 0) : "Not available", change: "Add conversion/order data" },
+  ];
+  if (view === "Campaigns") return [
+    { label: "Imported campaigns/ads", value: formatCompactNumber(summary.bySubject.length), change: `${summary.importCount} report${summary.importCount === 1 ? "" : "s"}` },
+    { label: "Spend", value: formatCurrency(spend), change: `${formatCompactNumber(results)} imported results` },
+    { label: "Reach", value: formatCompactNumber(reach), change: `${formatCompactNumber(impressions)} impressions` },
+    { label: "Cost / result", value: results ? formatCurrency(spend / results) : "—", change: "Spend ÷ imported results" },
+  ];
+  if (view === "Attribution") return [
+    { label: "Connected sources", value: formatCompactNumber(summary.sourceCount), change: "Imported or connected" },
+    { label: "Attributed revenue", value: formatCurrency(summary.totals.revenue_idr ?? 0), change: flags.hasRevenue ? "Ready for ROAS" : "Needs order/revenue data" },
+    { label: "Tracking coverage", value: flags.hasClicks || flags.hasRevenue ? "Partial" : "Delivery only", change: "Clicks/revenue decide confidence" },
+    { label: "ROAS", value: formatRatio(summary.derived.roas), change: flags.hasRevenue ? "Revenue ÷ spend" : "Locked until revenue exists" },
+  ];
+  return [
+    { label: "Spend", value: formatCurrency(spend), change: flags.hasClicks ? `CPC ${formatCurrency(summary.derived.cpc ?? 0)}` : "Clicks not imported" },
+    { label: "Reach", value: formatCompactNumber(reach || impressions), change: `${formatCompactNumber(impressions)} impressions` },
+    { label: "Results", value: formatCompactNumber(results), change: "Imported campaign objective" },
+    { label: "Revenue", value: formatCurrency(summary.totals.revenue_idr ?? 0), change: flags.hasRevenue ? `ROAS ${formatRatio(summary.derived.roas)}` : "Add revenue data" },
+  ];
 }
 
 export function LiveCampaignResultMetrics() {
