@@ -687,6 +687,16 @@ svg { flex: none; }
 .report-command h2 { margin: 4px 0; font-family: var(--font-serif); font-size: 24px; font-weight: 500; }
 .report-command p { margin: 0; max-width: 700px; color: var(--muted); font-size: 9.5px; line-height: 1.6; }
 .report-command > div:last-child { display: flex; flex-wrap: wrap; gap: 9px; margin-left: auto; }
+.compact-page-head { margin-bottom: 14px; }
+.report-action-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 10px 0 12px; padding: 0 2px; }
+.report-action-row strong, .report-action-row span { display: block; }
+.report-action-row strong { font-size: 12px; }
+.report-action-row span { margin-top: 3px; color: var(--muted); font-size: 9px; }
+.report-action-row button { border: 1px solid var(--line); border-radius: 999px; padding: 7px 11px; background: var(--paper); color: var(--muted); font-size: 9px; cursor: pointer; }
+.report-action-row button:hover { color: var(--ink); border-color: color-mix(in srgb, var(--green) 40%, var(--line)); }
+.report-explainer.compact { margin: 10px 0; padding: 10px 12px; }
+.report-explainer.compact span { font-size: 9px; }
+.surface-head small { display: block; margin-top: 3px; color: var(--muted); font-size: 9px; font-weight: 400; line-height: 1.45; }
 .report-empty-hero { display: grid; grid-template-columns: 46px 1fr auto; gap: 17px; align-items: center; margin-bottom: 16px; padding: 20px; }
 .report-empty-hero > svg { width: 42px; height: 42px; padding: 9px; border-radius: 11px; background: var(--sage-2); color: var(--green); }
 .report-empty-hero h2 { margin: 0 0 4px; font-family: var(--font-serif); font-size: 23px; font-weight: 500; }
@@ -1620,6 +1630,8 @@ svg { flex: none; }
   .report-command { align-items: stretch; flex-direction: column; }
   .report-command > div:last-child { flex-direction: column; }
   .report-command .button { width: 100%; justify-content: center; }
+  .report-action-row { align-items: stretch; flex-direction: column; }
+  .report-action-row button { width: fit-content; }
   .auth-language { top: 16px; right: 16px; }
   .workflow-grid { grid-template-columns: 1fr; }
   .workflow-steps.ads-workflow-steps { grid-template-columns: 1fr 1fr; }
