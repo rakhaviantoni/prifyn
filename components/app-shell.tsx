@@ -102,6 +102,16 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     window.addEventListener("keydown", closeOnEscape);
     return () => { document.body.classList.remove("mobile-nav-open"); window.removeEventListener("keydown", closeOnEscape); };
   }, [mobileOpen]);
+  useEffect(() => {
+    const openBrandManager = () => {
+      setEditingBrand(activeBrand.id === "pending" ? null : activeBrand);
+      setBrandDialogOpen(true);
+      setBrandOpen(false);
+      setMobileOpen(false);
+    };
+    window.addEventListener("prifyn-open-brand-manager", openBrandManager);
+    return () => window.removeEventListener("prifyn-open-brand-manager", openBrandManager);
+  }, [activeBrand]);
 
   const toggleTheme = () => {
     const next = !dark;
