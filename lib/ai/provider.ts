@@ -64,6 +64,27 @@ function parseInsightContent(content: string) {
   return Insight.parse(normalizeInsightPayload(parsed));
 }
 
+function contentFromPayload(payload: unknown) {
+  const data = payload as {
+    choices?: Array<{
+      message?: { content?: string | Array<{ text?: string; content?: string }>; reasoning_content?: string };
+      text?: string;
+    }>;
+    output_text?: string;
+    text?: string;
+    message?: { content?: string };
+  };
+  const message = data.choices?.[0]?.message;
+  const content = message?.content;
+  if (typeof content === "string" && content.trim()) return content;
+  if (Array.isArray(content)) {
+    const joined = content.map(item => item.text ?? item.content ?? "").join("\n").trim();
+    if (joined) return joined;
+  }
+  const fallbacks = [message?.reasoning_content, data.choices?.[0]?.text, data.output_text, data.text, data.message?.content];
+  return fallbacks.find(item => typeof item === "string" && item.trim()) ?? "";
+}
+
 function offline(question: string, context: InsightContext): InsightResponse {
   const normalized = question.toLowerCase();
   const scope = `Scoped to ${context.brand} · ${context.period}.`;
@@ -95,7 +116,7 @@ export async function generateInsight(question: string, suppliedContext?: Insigh
       max_tokens: 900,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Keep answers concise, operational, and action-oriented." },
+        { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Prefer PRIFYN-supported sources: Meta/TikTok/Google ads exports, GA4, Shopee/Tokopedia order exports, affiliate/coupon reports, creator proof, and UTM links. Do not recommend Shopify or Stripe unless the supplied evidence mentions them. Keep answers concise, operational, and action-oriented." },
         { role: "user", content: `Question: ${question}\nContext: ${JSON.stringify(context)}\nEvidence bundle: ${JSON.stringify(context.evidence ?? { instruction: "Use only imported reports, connected accounts, and campaign activity supplied by PRIFYN. If evidence is missing, say what to connect or import next." })}` },
       ],
     }),
@@ -109,8 +130,8 @@ export async function generateInsight(question: string, suppliedContext?: Insigh
     const detail = await response.text().catch(() => "");
     throw new AIProviderError("AI_PROVIDER_ERROR", `AI provider returned ${response.status}.`, { status: response.status, detail: detail.slice(0, 240) });
   }
-  const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
-  const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new AIProviderError("AI_EMPTY_RESPONSE", "AI provider returned no answer.");
+  const payload = await response.json();
+  const content = contentFromPayload(payload);
+  if (!content) throw new AIProviderError("AI_EMPTY_RESPONSE", "AI provider returned no answer.", { detail: JSON.stringify(payload).slice(0, 240) });
   return { ...parseInsightContent(content), mode: "live" };
 }
