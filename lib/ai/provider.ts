@@ -34,14 +34,34 @@ function chatCompletionsUrl(baseURL: string) {
   return clean.endsWith("/chat/completions") ? clean : `${clean}/chat/completions`;
 }
 
+function normalizeInsightPayload(value: unknown) {
+  const object = value && typeof value === "object" ? value as Record<string, unknown> : {};
+  const confidenceRaw = String(object.confidence ?? "medium").toLowerCase();
+  const confidence = confidenceRaw.includes("high") ? "high" : confidenceRaw.includes("low") ? "low" : "medium";
+  const limitationsRaw = object.limitations;
+  const limitations = Array.isArray(limitationsRaw)
+    ? limitationsRaw.map(item => String(item)).filter(Boolean)
+    : typeof limitationsRaw === "string" && limitationsRaw.trim()
+      ? limitationsRaw.split(/\n|;|\.\s+/).map(item => item.trim()).filter(Boolean)
+      : [];
+  return {
+    answer: String(object.answer ?? object.response ?? object.analysis ?? "").trim(),
+    why: String(object.why ?? object.reason ?? object.evidence ?? "Based on the available workspace evidence.").trim(),
+    confidence,
+    limitations,
+  };
+}
+
 function parseInsightContent(content: string) {
+  let parsed: unknown;
   try {
-    return Insight.parse(JSON.parse(content));
+    parsed = JSON.parse(content);
   } catch {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new AIProviderError("AI_BAD_JSON", "AI response was not valid JSON.");
-    return Insight.parse(JSON.parse(jsonMatch[0]));
+    parsed = JSON.parse(jsonMatch[0]);
   }
+  return Insight.parse(normalizeInsightPayload(parsed));
 }
 
 function offline(question: string, context: InsightContext): InsightResponse {

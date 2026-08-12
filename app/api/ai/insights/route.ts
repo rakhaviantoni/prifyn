@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const body = RequestBody.parse(await request.json());
     return Response.json(await generateInsight(body.question, body.context));
   } catch (error) {
-    if (error instanceof z.ZodError) return Response.json({ code: "INVALID_QUESTION", issues: error.issues }, { status: 400 });
+    if (error instanceof z.ZodError) return Response.json({ code: "INVALID_REQUEST", message: "The question could not be read.", issues: error.issues }, { status: 400 });
     if (error instanceof AIProviderError) return Response.json({
       code: error.code,
       message: error.message,
