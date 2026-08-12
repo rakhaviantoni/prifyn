@@ -52,8 +52,8 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
       const response = await fetch("/api/auth/configured");
       const readiness = await response.json().catch(() => ({})) as { reason?: string };
       if (!response.ok) {
-        if (readiness.reason === "database") throw new Error("PRIFYN cannot reach the authentication database. Check DATABASE_URL in the deployed environment.");
-        if (readiness.reason === "migrations") throw new Error("The authentication schema is not installed yet. Run the checked-in database migrations once, then try again.");
+        if (readiness.reason === "database") throw new Error("PRIFYN cannot sign you in right now. Please try again in a few minutes.");
+        if (readiness.reason === "migrations") throw new Error("Sign-in setup is not complete yet. Please ask the workspace admin to finish setup.");
         throw new Error("Google sign-in credentials are not configured for this domain yet.");
       }
       const oauth = await fetch("/api/auth/sign-in/social", {

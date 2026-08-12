@@ -57,7 +57,7 @@ export const importTemplates: ImportTemplate[] = [
       roas: ["ROAS"],
       reporting_starts: ["Date", "Reporting starts"],
     },
-    notes: "Use this when TikTok Business API approval is not ready yet. Keep exported raw rows intact and normalize metrics into performance facts.",
+    notes: "Use this when TikTok Ads connection is not ready yet. PRIFYN keeps the original export and prepares supported metrics for reports.",
   },
   {
     id: "google_ads",

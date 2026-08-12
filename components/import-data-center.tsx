@@ -146,8 +146,8 @@ export function ImportDataCenter() {
     setMessage(null);
     setFeedback({
       tone: "info",
-      title: "Importing to database",
-      detail: `Writing ${preview.totalRows} mapped rows from ${preview.fileName ?? "this file"} into this workspace. Keep this tab open for a moment.`,
+      title: "Importing report",
+      detail: `Adding ${preview.totalRows} rows from ${preview.fileName ?? "this file"} to your workspace. Keep this tab open for a moment.`,
     });
     try {
       const response = await fetch("/api/imports", {
@@ -167,13 +167,18 @@ export function ImportDataCenter() {
       });
       const data = await response.json().catch(() => ({})) as { import?: ImportBatch; duplicate?: boolean; error?: string; reason?: string; missingTables?: string[]; detail?: string; code?: string };
       if (!response.ok || !data.import) {
+        const cleanError = data.reason === "missing_import_schema"
+          ? "Import setup is not complete yet."
+          : data.reason === "database_unreachable" || data.reason === "database_write_failed"
+            ? "PRIFYN could not save this import right now."
+            : data.error || `Import failed with HTTP ${response.status}.`;
         const schemaHelp = data.reason === "missing_import_schema" && data.missingTables?.length
-          ? ` Missing: ${data.missingTables.join(", ")}. Run drizzle/0005_wide_wolfpack.sql and newer migrations in Supabase.`
+          ? " The import service is not ready yet. Please ask the workspace admin to finish setup."
           : "";
         const databaseHelp = data.reason === "database_unreachable"
-          ? " PRIFYN could not reach the database. Check DATABASE_URL."
-          : data.reason === "database_write_failed" && data.detail ? ` Detail: ${data.detail}` : "";
-        throw new Error(`${data.error || `Import failed with HTTP ${response.status}.`}${schemaHelp}${databaseHelp}`);
+          ? " PRIFYN could not save this import right now. Please try again in a few minutes."
+          : data.reason === "database_write_failed" && data.detail ? " The file was read, but PRIFYN could not save the rows." : "";
+        throw new Error(`${cleanError}${schemaHelp}${databaseHelp}`);
       }
       setImportedBatches(current => [data.import!, ...current.filter(item => item.id !== data.import!.id)].slice(0, 8));
       setPreview(null);
@@ -181,12 +186,12 @@ export function ImportDataCenter() {
         tone: "success",
         title: data.duplicate ? "File already imported" : "Import complete",
         detail: data.duplicate
-          ? `${data.import.fileName} was already imported. PRIFYN kept the existing database batch to avoid duplicate facts.`
+          ? `${data.import.fileName} was already imported, so PRIFYN did not duplicate the same report.`
           : `${data.import.fileName} imported successfully. ${data.import.acceptedRows ?? data.import.rows} of ${data.import.rows} rows are ready for dashboard metrics, campaign results, and reports.`,
       });
     } catch (error) {
       const detail = error instanceof DOMException && error.name === "AbortError"
-        ? "Import request timed out after 20 seconds. The database may be unreachable or the file is too large. Try again, or check DATABASE_URL and migrations."
+        ? "Import is taking longer than expected. Try again with a smaller file, or wait a moment and retry."
         : error instanceof Error ? error.message : "Import failed before rows were written.";
       setFeedback({ tone: "error", title: "Import failed", detail });
     } finally {
@@ -210,11 +215,11 @@ export function ImportDataCenter() {
   }
 
   return <div className="import-center">
-    <header className="app-page-head import-head"><div><span>Data operations</span><h1>Data Imports</h1><p>Use platform exports while OAuth/API approvals are still pending. PRIFYN keeps raw imports, mapping rules, normalized rows, and source confidence separate.</p></div><button className="button button-outline" type="button" onClick={downloadTemplate}><FileCsv /> Download Meta template</button></header>
+    <header className="app-page-head import-head"><div><span>Data operations</span><h1>Data Imports</h1><p>Use platform exports while channel connections are still pending. PRIFYN keeps the original file and turns supported columns into reporting metrics.</p></div><button className="button button-outline" type="button" onClick={downloadTemplate}><FileCsv /> Download Meta template</button></header>
 
     <section className="surface import-hero">
-      <div><span className="section-kicker">Import-first growth data</span><h2>Upload exports from Meta, TikTok, Google, Shopee, Tokopedia, or affiliate sheets.</h2><p>This is the practical bridge before seamless integrations: export from the platform, import into PRIFYN, map fields, then reports can calculate performance, journey, location, creative, and ROAS with evidence labels.</p></div>
-      <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>{isReading ? "Reading export…" : "Drop or choose CSV/XLSX export"}</strong><span>Preview rows, detect the source, then map metrics before importing.</span></label>
+      <div><span className="section-kicker">Import growth reports</span><h2>Upload exports from Meta, TikTok, Google, Shopee, Tokopedia, or affiliate sheets.</h2><p>Export from the platform, upload here, then PRIFYN will prepare campaign, ad, creative, attribution, and report views from the columns it can read.</p></div>
+      <label className="import-dropzone"><input type="file" accept=".csv,.xlsx" onChange={event => event.target.files?.[0] && void readFile(event.target.files[0])} /><FileArrowUp weight="duotone" /><strong>{isReading ? "Reading export…" : "Drop or choose CSV/XLSX export"}</strong><span>Preview the file, confirm the detected source, then finish import.</span></label>
     </section>
 
     {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
@@ -228,24 +233,24 @@ export function ImportDataCenter() {
       <div className="stack">
         <section className="surface import-preview-card">
           <div className="surface-head"><h2>Uploaded file</h2>{preview && <button type="button" onClick={clearPreview}>Clear</button>}</div>
-          {!preview ? <div className="import-empty"><Database weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see how PRIFYN maps fields.</p></div> : <div className="import-file-summary">
+          {!preview ? <div className="import-empty"><Database weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see which metrics PRIFYN can read.</p></div> : <div className="import-file-summary">
             <span>{preview.extension === ".xlsx" ? <FileXls /> : <FileCsv />}</span><div><strong>{preview.fileName}</strong><small>{preview.extension?.toUpperCase()} · {preview.totalRows ? `${preview.totalRows} rows detected` : "Ready to map"}</small></div>
             <b className={`status-pill ${detected ? "" : "warning"}`}>{detected ? "Template detected" : "Needs mapping"}</b>
           </div>}
           {preview?.headers.length ? <div className="import-table-wrap"><table className="data-table"><thead><tr>{preview.headers.slice(0, 8).map(header => <th key={header}>{header}</th>)}</tr></thead><tbody>{preview.rows.slice(0, 4).map((row, index) => <tr key={index}>{preview.headers.slice(0, 8).map((header, cellIndex) => <td key={header}>{row[cellIndex] || "-"}</td>)}</tr>)}</tbody></table></div> : null}
-          {preview?.headers.length ? <div className="import-finish-bar"><div><strong>Ready to finish import?</strong><span>{detected ? `${detected.template.label} detected. ${preview.totalRows} rows will be added to the workspace import history.` : "Choose a supported mapping before importing."}</span></div><button type="button" className="button button-dark" disabled={!detected || importing} onClick={finishImport}>{importing ? "Importing…" : "Import to workspace"} <ArrowRight /></button></div> : null}
+          {preview?.headers.length ? <div className="import-finish-bar"><div><strong>Ready to finish import?</strong><span>{detected ? `${detected.template.label} detected. ${preview.totalRows} rows will be available in Ads Manager and Reports.` : "This file needs a supported template before it can be imported."}</span></div><button type="button" className="button button-dark" disabled={!detected || importing} onClick={finishImport}>{importing ? "Importing…" : "Finish import"} <ArrowRight /></button></div> : null}
         </section>
 
         <section className="surface import-mapping-card">
           <div className="surface-head"><h2>Detected mapping</h2><span>{detected ? `${detected.score} match score` : "No source selected"}</span></div>
-          {detected && mapping ? <div className="mapping-list"><header><span><PlugsConnected /> {detected.template.label}</span><small>{detected.template.notes}</small></header>{Object.entries(mapping).slice(0, 12).map(([metric, column]) => <article key={metric}><strong>{metric.replaceAll("_", " ")}</strong><span className={column ? "mapped" : "missing"}>{column ?? "Not found"}</span></article>)}</div> : <div className="import-empty compact"><Info weight="duotone" /><p>Upload CSV data or choose a template. PRIFYN will keep unmapped columns as raw evidence instead of silently dropping them.</p></div>}
+          {detected && mapping ? <div className="mapping-list"><header><span><PlugsConnected /> {detected.template.label}</span><small>{detected.template.notes}</small></header>{Object.entries(mapping).slice(0, 12).map(([metric, column]) => <article key={metric}><strong>{metric.replaceAll("_", " ")}</strong><span className={column ? "mapped" : "missing"}>{column ?? "Not found"}</span></article>)}</div> : <div className="import-empty compact"><Info weight="duotone" /><p>Upload CSV/XLSX data or use a template. Columns PRIFYN cannot read yet will stay in the uploaded report for review.</p></div>}
         </section>
       </div>
 
       <aside className="stack">
-        <section className="surface import-history-card"><div className="surface-head"><h2>Imported batches</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><Database weight="duotone" /><p>Finished imports will appear here with source, row count, and report-readiness status.</p></div>}</section>
+        <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><Database weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Detect and review mapping", "Write rows to database", "Use evidence in reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
+        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Confirm detected source", "Finish import", "Open Ads Manager or Reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
         <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>

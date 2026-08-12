@@ -23,13 +23,13 @@ function toSummary(row: typeof campaigns.$inferSelect) {
     status: row.status === "completed" ? "Completed" as const : row.status === "active" || row.status === "ready" ? "Active" as const : "Draft" as const,
     objective: row.objectiveSummary || "Campaign objective",
     owner: "Workspace",
-    creators: "Not linked",
+    creators: "No creators yet",
     revenue: "Rp 0",
-    roas: "Needs revenue",
+    roas: "Add revenue",
     end: row.endAt ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric" }).format(row.endAt) : "No end date",
-    note: row.objectiveSummary || "Campaign shell created. Link Ads/KOL execution and imported reports to build performance evidence.",
+    note: row.objectiveSummary || "Campaign created. Add Ads/KOL activity and imported reports to build performance.",
     nextAction: "Complete brief",
-    tracking: "Not configured",
+    tracking: "Set tracking",
     source: "campaign" as const,
   };
 }

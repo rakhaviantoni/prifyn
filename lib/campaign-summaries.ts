@@ -113,13 +113,13 @@ function summarizeCampaignShell(row: typeof campaigns.$inferSelect): CampaignSum
     status: statusFromCampaign(row.status),
     objective: row.objectiveSummary || "Campaign objective",
     owner: "Workspace",
-    creators: "Not linked",
+    creators: "No creators yet",
     revenue: "Rp 0",
-    roas: "Needs revenue",
+    roas: "Add revenue",
     end: formatDate(row.endAt),
     note: row.objectiveSummary || "Campaign shell created. Add Ads/KOL execution and import performance reports when available.",
-    nextAction: "Complete brief",
-    tracking: "Not configured",
+    nextAction: "Complete campaign brief",
+    tracking: "Set tracking",
     source: "campaign",
   };
 }
@@ -169,7 +169,7 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
         const spend = numberValue(row.spend);
         const revenue = numberValue(row.revenue);
         const orders = numberValue(row.orders) || numberValue(row.conversions);
-        const roas = spend > 0 && revenue > 0 ? `${(revenue / spend).toFixed(2)}x` : "Needs revenue";
+        const roas = spend > 0 && revenue > 0 ? `${(revenue / spend).toFixed(2)}x` : "Add revenue";
         const importedRows = numberValue(row.imported_rows);
         const campaignName = row.campaign_name ?? "Imported campaign";
         return {
@@ -177,12 +177,12 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
           status: statusFromDelivery(row.delivery_status),
           objective: row.result_type || "Imported performance",
           owner: "Workspace",
-          creators: "Not linked",
+          creators: "No creators yet",
           revenue: formatIdr(revenue),
           roas,
           end: formatDate(row.period_end),
           note: `${importedRows} imported row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${orders ? ` · ${Math.round(orders).toLocaleString("id-ID")} result/orders` : ""}.`,
-          nextAction: revenue > 0 && spend > 0 ? "Review performance" : "Complete attribution",
+          nextAction: revenue > 0 && spend > 0 ? "Review performance" : "Add outcome data",
           tracking: row.source_type ? `Imported export · ${sourceLabel(row.source_type)}` : "Imported export",
           source: "import" as const,
           importedRows,
