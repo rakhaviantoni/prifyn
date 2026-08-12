@@ -1354,6 +1354,11 @@ svg { flex: none; }
 .ads-manager-command strong,
 .ads-manager-command small { display: block; }
 .ads-manager-command small { margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
+.ads-campaign-filter { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 14px 16px; }
+.ads-campaign-filter > span { color: var(--muted); font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.ads-campaign-filter select { min-width: min(420px, 100%); height: 40px; padding: 0 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); color: var(--ink); }
+.ads-campaign-filter .button { margin-left: auto; }
+.ads-table td small { display: block; margin-top: 3px; color: var(--muted); font-size: 8px; }
 .table-empty { display: grid; place-items: center; gap: 8px; padding: 28px; color: var(--muted); font-size: 10px; }
 .table-empty button { border: 0; background: transparent; color: var(--green); font-weight: 800; cursor: pointer; }
 .form-error { margin: -2px 0 2px; padding: 10px 12px; border: 1px solid rgba(181,67,53,.22); border-radius: 12px; background: #fff4f1; color: var(--red); font-size: 9.5px; line-height: 1.45; }
@@ -1532,6 +1537,8 @@ svg { flex: none; }
   .ads-manager-command { align-items: stretch; flex-direction: column; }
   .ads-manager-command > div:last-child { flex-direction: column; align-items: stretch; }
   .ads-manager-command .button { width: 100%; justify-content: center; }
+  .ads-campaign-filter { align-items: stretch; flex-direction: column; }
+  .ads-campaign-filter .button { width: 100%; margin-left: 0; justify-content: center; }
   .campaign-detail-grid, .buzzer-dynamic-grid { grid-template-columns: 1fr; }
   .stack { grid-template-columns: 1fr; }
   .stack > :first-child { grid-column: auto; }

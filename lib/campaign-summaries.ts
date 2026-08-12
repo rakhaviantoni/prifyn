@@ -20,6 +20,21 @@ export type CampaignSummary = {
   importedRows?: number;
 };
 
+export type AdSummary = {
+  campaignName: string;
+  adSetName: string;
+  adName: string;
+  status: string;
+  resultType: string;
+  results: string;
+  costPerResult: string;
+  spend: string;
+  impressions: string;
+  reach: string;
+  source: string;
+  action: string;
+};
+
 type ImportedCampaignRow = {
   campaign_name: string | null;
   delivery_status: string | null;
@@ -33,6 +48,20 @@ type ImportedCampaignRow = {
   clicks: string | number | null;
   impressions: string | number | null;
   period_end: Date | string | null;
+};
+
+type ImportedAdRow = {
+  campaign_name: string | null;
+  ad_set_name: string | null;
+  ad_name: string | null;
+  delivery_status: string | null;
+  result_type: string | null;
+  source_type: string | null;
+  results: string | number | null;
+  cost_per_result: string | number | null;
+  spend: string | number | null;
+  impressions: string | number | null;
+  reach: string | number | null;
 };
 
 function numberValue(value: string | number | null | undefined) {
@@ -66,6 +95,10 @@ function statusFromDelivery(delivery: string | null | undefined): CampaignSummar
 function sourceLabel(sourceType: string | null | undefined) {
   if (!sourceType) return "imported data";
   return sourceType.replace(/_/g, " ");
+}
+
+function formatNumber(value: number) {
+  return new Intl.NumberFormat("en", { notation: value >= 100000 ? "compact" : "standard", maximumFractionDigits: value >= 100000 ? 1 : 0 }).format(value);
 }
 
 function statusFromCampaign(status: typeof campaigns.$inferSelect.status): CampaignSummary["status"] {
@@ -171,6 +204,67 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
       } : item);
     }
     return [...byName.values()];
+  } catch {
+    return [];
+  }
+}
+
+export async function getWorkspaceAdSummaries(): Promise<AdSummary[]> {
+  if (!isAuthConfigured()) return [];
+  const session = await getAuth().api.getSession({ headers: await headers() });
+  if (!session?.user) return [];
+
+  const db = getDb();
+  const membership = (await db.select().from(member).where(eq(member.userId, session.user.id)).limit(1))[0];
+  if (!membership) return [];
+
+  const brand = (await db.select().from(businessOrganizations).where(eq(businessOrganizations.workspaceId, membership.organizationId)).limit(1))[0];
+  if (!brand) return [];
+
+  try {
+    const result = await db.execute(sql<ImportedAdRow>`
+      select
+        nullif(ir.dimensions->>'campaign_name', '') as campaign_name,
+        nullif(ir.dimensions->>'ad_set_name', '') as ad_set_name,
+        nullif(ir.dimensions->>'ad_name', '') as ad_name,
+        max(nullif(ir.dimensions->>'delivery_status', '')) as delivery_status,
+        max(nullif(ir.dimensions->>'result_type', '')) as result_type,
+        max(ij.source_type) as source_type,
+        coalesce(sum((ir.normalized_metrics->>'results')::numeric), 0) as results,
+        coalesce(avg((ir.normalized_metrics->>'cost_per_result_idr')::numeric), 0) as cost_per_result,
+        coalesce(sum((ir.normalized_metrics->>'spend_idr')::numeric), 0) as spend,
+        coalesce(sum((ir.normalized_metrics->>'impressions')::numeric), 0) as impressions,
+        coalesce(sum((ir.normalized_metrics->>'reach')::numeric), 0) as reach
+      from import_rows ir
+      inner join import_jobs ij on ij.id = ir.import_job_id
+      where ij.workspace_id = ${membership.organizationId}
+        and ij.organization_id = ${brand.id}
+        and ij.status = 'completed'
+      group by nullif(ir.dimensions->>'campaign_name', ''), nullif(ir.dimensions->>'ad_set_name', ''), nullif(ir.dimensions->>'ad_name', '')
+      order by max(ij.created_at) desc, campaign_name asc, ad_name asc
+      limit 200
+    `);
+    const rows = (Array.isArray(result) ? result : []) as ImportedAdRow[];
+    return rows.filter(row => row.ad_name || row.campaign_name).map(row => {
+      const status = row.delivery_status || "Imported";
+      const resultType = row.result_type || "Result";
+      const cost = numberValue(row.cost_per_result);
+      const normalized = status.toLowerCase();
+      return {
+        campaignName: row.campaign_name || "Imported campaign",
+        adSetName: row.ad_set_name || "No ad set",
+        adName: row.ad_name || row.campaign_name || "Imported ad",
+        status,
+        resultType,
+        results: formatNumber(numberValue(row.results)),
+        costPerResult: cost ? formatIdr(cost) : "—",
+        spend: formatIdr(numberValue(row.spend)),
+        impressions: formatNumber(numberValue(row.impressions)),
+        reach: formatNumber(numberValue(row.reach)),
+        source: sourceLabel(row.source_type),
+        action: normalized.includes("archived") ? "Keep archived" : normalized.includes("inactive") ? "Review learning" : "Monitor delivery",
+      };
+    });
   } catch {
     return [];
   }

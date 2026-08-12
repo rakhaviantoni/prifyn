@@ -7,7 +7,7 @@ import {
 } from "@phosphor-icons/react";
 import { ChannelLogo } from "./channel-logo";
 import { CampaignResults } from "./campaign-results";
-import type { CampaignSummary } from "@/lib/campaign-summaries";
+import type { AdSummary, CampaignSummary } from "@/lib/campaign-summaries";
 
 type Stage = "setup" | "channels" | "preview" | "results";
 type AdsMode = "list" | "create";
@@ -34,7 +34,7 @@ const statusCopy: Record<DeliveryStatus, string> = {
   Completed: "The campaign reached its end date and final reporting is available.",
 };
 
-export function AdsWindow({ initialCampaign, initialMode, campaigns = [] }: { initialCampaign?: string; initialMode?: string; campaigns?: CampaignSummary[] }) {
+export function AdsWindow({ initialCampaign, initialMode, campaigns = [], ads = [] }: { initialCampaign?: string; initialMode?: string; campaigns?: CampaignSummary[]; ads?: AdSummary[] }) {
   const [mode, setMode] = useState<AdsMode>(initialMode === "create" || initialCampaign ? "create" : "list");
   const [stage, setStage] = useState<Stage>("setup");
   const [campaignName, setCampaignName] = useState(initialCampaign || campaigns[0]?.name || "");
@@ -95,10 +95,14 @@ export function AdsWindow({ initialCampaign, initialMode, campaigns = [] }: { in
   const selectedMetaAccount = selectedAccounts.Meta ?? accounts.Meta[0];
 
   if (mode === "list") {
+    const selectedCampaignAds = campaignName ? ads.filter(item => item.campaignName === campaignName) : ads;
+    const adCampaignNames = Array.from(new Set(ads.map(item => item.campaignName)));
+    const campaignOptions = campaigns.length ? campaigns.map(item => item.name) : adCampaignNames;
+    const campaignCount = adCampaignNames.length;
     return <div className="app-content workflow-page">
       <header className="app-page-head"><div><span>Paid media workspace</span><h1>Ads Manager</h1><p>Monitor imported ads performance, connection readiness, and create new paid campaigns from a real campaign context.</p></div><button className="button button-dark" type="button" onClick={() => setMode("create")}><Plus weight="bold" /> Create ads campaign</button></header>
-      <section className="surface ads-manager-command"><div><Megaphone weight="duotone" /><span><strong>Create new ads only after choosing the campaign context.</strong><small>Ads Manager is the operating list. The stepper is for setting up a new paid campaign draft.</small></span></div><div><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/connections")}>Manage connections</button><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/imports")}>Import report</button></div></section>
-      {campaigns.length ? <section className="surface table-wrap"><table className="data-table campaign-table"><thead><tr><th>Campaign</th><th>Status</th><th>Revenue</th><th>ROAS</th><th>Source</th><th /></tr></thead><tbody>{campaigns.map(item => <tr key={item.name}><td><strong>{item.name}</strong><small>{item.objective}</small></td><td><span className={`status-pill ${item.status === "At risk" ? "warning" : item.status === "Completed" ? "neutral" : ""}`}>{item.status}</span></td><td>{item.revenue}</td><td>{item.roas}</td><td>{item.tracking}</td><td><button className="table-action" type="button" onClick={() => { setCampaignName(item.name); setMode("create"); }}><Plus /> New ad</button></td></tr>)}</tbody></table></section> : <section className="surface empty-state"><FileArrowUp /><h2>No ads data yet</h2><p>Import a platform export or create a campaign first. Production Ads Manager will not show sample Ramadan campaigns inside a real workspace.</p><div className="empty-actions"><button className="button button-dark" type="button" onClick={() => setMode("create")}>Create manual draft</button><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/imports")}>Import report</button></div></section>}
+      <section className="surface ads-manager-command"><div><Megaphone weight="duotone" /><span><strong>{ads.length ? `${ads.length} ads imported across ${campaignCount || 1} campaign${campaignCount === 1 ? "" : "s"}.` : "Bring ads into PRIFYN from exports or connected accounts."}</strong><small>{ads.length ? "Review ad-level spend, reach, result cost, and delivery status before creating the next ad." : "Use imports while channel APIs are pending. Create new ads when you are ready to launch."}</small></span></div><div><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/connections")}>Manage connections</button><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/imports")}>Import report</button></div></section>
+      {ads.length ? <><section className="surface ads-campaign-filter"><span>Campaign</span><select value={campaignName} onChange={event => setCampaignName(event.target.value)}>{campaignOptions.map(item => <option key={item}>{item}</option>)}</select><button className="button button-dark" type="button" onClick={() => setMode("create")}><Plus /> Create ad for this campaign</button></section><section className="surface table-wrap"><table className="data-table campaign-table ads-table"><thead><tr><th>Ad</th><th>Status</th><th>Results</th><th>Cost / result</th><th>Spend</th><th>Impressions</th><th>Reach</th><th /></tr></thead><tbody>{selectedCampaignAds.map(item => <tr key={`${item.campaignName}-${item.adSetName}-${item.adName}`}><td><strong>{item.adName}</strong><small>{item.campaignName} · {item.adSetName}</small></td><td><span className={`status-pill ${item.status.toLowerCase().includes("archived") ? "neutral" : ""}`}>{item.status}</span></td><td><strong>{item.results}</strong><small>{item.resultType}</small></td><td>{item.costPerResult}</td><td>{item.spend}</td><td>{item.impressions}</td><td>{item.reach}</td><td><button className="table-action" type="button" onClick={() => { setCampaignName(item.campaignName); setMode("create"); }}><Plus /> Use setup</button></td></tr>)}</tbody></table></section></> : <section className="surface empty-state"><FileArrowUp /><h2>No ads data yet</h2><p>Import a platform export or create a campaign first. Production Ads Manager will not show sample Ramadan campaigns inside a real workspace.</p><div className="empty-actions"><button className="button button-dark" type="button" onClick={() => setMode("create")}>Create manual draft</button><button className="button button-outline" type="button" onClick={() => window.location.assign("/app/settings/imports")}>Import report</button></div></section>}
     </div>;
   }
 
