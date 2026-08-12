@@ -1356,6 +1356,7 @@ svg { flex: none; }
 .ads-manager-command small { margin-top: 3px; color: var(--muted); font-size: 9px; line-height: 1.45; }
 .table-empty { display: grid; place-items: center; gap: 8px; padding: 28px; color: var(--muted); font-size: 10px; }
 .table-empty button { border: 0; background: transparent; color: var(--green); font-weight: 800; cursor: pointer; }
+.form-error { margin: -2px 0 2px; padding: 10px 12px; border: 1px solid rgba(181,67,53,.22); border-radius: 12px; background: #fff4f1; color: var(--red); font-size: 9.5px; line-height: 1.45; }
 
 .theme-dark, .theme-dark body { background: #111814; }
 .theme-dark .app-layout { --ink: #edf4ef; --paper: #131b17; --paper-2: #1c2621; --white: #1a241f; --line: rgba(237,244,239,.11); --muted: #9ba9a1; --sage-2: #263c31; color-scheme: dark; scrollbar-color: #405248 #111814; background: #111814; color: #edf4ef; }

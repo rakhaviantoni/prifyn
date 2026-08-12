@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
-import { eq, sql } from "drizzle-orm";
+import { desc, eq, sql } from "drizzle-orm";
 import { getDb } from "@/db";
-import { businessOrganizations, member } from "@/db/schema";
+import { businessOrganizations, campaigns, member } from "@/db/schema";
 import { getAuth, isAuthConfigured } from "@/lib/auth/server";
 
 export type CampaignSummary = {
@@ -68,6 +68,29 @@ function sourceLabel(sourceType: string | null | undefined) {
   return sourceType.replace(/_/g, " ");
 }
 
+function statusFromCampaign(status: typeof campaigns.$inferSelect.status): CampaignSummary["status"] {
+  if (status === "completed") return "Completed";
+  if (status === "active" || status === "ready" || status === "paused") return "Active";
+  return "Draft";
+}
+
+function summarizeCampaignShell(row: typeof campaigns.$inferSelect): CampaignSummary {
+  return {
+    name: row.name,
+    status: statusFromCampaign(row.status),
+    objective: row.objectiveSummary || "Campaign objective",
+    owner: "Workspace",
+    creators: "Not linked",
+    revenue: "Rp 0",
+    roas: "Needs revenue",
+    end: formatDate(row.endAt),
+    note: row.objectiveSummary || "Campaign shell created. Add Ads/KOL execution and import performance reports when available.",
+    nextAction: "Complete brief",
+    tracking: "Not configured",
+    source: "campaign",
+  };
+}
+
 export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]> {
   if (!isAuthConfigured()) return [];
   const session = await getAuth().api.getSession({ headers: await headers() });
@@ -81,6 +104,8 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
   if (!brand) return [];
 
   try {
+    const shellRows = await db.select().from(campaigns).where(eq(campaigns.organizationId, brand.id)).orderBy(desc(campaigns.createdAt)).limit(50);
+    const shells = shellRows.map(summarizeCampaignShell);
     const result = await db.execute(sql<ImportedCampaignRow>`
       select
         nullif(ir.dimensions->>'campaign_name', '') as campaign_name,
@@ -105,7 +130,7 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
       limit 50
     `);
     const rows = (Array.isArray(result) ? result : []) as ImportedCampaignRow[];
-    return rows
+    const imported: CampaignSummary[] = rows
       .filter(row => row.campaign_name)
       .map(row => {
         const spend = numberValue(row.spend);
@@ -126,10 +151,26 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
           note: `${importedRows} imported row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${orders ? ` · ${Math.round(orders).toLocaleString("id-ID")} result/orders` : ""}.`,
           nextAction: revenue > 0 && spend > 0 ? "Review performance" : "Complete attribution",
           tracking: row.source_type ? `Imported export · ${sourceLabel(row.source_type)}` : "Imported export",
-          source: "import",
+          source: "import" as const,
           importedRows,
         };
       });
+    const byName = new Map<string, CampaignSummary>();
+    for (const shell of shells) byName.set(shell.name.toLowerCase(), shell);
+    for (const item of imported) {
+      const key = item.name.toLowerCase();
+      const shell = byName.get(key);
+      byName.set(key, shell ? {
+        ...item,
+        status: shell.status === "Draft" ? item.status : shell.status,
+        objective: shell.objective || item.objective,
+        owner: shell.owner,
+        note: `${shell.note} Performance evidence: ${item.note}`,
+        nextAction: item.nextAction,
+        source: "campaign" as const,
+      } : item);
+    }
+    return [...byName.values()];
   } catch {
     return [];
   }
