@@ -27,10 +27,10 @@ export function Copilot() {
     setValue(""); setLoading(true);
     try {
       const response = await fetch("/api/ai/insights", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ question, context: { brand, period: "Last 7 days", route: window.location.pathname, evidence: { hasData: summary.hasData, totals: summary.totals, derived: summary.derived, sources: summary.bySource, subjects: summary.bySubject, creator: summary.creator, missing: { revenue: !(summary.totals.revenue_idr ?? 0), clicks: !(summary.totals.clicks ?? 0), orders: !(summary.totals.orders ?? summary.totals.conversions ?? 0) } } } }) });
-      if (!response.ok) throw new Error("AI request failed");
       const data = await response.json();
+      if (!response.ok) throw new Error(data.detail ? `${data.message} ${data.detail}` : data.message || "AI request failed");
       setMessages(current => [...current, { role: "assistant", content: data.answer, why: `${data.why} · ${data.confidence} confidence · ${data.mode === "offline" ? "AI connection needed" : "Live evidence"}` }]);
-    } catch { setMessages(current => [...current, { role: "assistant", content: "I could not complete that analysis. Check the DeepSeek configuration and try again.", why: "No business record was changed." }]); }
+    } catch (error) { setMessages(current => [...current, { role: "assistant", content: "I could not complete that analysis yet.", why: `${error instanceof Error ? error.message : "AI provider unavailable."} · No business record was changed.` }]); }
     finally { setLoading(false); }
   }
 

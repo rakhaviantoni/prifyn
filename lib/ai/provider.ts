@@ -11,6 +11,39 @@ export type InsightResponse = z.infer<typeof Insight> & { mode: "live" | "offlin
 
 type InsightContext = { brand: string; period: string; route: string; evidence?: unknown };
 
+export class AIProviderError extends Error {
+  code: string;
+  status?: number;
+  detail?: string;
+
+  constructor(code: string, message: string, options?: { status?: number; detail?: string }) {
+    super(message);
+    this.name = "AIProviderError";
+    this.code = code;
+    this.status = options?.status;
+    this.detail = options?.detail;
+  }
+}
+
+function envValue(key: string) {
+  return process.env[key]?.trim().replace(/^["']|["']$/g, "");
+}
+
+function chatCompletionsUrl(baseURL: string) {
+  const clean = baseURL.trim().replace(/^["']|["']$/g, "").replace(/\/$/, "");
+  return clean.endsWith("/chat/completions") ? clean : `${clean}/chat/completions`;
+}
+
+function parseInsightContent(content: string) {
+  try {
+    return Insight.parse(JSON.parse(content));
+  } catch {
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new AIProviderError("AI_BAD_JSON", "AI response was not valid JSON.");
+    return Insight.parse(JSON.parse(jsonMatch[0]));
+  }
+}
+
 function offline(question: string, context: InsightContext): InsightResponse {
   const normalized = question.toLowerCase();
   const scope = `Scoped to ${context.brand} · ${context.period}.`;
@@ -26,17 +59,20 @@ function offline(question: string, context: InsightContext): InsightResponse {
 
 export async function generateInsight(question: string, suppliedContext?: InsightContext): Promise<InsightResponse> {
   const context = suppliedContext ?? { brand: "Selected brand", period: "Last 7 days", route: "/app/copilot" };
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
+  const apiKey = envValue("DEEPSEEK_API_KEY");
+  const model = envValue("DEEPSEEK_MODEL") || "deepseek-chat";
   if (!apiKey || !model) return offline(question, context);
 
-  const baseURL = (process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1").replace(/\/$/, "");
-  const response = await fetch(`${baseURL}/chat/completions`, {
+  const baseURL = envValue("DEEPSEEK_BASE_URL") || "https://api.deepseek.com";
+  let response: Response;
+  try {
+    response = await fetch(chatCompletionsUrl(baseURL), {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
       model,
       temperature: 0.2,
+      max_tokens: 900,
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Keep answers concise, operational, and action-oriented." },
@@ -45,9 +81,16 @@ export async function generateInsight(question: string, suppliedContext?: Insigh
     }),
     signal: AbortSignal.timeout(20000),
   });
-  if (!response.ok) throw new Error(`AI provider returned ${response.status}`);
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "TimeoutError") throw new AIProviderError("AI_TIMEOUT", "AI analysis took too long.");
+    throw new AIProviderError("AI_NETWORK", "AI provider could not be reached.");
+  }
+  if (!response.ok) {
+    const detail = await response.text().catch(() => "");
+    throw new AIProviderError("AI_PROVIDER_ERROR", `AI provider returned ${response.status}.`, { status: response.status, detail: detail.slice(0, 240) });
+  }
   const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
   const content = payload.choices?.[0]?.message?.content;
-  if (!content) throw new Error("AI provider returned no content");
-  return { ...Insight.parse(JSON.parse(content)), mode: "live" };
+  if (!content) throw new AIProviderError("AI_EMPTY_RESPONSE", "AI provider returned no answer.");
+  return { ...parseInsightContent(content), mode: "live" };
 }
