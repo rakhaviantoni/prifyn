@@ -21,7 +21,7 @@ export function BillingCenter() {
   const [notice, setNotice] = useState<string | null>(null);
   const notify = (value: string) => { setNotice(value); window.setTimeout(() => setNotice(null), 2400); };
   const downloadInvoice = (invoice: (typeof invoices)[number]) => {
-    const body = `PRIFYN\nInvoice,${invoice.number}\nDate,${invoice.date}\nBilling period,${invoice.period}\nPlan,Growth\nWorkspace,Nusa Spice Group\nSubtotal,Rp1.490.000\nTax 11%,Rp163.900\nTotal,${invoice.amount}\nStatus,${invoice.status}\n`;
+    const body = `PRIFYN\nInvoice,${invoice.number}\nDate,${invoice.date}\nBilling period,${invoice.period}\nPlan,Growth\nWorkspace,Current workspace\nSubtotal,Rp1.490.000\nTax 11%,Rp163.900\nTotal,${invoice.amount}\nStatus,${invoice.status}\n`;
     const url = URL.createObjectURL(new Blob([body], { type: "text/csv;charset=utf-8" }));
     const anchor = document.createElement("a"); anchor.href = url; anchor.download = `${invoice.number}.csv`; anchor.click(); URL.revokeObjectURL(url);
     notify(`${invoice.number} downloaded.`);

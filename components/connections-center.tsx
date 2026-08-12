@@ -26,11 +26,11 @@ type LiveConnection = { provider: string; status: string; accounts: Array<{ id: 
 const categories = ["Advertising", "Commerce", "Analytics", "Creator data"] as const;
 
 const providerMeta: Record<string, { category: typeof categories[number]; description: string; status: string; freshness: string; account: string }> = {
-  meta: { category: "Advertising", description: "Ad accounts, Pages, Instagram identities, publishing, and insights.", status: "Connected", freshness: "Synced 8 min ago", account: "Nusa Spice Business · 2 ad accounts" },
+  meta: { category: "Advertising", description: "Ad accounts, Pages, Instagram identities, publishing, and insights.", status: "Authorization required", freshness: "No production sync", account: "No account authorized" },
   google: { category: "Advertising", description: "Customer accounts, conversion actions, campaign publishing, and reporting.", status: "Setup required", freshness: "No production sync", account: "No account authorized" },
   tiktok: { category: "Advertising", description: "Advertiser accounts, TikTok identities, campaign publishing, and reporting.", status: "Approval required", freshness: "Provider review pending", account: "No advertiser authorized" },
-  tokopedia: { category: "Commerce", description: "Shop orders and attribution through approved partner access.", status: "Partner gated", freshness: "Manual import available", account: "Nusa Spice Official Store" },
-  shopee: { category: "Commerce", description: "Authorized shops, order data, and commerce attribution.", status: "Partner gated", freshness: "Manual import available", account: "Nusa Spice Official" },
+  tokopedia: { category: "Commerce", description: "Shop orders and attribution through approved partner access.", status: "Partner gated", freshness: "Manual import available", account: "No shop authorized" },
+  shopee: { category: "Commerce", description: "Authorized shops, order data, and commerce attribution.", status: "Partner gated", freshness: "Manual import available", account: "No shop authorized" },
 };
 
 const extraProviders: ProviderReadiness[] = [
