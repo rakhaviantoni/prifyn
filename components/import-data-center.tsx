@@ -2,7 +2,7 @@
 
 import {
   ArrowRight, CheckCircle, ChartLineUp, FileArrowUp, FileCsv, FileXls, Info,
-  PlugsConnected, Table, Warning,
+  MagnifyingGlass, PlugsConnected, Table, Warning, X,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import type JSZip from "jszip";
@@ -11,6 +11,13 @@ import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } fr
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
 type ImportBatch = { id: string; fileName: string; source: string; rows: number; acceptedRows?: number; rejectedRows?: number; importedAt: string; status: string };
 type ImportFeedback = { tone: "info" | "success" | "error"; title: string; detail: string } | null;
+type ImportDetail = {
+  import: ImportBatch;
+  mapping: { name: string; notes: string | null; columnMap: Record<string, string>; requiredColumns: string[] } | null;
+  metricKeys: string[];
+  dimensionKeys: string[];
+  sampleRows: Array<{ rowNumber: number; subjectId: string; status: string; dimensions: Record<string, unknown>; metrics: Record<string, number>; errors: string[] }>;
+};
 
 const reportPatterns = [
   ["Funnel journey", "Impressions → clicks → landing views → leads/orders → revenue → repeat purchase"],
@@ -86,6 +93,8 @@ export function ImportDataCenter() {
   const [isReading, setIsReading] = useState(false);
   const [importing, setImporting] = useState(false);
   const [importedBatches, setImportedBatches] = useState<ImportBatch[]>([]);
+  const [selectedImport, setSelectedImport] = useState<ImportDetail | null>(null);
+  const [loadingImportId, setLoadingImportId] = useState<string | null>(null);
   const detected = useMemo(() => preview ? detectImportTemplate(preview.headers) : null, [preview]);
   const mapping = useMemo(() => detected && preview ? mapHeaders(preview.headers, detected.template) : null, [detected, preview]);
 
@@ -129,6 +138,25 @@ export function ImportDataCenter() {
     setPreview(null);
     setMessage(null);
     setFeedback(null);
+  }
+
+  async function openImport(batch: ImportBatch) {
+    setLoadingImportId(batch.id);
+    setFeedback(null);
+    try {
+      const response = await fetch(`/api/imports?id=${encodeURIComponent(batch.id)}`);
+      const detail = await response.json().catch(() => ({})) as ImportDetail & { error?: string };
+      if (!response.ok || !detail.import) throw new Error(detail.error || "PRIFYN could not open this import.");
+      setSelectedImport(detail);
+    } catch (error) {
+      setFeedback({
+        tone: "error",
+        title: "Report could not open",
+        detail: error instanceof Error ? error.message : "Try refreshing the page and opening the report again.",
+      });
+    } finally {
+      setLoadingImportId(null);
+    }
   }
 
   async function finishImport() {
@@ -248,12 +276,27 @@ export function ImportDataCenter() {
       </div>
 
       <aside className="stack">
-        <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><FileArrowUp weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
+        <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><button type="button" onClick={() => void openImport(batch)}><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></button><span className="status-pill">{loadingImportId === batch.id ? "Opening…" : "Open"}</span></article>)}</div> : <div className="import-empty compact"><FileArrowUp weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><ChartLineUp weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Confirm detected source", "Finish import", "Open Ads Manager or Reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
+        <section className="surface import-flow-card"><ChartLineUp weight="duotone" /><h2>What happens after import</h2>{[["Rows become ads/campaign metrics", "/app/ads-window"], ["Campaign results become report evidence", "/app/reports"], ["Creator data appears after affiliate/KOL imports", "/creator/performance"]].map(([item, href], index) => <a key={item} href={href}><b>{importedBatches.length ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span><ArrowRight /></a>)}</section>
         <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>
     </section>
+    {selectedImport && <div className="dialog-backdrop" role="presentation" onMouseDown={() => setSelectedImport(null)}>
+      <section className="dialog-card import-detail-dialog" role="dialog" aria-modal="true" aria-labelledby="import-detail-title" onMouseDown={event => event.stopPropagation()}>
+        <button className="dialog-close" type="button" aria-label="Close" onClick={() => setSelectedImport(null)}><X /></button>
+        <span className="section-kicker">Imported report</span>
+        <h2 id="import-detail-title">{selectedImport.import.fileName}</h2>
+        <p>{selectedImport.import.source} · {selectedImport.import.rows} rows · {selectedImport.import.acceptedRows ?? selectedImport.import.rows} accepted{selectedImport.import.rejectedRows ? ` · ${selectedImport.import.rejectedRows} need review` : ""}</p>
+        <div className="import-detail-metrics">
+          <div><span>Mapped metrics</span><strong>{selectedImport.metricKeys.length ? selectedImport.metricKeys.map(item => item.replaceAll("_", " ")).join(", ") : "No numeric metrics"}</strong></div>
+          <div><span>Detected fields</span><strong>{selectedImport.dimensionKeys.length ? selectedImport.dimensionKeys.map(item => item.replaceAll("_", " ")).join(", ") : "No dimensions"}</strong></div>
+        </div>
+        {selectedImport.mapping && <section className="import-detail-section"><h3>Column mapping</h3><div className="mapping-list compact">{Object.entries(selectedImport.mapping.columnMap).map(([metric, column]) => <article key={metric}><strong>{metric.replaceAll("_", " ")}</strong><span className="mapped">{column}</span></article>)}</div></section>}
+        <section className="import-detail-section"><h3>Sample rows</h3><div className="import-table-wrap"><table className="data-table"><thead><tr><th>#</th><th>Subject</th><th>Status</th>{selectedImport.metricKeys.slice(0, 4).map(metric => <th key={metric}>{metric.replaceAll("_", " ")}</th>)}</tr></thead><tbody>{selectedImport.sampleRows.map(row => <tr key={row.rowNumber}><td>{row.rowNumber}</td><td>{row.subjectId}</td><td>{row.status}</td>{selectedImport.metricKeys.slice(0, 4).map(metric => <td key={metric}>{row.metrics?.[metric] ?? "—"}</td>)}</tr>)}</tbody></table></div></section>
+        <div className="dialog-actions"><a className="button button-outline" href="/app/ads-window"><MagnifyingGlass /> Open Ads Manager</a><a className="button button-dark" href="/app/reports"><ChartLineUp /> Open Reports</a></div>
+      </section>
+    </div>}
   </div>;
 }

@@ -167,12 +167,12 @@ export function mapHeaders(headers: string[], template: ImportTemplate) {
   ]));
 }
 
-export function parseCsvPreview(input: string, maxRows = 8) {
+export function parseCsvPreview(input: string) {
   const rows = input
     .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .filter(row => row.trim().length > 0)
     .map(row => row.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(cell => cell.trim().replace(/^"|"$/g, "")));
   const headers = rows[0] ?? [];
-  return { headers, rows: rows.slice(1, maxRows + 1), totalRows: Math.max(rows.length - 1, 0) };
+  return { headers, rows: rows.slice(1), totalRows: Math.max(rows.length - 1, 0) };
 }

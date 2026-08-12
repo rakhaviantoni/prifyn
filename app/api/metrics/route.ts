@@ -45,6 +45,23 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
   const impressions = totals.impressions ?? 0;
   const orders = totals.orders ?? totals.conversions ?? totals.results ?? 0;
   const creatorCost = totals.creator_cost_idr ?? 0;
+  const metricLabels: Record<string, string> = {
+    spend_idr: "Spend",
+    impressions: "Impressions",
+    reach: "Reach",
+    clicks: "Clicks",
+    results: "Results",
+    conversions: "Conversions",
+    orders: "Orders",
+    revenue_idr: "Revenue",
+    creator_cost_idr: "Creator cost",
+    cost_per_result_idr: "Cost / result",
+  };
+  const availableMetrics = Object.entries(totals)
+    .filter(([, value]) => value > 0)
+    .map(([key, value]) => ({ key, label: metricLabels[key] ?? key.replaceAll("_", " "), value }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 12);
 
   const sourceRows = Array.from(bySource.entries()).map(([source, metrics]) => {
     const sourceSpend = metrics.spend_idr ?? 0;
@@ -88,6 +105,7 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
     importCount,
     factCount: facts.length,
     sourceCount: sourceRows.length,
+    availableMetrics,
     bySource: sourceRows,
     bySubject: subjectRows,
     creator: {

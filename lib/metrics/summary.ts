@@ -11,6 +11,7 @@ export type MetricSummary = {
   importCount: number;
   factCount: number;
   sourceCount: number;
+  availableMetrics: Array<{ key: string; label: string; value: number }>;
   bySource: Array<{ source: string; spend: number; revenue: number; impressions: number; clicks: number; orders: number; roas: number | null }>;
   bySubject: Array<{ subjectId: string; subjectType: string; spend: number; revenue: number; impressions: number; clicks: number; orders: number; roas: number | null }>;
   creator: {
@@ -50,6 +51,7 @@ export function emptyMetricSummary(): MetricSummary {
     importCount: 0,
     factCount: 0,
     sourceCount: 0,
+    availableMetrics: [],
     bySource: [],
     bySubject: [],
     creator: { trackedClicks: 0, orders: 0, revenue: 0, creatorCost: 0, roas: null },

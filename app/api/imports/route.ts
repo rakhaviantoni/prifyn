@@ -157,10 +157,12 @@ function normalizeFacts(workspaceId: string, organizationId: string, jobId: stri
 }
 
 function publicJob(job: typeof importJobs.$inferSelect, sourceLabel?: string) {
+  const template = importTemplates.find(item => item.id === job.sourceType as ImportSourceType);
   return {
     id: job.id,
     fileName: job.objectKey,
-    source: sourceLabel ?? job.sourceType,
+    source: sourceLabel ?? template?.label ?? job.sourceType,
+    sourceType: job.sourceType,
     rows: job.totalRows,
     acceptedRows: job.acceptedRows,
     rejectedRows: job.rejectedRows,
@@ -172,6 +174,43 @@ function publicJob(job: typeof importJobs.$inferSelect, sourceLabel?: string) {
 export async function GET(request: Request) {
   try {
     const { db, membership, brand } = await getWorkspaceContext(request);
+    const url = new URL(request.url);
+    const importId = url.searchParams.get("id");
+    if (importId) {
+      const [job] = await db.select().from(importJobs).where(and(
+        eq(importJobs.id, importId),
+        eq(importJobs.workspaceId, membership.organizationId),
+        eq(importJobs.organizationId, brand.id),
+      )).limit(1);
+      if (!job) return Response.json({ error: "Import not found." }, { status: 404 });
+      const [mapping] = await db.select().from(importMappings).where(and(
+        eq(importMappings.workspaceId, membership.organizationId),
+        eq(importMappings.organizationId, brand.id),
+        eq(importMappings.sourceType, job.sourceType),
+      )).orderBy(desc(importMappings.createdAt)).limit(1);
+      const rows = await db.select().from(importRows).where(eq(importRows.importJobId, job.id)).orderBy(importRows.rowNumber).limit(12);
+      const metricKeys = Array.from(new Set(rows.flatMap(row => Object.keys(row.normalizedMetrics ?? {}))));
+      const dimensionKeys = Array.from(new Set(rows.flatMap(row => Object.keys(row.dimensions ?? {}).filter(key => key !== "raw"))));
+      return Response.json({
+        import: publicJob(job),
+        mapping: mapping ? {
+          name: mapping.name,
+          notes: mapping.notes,
+          columnMap: mapping.columnMap,
+          requiredColumns: mapping.requiredColumns,
+        } : null,
+        metricKeys,
+        dimensionKeys,
+        sampleRows: rows.map(row => ({
+          rowNumber: row.rowNumber,
+          subjectId: row.subjectId,
+          status: row.status,
+          dimensions: row.dimensions,
+          metrics: row.normalizedMetrics,
+          errors: row.errors,
+        })),
+      });
+    }
     const jobs = await db.select().from(importJobs).where(and(eq(importJobs.workspaceId, membership.organizationId), eq(importJobs.organizationId, brand.id))).orderBy(desc(importJobs.createdAt)).limit(8);
     return Response.json({ imports: jobs.map(job => publicJob(job)) });
   } catch (error) {

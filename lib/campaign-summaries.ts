@@ -18,6 +18,16 @@ export type CampaignSummary = {
   tracking: string;
   source: "import" | "campaign";
   importedRows?: number;
+  metrics?: {
+    spend: string;
+    results: string;
+    clicks: string;
+    impressions: string;
+    reach?: string;
+    revenue: string;
+    costPerResult?: string;
+  };
+  missingEvidence?: string[];
 };
 
 export type AdSummary = {
@@ -31,6 +41,10 @@ export type AdSummary = {
   spend: string;
   impressions: string;
   reach: string;
+  rawSpend: number;
+  rawResults: number;
+  rawImpressions: number;
+  rawReach: number;
   source: string;
   action: string;
 };
@@ -47,6 +61,9 @@ type ImportedCampaignRow = {
   orders: string | number | null;
   clicks: string | number | null;
   impressions: string | number | null;
+  reach: string | number | null;
+  results: string | number | null;
+  cost_per_result: string | number | null;
   period_end: Date | string | null;
 };
 
@@ -144,6 +161,9 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
         coalesce(sum((ir.normalized_metrics->>'orders')::numeric), 0) as orders,
         coalesce(sum((ir.normalized_metrics->>'clicks')::numeric), 0) as clicks,
         coalesce(sum((ir.normalized_metrics->>'impressions')::numeric), 0) as impressions,
+        coalesce(sum((ir.normalized_metrics->>'reach')::numeric), 0) as reach,
+        coalesce(sum((ir.normalized_metrics->>'results')::numeric), 0) as results,
+        coalesce(avg((ir.normalized_metrics->>'cost_per_result_idr')::numeric), 0) as cost_per_result,
         max(nullif(ir.dimensions->>'reporting_ends', '')) as period_end
       from import_rows ir
       inner join import_jobs ij on ij.id = ir.import_job_id
@@ -161,9 +181,16 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
         const spend = numberValue(row.spend);
         const revenue = numberValue(row.revenue);
         const orders = numberValue(row.orders) || numberValue(row.conversions);
+        const clicks = numberValue(row.clicks);
+        const results = numberValue(row.results) || orders;
         const roas = spend > 0 && revenue > 0 ? `${(revenue / spend).toFixed(2)}x` : "Add revenue";
         const importedRows = numberValue(row.imported_rows);
         const campaignName = row.campaign_name ?? "Imported campaign";
+        const missingEvidence = [
+          clicks ? "" : "Clicks / landing visits",
+          revenue ? "" : "Revenue or GMV",
+          orders ? "" : "Orders / leads",
+        ].filter(Boolean);
         return {
           name: campaignName,
           status: statusFromDelivery(row.delivery_status),
@@ -173,11 +200,21 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
           revenue: formatIdr(revenue),
           roas,
           end: formatDate(row.period_end),
-          note: `${importedRows} imported row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${orders ? ` · ${Math.round(orders).toLocaleString("id-ID")} result/orders` : ""}.`,
+          note: `${importedRows} imported ad row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${results ? ` · ${Math.round(results).toLocaleString("id-ID")} ${row.result_type || "results"}` : ""}.`,
           nextAction: revenue > 0 && spend > 0 ? "Review performance" : "Add outcome data",
           tracking: row.source_type ? `Imported export · ${sourceLabel(row.source_type)}` : "Imported export",
           source: "import" as const,
           importedRows,
+          metrics: {
+            spend: formatIdr(spend),
+            results: formatNumber(results),
+            clicks: clicks ? formatNumber(clicks) : "Not imported",
+            impressions: formatNumber(numberValue(row.impressions)),
+            reach: formatNumber(numberValue(row.reach)),
+            revenue: formatIdr(revenue),
+            costPerResult: numberValue(row.cost_per_result) ? formatIdr(numberValue(row.cost_per_result)) : undefined,
+          },
+          missingEvidence,
         };
       });
     const byName = new Map<string, CampaignSummary>();
@@ -245,6 +282,10 @@ export async function getWorkspaceAdSummaries(): Promise<AdSummary[]> {
         spend: formatIdr(numberValue(row.spend)),
         impressions: formatNumber(numberValue(row.impressions)),
         reach: formatNumber(numberValue(row.reach)),
+        rawSpend: numberValue(row.spend),
+        rawResults: numberValue(row.results),
+        rawImpressions: numberValue(row.impressions),
+        rawReach: numberValue(row.reach),
         source: sourceLabel(row.source_type),
         action: normalized.includes("archived") ? "Keep archived" : normalized.includes("inactive") ? "Review learning" : "Monitor delivery",
       };
