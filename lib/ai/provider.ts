@@ -58,8 +58,22 @@ function parseInsightContent(content: string) {
     parsed = JSON.parse(content);
   } catch {
     const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new AIProviderError("AI_BAD_JSON", "AI response was not valid JSON.");
-    parsed = JSON.parse(jsonMatch[0]);
+    if (!jsonMatch) return Insight.parse({
+      answer: content.trim(),
+      why: "The AI response was returned as plain text, so PRIFYN preserved the answer but could not read structured evidence fields.",
+      confidence: "low",
+      limitations: ["Answer format was not structured", "Review the evidence before acting"],
+    });
+    try {
+      parsed = JSON.parse(jsonMatch[0]);
+    } catch {
+      return Insight.parse({
+        answer: content.trim(),
+        why: "The AI response contained malformed JSON, so PRIFYN preserved the answer as plain text.",
+        confidence: "low",
+        limitations: ["Answer format was not structured", "Review the evidence before acting"],
+      });
+    }
   }
   return Insight.parse(normalizeInsightPayload(parsed));
 }
