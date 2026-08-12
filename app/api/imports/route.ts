@@ -99,7 +99,7 @@ function databaseErrorDetail(error: unknown) {
     current = item.cause;
   }
   const code = chain.find(item => item.code)?.code;
-  const message = chain.map(item => item.message).find(Boolean) ?? "Database operation failed.";
+  const message = chain.map(item => item.message).find(Boolean) ?? "The import could not be saved.";
   const detail = chain.map(item => item.detail).find(Boolean);
   const missingRelation = message.match(/relation "([^"]+)" does not exist/i)?.[1];
   const missingType = message.match(/type "([^"]+)" does not exist/i)?.[1];
@@ -242,7 +242,7 @@ export async function POST(request: Request) {
     const missingTables = await assertImportSchemaReady(db);
     if (missingTables.length) {
       return Response.json({
-        error: `Database import schema is not ready. Missing table${missingTables.length === 1 ? "" : "s"}: ${missingTables.join(", ")}.`,
+        error: "Import setup is not complete yet. Ask the workspace admin to finish setup, then try again.",
         reason: "missing_import_schema",
         missingTables,
       }, { status: 503 });
@@ -307,9 +307,7 @@ export async function POST(request: Request) {
     const detail = databaseErrorDetail(error);
     if (detail.missingRelation || detail.missingType) {
       return Response.json({
-        error: detail.missingRelation
-          ? `Database table "${detail.missingRelation}" is missing. Run the latest Drizzle migrations before importing.`
-          : `Database type "${detail.missingType}" is missing. Run the latest Drizzle migrations before importing.`,
+        error: "Import setup is not complete yet. Ask the workspace admin to finish setup, then try again.",
         reason: "missing_import_schema",
         code: detail.code,
         missingTables: detail.missingRelation ? [detail.missingRelation] : undefined,

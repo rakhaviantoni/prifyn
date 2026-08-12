@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChartLineUp, CheckCircle, Database, FileArrowUp, Sparkle, TrendUp } from "@phosphor-icons/react";
+import { ChartLineUp, CheckCircle, FileArrowUp, Sparkle, TrendUp } from "@phosphor-icons/react";
 import { emptyMetricSummary, formatCompactNumber, formatCurrency, formatRatio, type MetricSummary } from "@/lib/metrics/summary";
 import { WorkspaceLink } from "@/components/workspace-link";
 
-function useMetricSummary() {
+export function useMetricSummary() {
   const [summary, setSummary] = useState<MetricSummary>(emptyMetricSummary());
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -46,7 +46,7 @@ export function LiveReportMetrics({ view = "Executive" }: { view?: "Executive" |
 export function LiveCampaignResultMetrics() {
   const { summary } = useMetricSummary();
   if (!summary.hasData) return null;
-  return <section className="surface results-decision live-results-evidence"><span><Database weight="duotone" /></span><div><small>Imported report</small><h2>{summary.importCount} report{summary.importCount === 1 ? "" : "s"} available for this workspace.</h2><p>Spend {formatCurrency(summary.totals.spend_idr ?? 0)} · Revenue {formatCurrency(summary.totals.revenue_idr ?? 0)} · ROAS {formatRatio(summary.derived.roas)}. Add clicks, orders, or revenue exports to unlock deeper diagnosis.</p><div><b>{summary.importCount} imports</b><b>{summary.sourceCount} sources</b><b>{summary.bySubject.length} campaigns/ads</b></div></div><WorkspaceLink className="button button-dark" href="/app/reports">Open reports</WorkspaceLink></section>;
+  return <section className="surface results-decision live-results-evidence"><span><FileArrowUp weight="duotone" /></span><div><small>Imported report</small><h2>{summary.importCount} report{summary.importCount === 1 ? "" : "s"} available for this workspace.</h2><p>Spend {formatCurrency(summary.totals.spend_idr ?? 0)} · Revenue {formatCurrency(summary.totals.revenue_idr ?? 0)} · ROAS {formatRatio(summary.derived.roas)}. Add clicks, orders, or revenue exports to unlock deeper diagnosis.</p><div><b>{summary.importCount} imports</b><b>{summary.sourceCount} sources</b><b>{summary.bySubject.length} campaigns/ads</b></div></div><WorkspaceLink className="button button-dark" href="/app/reports">Open reports</WorkspaceLink></section>;
 }
 
 export function CreatorLivePerformance() {
@@ -61,7 +61,7 @@ function ReportShell({ title, copy }: { title: string; copy: string }) {
 }
 
 function CreatorShell({ title, copy }: { title: string; copy: string }) {
-  return <><section className="payment-kpis"><article className="surface"><ChartLineUp /><span><small>Tracked clicks</small><strong>Waiting</strong></span></article><article className="surface"><TrendUp /><span><small>Orders / results</small><strong>Waiting</strong></span></article><article className="surface"><Sparkle /><span><small>Campaign readiness</small><strong>Not scored</strong></span></article></section><section className="surface performance-insight"><Sparkle weight="fill" /><div><span>Evidence-based insight</span><h2>{title}</h2><p>{copy}</p><small><Database /> No production creator metric is shown until evidence exists.</small></div></section></>;
+  return <><section className="payment-kpis"><article className="surface"><ChartLineUp /><span><small>Tracked clicks</small><strong>Waiting</strong></span></article><article className="surface"><TrendUp /><span><small>Orders / results</small><strong>Waiting</strong></span></article><article className="surface"><Sparkle /><span><small>Campaign readiness</small><strong>Not scored</strong></span></article></section><section className="surface performance-insight"><Sparkle weight="fill" /><div><span>Evidence-based insight</span><h2>{title}</h2><p>{copy}</p><small><FileArrowUp /> Import creator links, coupons, proof, or order results to activate this view.</small></div></section></>;
 }
 
 function Metric({ label, value, change }: { label: string; value: string; change: string }) {

@@ -975,6 +975,7 @@ svg { flex: none; }
 .journey-layout > section { padding: 15px; }
 .journey-funnel { display: grid; justify-items: center; gap: 5px; }
 .journey-funnel > div { position: relative; min-height: 43px; display: grid; grid-template-columns: 1fr .6fr .8fr; gap: 8px; align-items: center; padding: 0 14px; border-radius: 6px; background: linear-gradient(90deg, #dcece2, var(--sage-2)); }
+.journey-funnel > div.missing { border: 1px dashed rgba(105,115,110,.35); background: rgba(255,255,255,.46); opacity: .74; }
 .journey-funnel > div strong { font-size: 10px; }
 .journey-funnel > div span, .journey-funnel > div small { font-size: 6.5px; }
 .journey-funnel > div small { color: var(--muted); }
@@ -1407,6 +1408,7 @@ svg { flex: none; }
 .theme-dark .market-bubbles { background: radial-gradient(circle at 45% 48%, rgba(126,186,149,.15), transparent 35%), linear-gradient(145deg, #18251e, #24372d); }
 .theme-dark .donut { background: radial-gradient(circle, var(--paper) 55%, transparent 57%), conic-gradient(var(--sage) var(--value), #314239 0); }
 .theme-dark .journey-funnel > div { background: linear-gradient(90deg, #24392e, var(--sage-2)); }
+.theme-dark .journey-funnel > div.missing { background: rgba(255,255,255,.05); }
 .theme-dark .decision-chip.warning, .theme-dark .decision-chip.red { background: #3a2421; color: #e88d80; }
 .theme-dark .decision-chip.amber { background: #3b2d1a; color: #e6b976; }
 

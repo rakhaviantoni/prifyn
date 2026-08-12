@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CheckCircle, CreditCard, Database, PlugsConnected, ShieldCheck, UsersThree } from "@phosphor-icons/react";
+import { Bell, ChartLineUp, CheckCircle, CreditCard, PlugsConnected, ShieldCheck, UsersThree } from "@phosphor-icons/react";
 import { useState } from "react";
 import { WorkspaceLink } from "@/components/workspace-link";
 
@@ -8,7 +8,7 @@ const settings = [
   { icon: PlugsConnected, title: "Connections", copy: "Authorize channels once, assign external accounts to operating brands, and monitor permissions and sync health.", status: "2 active sources", tone: "" },
   { icon: UsersThree, title: "Team & access", copy: "Invite teammates, assign workspace roles, and keep sensitive decisions with the right people.", status: "4 members", tone: "" },
   { icon: CreditCard, title: "Billing & usage", copy: "Manage the workspace plan, operating-brand capacity, AI usage, invoices, and receipts.", status: "Growth · 3 brands", tone: "" },
-  { icon: Database, title: "Data readiness", copy: "Review source coverage and freshness before PRIFYN uses evidence in a recommendation.", status: "86% ready", tone: "" },
+  { icon: ChartLineUp, title: "Data readiness", copy: "Review source coverage and freshness before PRIFYN uses evidence in a recommendation.", status: "86% ready", tone: "" },
   { icon: ShieldCheck, title: "AI recommendations", copy: "Require visible evidence, confidence, and human confirmation before any action is recorded.", status: "Human review on", tone: "" },
   { icon: Bell, title: "Decision notifications", copy: "Choose which risks, approvals, and weekly reviews should reach your team.", status: "3 rules active", tone: "neutral" },
 ];

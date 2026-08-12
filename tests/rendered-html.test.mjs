@@ -118,7 +118,7 @@ test("legacy ads page redirects to the broader growth story", async () => {
   assert.equal(new URL(response.headers.get("location")).pathname, "/growth");
 });
 
-test("AI endpoint provides an explainable safe demo without credentials", async () => {
+test("AI endpoint fails safely without provider credentials", async () => {
   const response = await request("/api/ai/insights", {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json" },
@@ -126,10 +126,10 @@ test("AI endpoint provides an explainable safe demo without credentials", async 
   });
   assert.equal(response.status, 200);
   const body = await response.json();
-  assert.equal(body.mode, "demo");
-  assert.equal(body.confidence, "high");
-  assert.match(body.answer, /amplification/i);
-  assert.match(body.why, /cost/i);
+  assert.equal(body.mode, "offline");
+  assert.equal(body.confidence, "low");
+  assert.match(body.answer, /AI provider is not connected/i);
+  assert.match(body.why, /did not generate a business recommendation/i);
 });
 
 test("auth endpoint fails safely until credentials are supplied", async () => {

@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  ArrowRight, CheckCircle, Database, FileArrowUp, FileCsv, FileXls, Info,
+  ArrowRight, CheckCircle, ChartLineUp, FileArrowUp, FileCsv, FileXls, Info,
   PlugsConnected, Table, Warning,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -224,7 +224,7 @@ export function ImportDataCenter() {
 
     {message && <div className="report-explainer import-message" role="status"><strong>{preview ? "Import preview ready" : "Import needs attention"}</strong><span>{message}</span><button type="button" onClick={() => setMessage(null)}>Close</button></div>}
     {feedback && <div className={`import-feedback ${feedback.tone}`} role={feedback.tone === "error" ? "alert" : "status"}>
-      <span>{feedback.tone === "success" ? <CheckCircle weight="fill" /> : feedback.tone === "error" ? <Warning weight="fill" /> : <Database weight="duotone" />}</span>
+      <span>{feedback.tone === "success" ? <CheckCircle weight="fill" /> : feedback.tone === "error" ? <Warning weight="fill" /> : <FileArrowUp weight="duotone" />}</span>
       <div><strong>{feedback.title}</strong><small>{feedback.detail}</small></div>
       <button type="button" onClick={() => setFeedback(null)}>Dismiss</button>
     </div>}
@@ -233,7 +233,7 @@ export function ImportDataCenter() {
       <div className="stack">
         <section className="surface import-preview-card">
           <div className="surface-head"><h2>Uploaded file</h2>{preview && <button type="button" onClick={clearPreview}>Clear</button>}</div>
-          {!preview ? <div className="import-empty"><Database weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see which metrics PRIFYN can read.</p></div> : <div className="import-file-summary">
+          {!preview ? <div className="import-empty"><FileArrowUp weight="duotone" /><h3>No file selected yet.</h3><p>Upload a platform export or download the Meta template to see which metrics PRIFYN can read.</p></div> : <div className="import-file-summary">
             <span>{preview.extension === ".xlsx" ? <FileXls /> : <FileCsv />}</span><div><strong>{preview.fileName}</strong><small>{preview.extension?.toUpperCase()} · {preview.totalRows ? `${preview.totalRows} rows detected` : "Ready to map"}</small></div>
             <b className={`status-pill ${detected ? "" : "warning"}`}>{detected ? "Template detected" : "Needs mapping"}</b>
           </div>}
@@ -248,9 +248,9 @@ export function ImportDataCenter() {
       </div>
 
       <aside className="stack">
-        <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><Database weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
+        <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><div><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></div><span className="status-pill">{batch.status}</span></article>)}</div> : <div className="import-empty compact"><FileArrowUp weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><Database weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Confirm detected source", "Finish import", "Open Ads Manager or Reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
+        <section className="surface import-flow-card"><ChartLineUp weight="duotone" /><h2>Import flow</h2>{["Upload export", "Preview rows", "Confirm detected source", "Finish import", "Open Ads Manager or Reports"].map((item, index) => <div key={item}><b>{preview && index < 3 || importedBatches.length && index < 5 ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span></div>)}</section>
         <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
         <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
       </aside>
