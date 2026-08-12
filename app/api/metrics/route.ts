@@ -1,8 +1,8 @@
-import { desc, eq } from "drizzle-orm";
-import { getDb } from "@/db";
-import { importJobs, member, performanceFacts } from "@/db/schema";
-import { getAuth, isAuthConfigured } from "@/lib/auth/server";
+import { and, desc, eq } from "drizzle-orm";
+import { importJobs, performanceFacts } from "@/db/schema";
+import { isAuthConfigured } from "@/lib/auth/server";
 import { emptyMetricSummary, safeDivide, type MetricSummary } from "@/lib/metrics/summary";
+import { getWorkspaceContextFromRequest } from "@/lib/workspace-context";
 
 type Fact = typeof performanceFacts.$inferSelect;
 
@@ -103,17 +103,11 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
 export async function GET(request: Request) {
   if (!isAuthConfigured()) return Response.json({ summary: emptyMetricSummary(), reason: "auth_not_configured" }, { status: 503 });
   try {
-    const session = await getAuth().api.getSession({ headers: request.headers });
-    if (!session?.user) return Response.json({ summary: emptyMetricSummary() }, { status: 401 });
-
-    const db = getDb();
-    const memberships = await db.select({ workspaceId: member.organizationId }).from(member).where(eq(member.userId, session.user.id)).limit(1);
-    const workspaceId = memberships[0]?.workspaceId;
-    if (!workspaceId) return Response.json({ summary: emptyMetricSummary() });
+    const { db, membership, brand } = await getWorkspaceContextFromRequest(request);
 
     const [facts, imports] = await Promise.all([
-      db.select().from(performanceFacts).where(eq(performanceFacts.workspaceId, workspaceId)).orderBy(desc(performanceFacts.periodStart)).limit(5000),
-      db.select({ id: importJobs.id }).from(importJobs).where(eq(importJobs.workspaceId, workspaceId)).limit(1000),
+      db.select().from(performanceFacts).where(and(eq(performanceFacts.workspaceId, membership.organizationId), eq(performanceFacts.organizationId, brand.id))).orderBy(desc(performanceFacts.periodStart)).limit(5000),
+      db.select({ id: importJobs.id }).from(importJobs).where(and(eq(importJobs.workspaceId, membership.organizationId), eq(importJobs.organizationId, brand.id))).limit(1000),
     ]);
 
     return Response.json({ summary: buildSummary(facts, imports.length) });

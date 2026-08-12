@@ -24,13 +24,14 @@ export function CreatorWorkspace() {
 
   return <div className="app-content creator-intelligence-page">
     <header className="app-page-head"><div><span>Creator intelligence</span><h1>Find creators with evidence.</h1><p>Discover, evaluate, compare, and recruit the right talent—without a marketplace feed.</p></div><button className="button button-dark" type="button" onClick={() => setCreating(true)}><Plus weight="bold" /> Add creator</button></header>
+    <section className="surface evidence-strip"><Sparkle weight="fill" /><span><strong>Starter directory.</strong> Replace these profiles with onboarded creators or verified creator records from your team.</span><small>Evidence review required before real outreach</small></section>
     <section className="creator-command surface">
       <label><MagnifyingGlass /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search creator, niche, or location" aria-label="Search creators" /></label>
       <div className="creator-filter"><Funnel /><select value={platform} onChange={event => setPlatform(event.target.value)} aria-label="Filter by platform"><option>All platforms</option><option>TikTok</option><option>Instagram</option><option>YouTube</option></select></div>
       <button type="button" className="button button-outline" onClick={() => { setQuery(""); setPlatform("All platforms"); }}>Reset</button>
     </section>
     <section className="creator-stats" aria-label="Creator intelligence summary"><article><UsersThree /><div><strong>{creatorProfiles.length}</strong><span>evaluated creators</span></div></article><article><Sparkle /><div><strong>91%</strong><span>average AI confidence</span></div></article><article><SealCheck /><div><strong>{creatorProfiles.filter(item => item.verification !== "Review").length}</strong><span>identity-verified</span></div></article></section>
-    <div className="creator-results-head"><div><strong>{visible.length} creators</strong><span>Ranked for Ramadan Made Simple</span></div><span>AI scores are recommendations—not automatic decisions.</span></div>
+    <div className="creator-results-head"><div><strong>{visible.length} creators</strong><span>Ranked for the active campaign context</span></div><span>AI scores are recommendations—not automatic decisions.</span></div>
     <section className="creator-card-grid">
       {visible.map(creator => <article className="creator-card surface" key={creator.id}>
         <div className="creator-card-top"><span className="creator-avatar">{creator.initials}</span><div><h2>{creator.name} {creator.verification !== "Review" && <SealCheck weight="fill" />}</h2><p>{creator.handle} · {creator.location}</p></div><span className="fit-score"><b>{creator.fit}%</b> fit</span></div>

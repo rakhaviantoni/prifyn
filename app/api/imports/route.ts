@@ -1,19 +1,15 @@
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import {
-  businessOrganizations,
   importJobs,
   importMappings,
   importRows,
-  member,
-  organization,
-  organizationMembers,
   performanceFacts,
 } from "@/db/schema";
 import { importTemplates, type ImportSourceType } from "@/lib/imports/metric-mapping";
-import { getAuth, isAuthConfigured } from "@/lib/auth/server";
+import { getWorkspaceContextFromRequest } from "@/lib/workspace-context";
 
 const ImportPayload = z.object({
   fileName: z.string().min(1),
@@ -59,10 +55,6 @@ const dimensionMetrics = new Set([
   "reporting_starts",
   "reporting_ends",
 ]);
-
-function slugify(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "workspace";
-}
 
 function hash(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -120,51 +112,7 @@ async function assertImportSchemaReady(db: ReturnType<typeof getDb>) {
 }
 
 async function getWorkspaceContext(request: Request) {
-  if (!isAuthConfigured()) throw new Response("Authentication is not configured.", { status: 503 });
-  const session = await getAuth().api.getSession({ headers: request.headers });
-  if (!session?.user) throw new Response("Sign in is required.", { status: 401 });
-
-  const db = getDb();
-  let memberships = await db.select().from(member).where(eq(member.userId, session.user.id)).limit(1);
-  let membership = memberships[0];
-
-  if (!membership) {
-    const workspaceId = `ws_${randomUUID()}`;
-    const workspaceName = `${session.user.name || session.user.email?.split("@")[0] || "My"} Workspace`;
-    await db.insert(organization).values({
-      id: workspaceId,
-      name: workspaceName,
-      slug: `${slugify(workspaceName)}-${workspaceId.slice(3, 9)}`,
-    });
-    const memberId = `mem_${randomUUID()}`;
-    await db.insert(member).values({
-      id: memberId,
-      organizationId: workspaceId,
-      userId: session.user.id,
-      role: "owner",
-    });
-    memberships = await db.select().from(member).where(eq(member.id, memberId)).limit(1);
-    membership = memberships[0];
-  }
-
-  const organizations = await db.select().from(businessOrganizations).where(eq(businessOrganizations.workspaceId, membership.organizationId)).limit(1);
-  let brand = organizations[0];
-  if (!brand) {
-    const [createdBrand] = await db.insert(businessOrganizations).values({
-      workspaceId: membership.organizationId,
-      name: "Operating brand",
-      slug: "operating-brand",
-      type: "brand",
-    }).returning();
-    brand = createdBrand;
-    await db.insert(organizationMembers).values({
-      organizationId: brand.id,
-      workspaceMemberId: membership.id,
-      role: "owner",
-    }).onConflictDoNothing();
-  }
-
-  return { db, session, membership, brand };
+  return getWorkspaceContextFromRequest(request);
 }
 
 function normalizeRows(jobId: string, payload: z.infer<typeof ImportPayload>) {
@@ -223,8 +171,8 @@ function publicJob(job: typeof importJobs.$inferSelect, sourceLabel?: string) {
 
 export async function GET(request: Request) {
   try {
-    const { db, membership } = await getWorkspaceContext(request);
-    const jobs = await db.select().from(importJobs).where(eq(importJobs.workspaceId, membership.organizationId)).orderBy(desc(importJobs.createdAt)).limit(8);
+    const { db, membership, brand } = await getWorkspaceContext(request);
+    const jobs = await db.select().from(importJobs).where(and(eq(importJobs.workspaceId, membership.organizationId), eq(importJobs.organizationId, brand.id))).orderBy(desc(importJobs.createdAt)).limit(8);
     return Response.json({ imports: jobs.map(job => publicJob(job)) });
   } catch (error) {
     if (error instanceof Response) return error;

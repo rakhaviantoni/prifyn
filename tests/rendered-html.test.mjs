@@ -178,7 +178,7 @@ test("ships requested foundation packages and schema migrations", async () => {
   assert.doesNotMatch(importMigration, /DROP TABLE|TRUNCATE|DELETE FROM/);
   assert.match(envExample, /GOOGLE_CLIENT_ID/);
   assert.match(envExample, /PRIFYN_CREATOR_HOSTNAME/);
-  assert.match(envExample, /SUMOPOD_API_KEY/);
+  assert.match(envExample, /DEEPSEEK_API_KEY/);
 });
 
 test("Creator Intelligence exposes honest connector readiness", async () => {

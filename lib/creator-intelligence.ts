@@ -30,7 +30,7 @@ export const creatorPermissions = {
 export function creatorConnectorReadiness() {
   return {
     identity: { google: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) },
-    intelligence: { sumopod: Boolean(process.env.SUMOPOD_API_KEY), mode: process.env.SUMOPOD_API_KEY ? "configured" : "explainable-demo" },
+    intelligence: { deepseek: Boolean(process.env.DEEPSEEK_API_KEY), mode: process.env.DEEPSEEK_API_KEY ? "configured" : "evidence-gated" },
     social: {
       tiktok: { mode: "public-link", api: false },
       instagram: { mode: "public-link", api: false },

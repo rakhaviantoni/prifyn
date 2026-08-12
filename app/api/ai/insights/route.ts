@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { generateInsight } from "@/lib/ai/provider";
 
-const RequestBody = z.object({ question: z.string().trim().min(3).max(500), context: z.object({ brand: z.string().trim().min(1).max(120), period: z.string().trim().max(80), route: z.string().trim().max(200) }).optional() });
+const RequestBody = z.object({ question: z.string().trim().min(3).max(500), context: z.object({ brand: z.string().trim().min(1).max(120), period: z.string().trim().max(80), route: z.string().trim().max(200), evidence: z.unknown().optional() }).optional() });
 
 export async function POST(request: Request) {
   try {

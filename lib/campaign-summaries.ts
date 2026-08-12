@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
 import { desc, eq, sql } from "drizzle-orm";
-import { getDb } from "@/db";
-import { businessOrganizations, campaigns, member } from "@/db/schema";
-import { getAuth, isAuthConfigured } from "@/lib/auth/server";
+import { campaigns } from "@/db/schema";
+import { isAuthConfigured } from "@/lib/auth/server";
+import { getWorkspaceContextFromHeaders } from "@/lib/workspace-context";
 
 export type CampaignSummary = {
   name: string;
@@ -126,15 +126,7 @@ function summarizeCampaignShell(row: typeof campaigns.$inferSelect): CampaignSum
 
 export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]> {
   if (!isAuthConfigured()) return [];
-  const session = await getAuth().api.getSession({ headers: await headers() });
-  if (!session?.user) return [];
-
-  const db = getDb();
-  const membership = (await db.select().from(member).where(eq(member.userId, session.user.id)).limit(1))[0];
-  if (!membership) return [];
-
-  const brand = (await db.select().from(businessOrganizations).where(eq(businessOrganizations.workspaceId, membership.organizationId)).limit(1))[0];
-  if (!brand) return [];
+  const { db, membership, brand } = await getWorkspaceContextFromHeaders(await headers());
 
   try {
     const shellRows = await db.select().from(campaigns).where(eq(campaigns.organizationId, brand.id)).orderBy(desc(campaigns.createdAt)).limit(50);
@@ -211,15 +203,7 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
 
 export async function getWorkspaceAdSummaries(): Promise<AdSummary[]> {
   if (!isAuthConfigured()) return [];
-  const session = await getAuth().api.getSession({ headers: await headers() });
-  if (!session?.user) return [];
-
-  const db = getDb();
-  const membership = (await db.select().from(member).where(eq(member.userId, session.user.id)).limit(1))[0];
-  if (!membership) return [];
-
-  const brand = (await db.select().from(businessOrganizations).where(eq(businessOrganizations.workspaceId, membership.organizationId)).limit(1))[0];
-  if (!brand) return [];
+  const { db, membership, brand } = await getWorkspaceContextFromHeaders(await headers());
 
   try {
     const result = await db.execute(sql<ImportedAdRow>`

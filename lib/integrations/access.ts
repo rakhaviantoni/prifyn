@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
 import { businessOrganizations, member } from "@/db/schema";
 import { getAuth, isAuthConfigured } from "@/lib/auth/server";
+import { getCookieValue } from "@/lib/workspace-context";
 
 const connectionRoles = new Set(["owner", "admin"]);
 
@@ -15,8 +16,9 @@ export async function requireConnectionAdmin(request: Request, requestedOrganiza
   const membership = memberships.find(item => connectionRoles.has(item.role));
   if (!membership) throw new Response("Workspace owner or admin access is required.", { status: 403 });
 
-  const organizations = requestedOrganizationId
-    ? await db.select().from(businessOrganizations).where(and(eq(businessOrganizations.workspaceId, membership.workspaceId), eq(businessOrganizations.id, requestedOrganizationId))).limit(1)
+  const activeBrandId = requestedOrganizationId ?? getCookieValue(request.headers, "prifyn-active-brand-id");
+  const organizations = activeBrandId
+    ? await db.select().from(businessOrganizations).where(and(eq(businessOrganizations.workspaceId, membership.workspaceId), eq(businessOrganizations.id, activeBrandId))).limit(1)
     : await db.select().from(businessOrganizations).where(eq(businessOrganizations.workspaceId, membership.workspaceId)).limit(1);
   const organization = organizations[0];
   if (!organization) throw new Response("Create an operating brand before connecting a channel.", { status: 409 });

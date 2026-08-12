@@ -9,7 +9,7 @@ const Insight = z.object({
 
 export type InsightResponse = z.infer<typeof Insight> & { mode: "live" | "offline" };
 
-type InsightContext = { brand: string; period: string; route: string };
+type InsightContext = { brand: string; period: string; route: string; evidence?: unknown };
 
 function offline(question: string, context: InsightContext): InsightResponse {
   const normalized = question.toLowerCase();
@@ -26,11 +26,11 @@ function offline(question: string, context: InsightContext): InsightResponse {
 
 export async function generateInsight(question: string, suppliedContext?: InsightContext): Promise<InsightResponse> {
   const context = suppliedContext ?? { brand: "Selected brand", period: "Last 7 days", route: "/app/copilot" };
-  const apiKey = process.env.SUMOPOD_API_KEY;
-  const model = process.env.SUMOPOD_MODEL;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const model = process.env.DEEPSEEK_MODEL ?? "deepseek-chat";
   if (!apiKey || !model) return offline(question, context);
 
-  const baseURL = (process.env.SUMOPOD_BASE_URL ?? "https://ai.sumopod.com/v1").replace(/\/$/, "");
+  const baseURL = (process.env.DEEPSEEK_BASE_URL ?? "https://api.deepseek.com/v1").replace(/\/$/, "");
   const response = await fetch(`${baseURL}/chat/completions`, {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
@@ -39,8 +39,8 @@ export async function generateInsight(question: string, suppliedContext?: Insigh
       temperature: 0.2,
       response_format: { type: "json_object" },
       messages: [
-        { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System. Return JSON with answer, why, confidence (low|medium|high), and limitations. Never claim evidence outside the provided bundle. Prefer a clear next action." },
-        { role: "user", content: `Question: ${question}\nContext: ${JSON.stringify(context)}\nEvidence bundle: ${JSON.stringify({ instruction: "Use only imported reports, connected accounts, and campaign activity supplied by PRIFYN. If evidence is missing, say what to connect or import next." })}` },
+        { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Keep answers concise, operational, and action-oriented." },
+        { role: "user", content: `Question: ${question}\nContext: ${JSON.stringify(context)}\nEvidence bundle: ${JSON.stringify(context.evidence ?? { instruction: "Use only imported reports, connected accounts, and campaign activity supplied by PRIFYN. If evidence is missing, say what to connect or import next." })}` },
       ],
     }),
     signal: AbortSignal.timeout(20000),
