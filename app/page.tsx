@@ -25,8 +25,8 @@ export default function LandingPage() {
               <h1>Know what moves<br />your business <em>next.</em></h1>
               <p className="hero-lede">PRIFYN connects campaigns, creators, revenue, and operating signals—then turns the evidence into the next best decision.</p>
               <div className="hero-actions">
-                <Link className="button button-light button-large" href="/auth/sign-up">Start building growth <ArrowRight weight="bold" /></Link>
-                <Link className="button button-ghost-light button-large" href="/features">Explore Growth OS</Link>
+                <Link className="button button-light button-large" href="/book">Book appointment <ArrowRight weight="bold" /></Link>
+                <Link className="button button-ghost-light button-large" href="/apply">Apply online</Link>
               </div>
               <div className="hero-proof">
                 <span><CheckCircle weight="fill" /> No credit card</span>
@@ -55,7 +55,7 @@ export default function LandingPage() {
             </div>
             <div className="intro-copy">
               <p>Growing businesses and multi-brand teams can create demand. The real constraint appears after the campaign works: disconnected data, overloaded teams, uncertain attribution, and decisions made too late.</p>
-              <Link href="/features" className="text-link">See how the system works <ArrowRight weight="bold" /></Link>
+              <Link href="/docs" className="text-link">Read the Growth OS docs <ArrowRight weight="bold" /></Link>
             </div>
           </div>
           <div className="marketing-container problem-grid">
@@ -122,8 +122,8 @@ export default function LandingPage() {
             <h2>Your business already has the signals.<br /><em>PRIFYN makes them useful.</em></h2>
             <p>Build a calmer, more accountable growth operation from your next campaign onward.</p>
             <div className="hero-actions centered-actions">
-              <Link className="button button-light button-large" href="/auth/sign-up">Start with Growth OS <ArrowRight weight="bold" /></Link>
-              <Link className="button button-ghost-light button-large" href="/pricing">View pricing</Link>
+              <Link className="button button-light button-large" href="/book">Book walkthrough <ArrowRight weight="bold" /></Link>
+              <Link className="button button-ghost-light button-large" href="/docs">Read docs</Link>
             </div>
           </div>
         </section>

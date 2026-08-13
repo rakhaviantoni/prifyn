@@ -5,7 +5,8 @@ import { Brand } from "./brand";
 const groups = [
   ["Product", [["Growth OS overview", "/growth"], ["Features", "/features"], ["Pricing", "/pricing"], ["Product demo", "/demo"]]],
   ["Solutions", [["For Brands", "/solutions/brands"], ["For Agencies", "/solutions/agencies"], ["For Creators", "/solutions/creators"]]],
-  ["Resources", [["Blog", "/blog"], ["Case Studies", "/case-studies"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
+  ["Start", [["Book appointment", "/book"], ["Apply online", "/apply"], ["Create workspace", "/auth/sign-up"]]],
+  ["Resources", [["Docs", "/docs"], ["Blog", "/blog"], ["Case Studies", "/case-studies"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
 ];
 
 export function MarketingFooter() {

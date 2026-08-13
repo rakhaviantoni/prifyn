@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight } from "@phosphor-icons/react/dist/ssr";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingHeader } from "@/components/marketing-header";
 import { PricingTable } from "@/components/pricing-table";
@@ -6,5 +8,5 @@ import { PricingTable } from "@/components/pricing-table";
 export const metadata: Metadata = { title: "Pricing", description: "Simple Growth OS pricing for growing and multi-brand teams." };
 
 export default function PricingPage() {
-  return <div className="marketing-page"><div className="subpage-header"><MarketingHeader /></div><main><section className="page-hero compact"><div className="marketing-container"><span className="section-kicker">Simple, deliberate pricing</span><h1>Start with decisions.<br />Scale with your operation.</h1><p>No feature maze. Choose the operating depth your team needs today, then expand when the business earns the complexity.</p></div></section><PricingTable /><section className="final-cta"><div className="marketing-container final-cta-inner"><span className="section-kicker light">Not sure where to start?</span><h2>Begin with one campaign.<br /><em>Prove the operating rhythm.</em></h2><p>Every plan includes guided onboarding and a complete data export.</p></div></section></main><MarketingFooter /></div>;
+  return <div className="marketing-page"><div className="subpage-header"><MarketingHeader /></div><main><section className="page-hero compact"><div className="marketing-container"><span className="section-kicker">Simple, deliberate pricing</span><h1>Start with decisions.<br />Scale with your operation.</h1><p>No feature maze. Choose the operating depth your team needs today, then expand when the business earns the complexity.</p></div></section><PricingTable /><section className="final-cta"><div className="marketing-container final-cta-inner"><span className="section-kicker light">Not sure where to start?</span><h2>Begin with one campaign.<br /><em>Prove the operating rhythm.</em></h2><p>Book a walkthrough or apply online if you want PRIFYN to map your first campaign/reporting loop before workspace setup.</p><div className="hero-actions centered-actions"><Link className="button button-light button-large" href="/book">Book appointment <ArrowRight /></Link><Link className="button button-ghost-light button-large" href="/apply">Apply online</Link></div></div></section></main><MarketingFooter /></div>;
 }

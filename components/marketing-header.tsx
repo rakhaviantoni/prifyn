@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, Briefcase, CaretDown, ChartLineUp, List, Newspaper, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
+import { ArrowRight, BookOpenText, Briefcase, CalendarCheck, CaretDown, ChartLineUp, ClipboardText, List, Newspaper, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand";
@@ -19,9 +19,15 @@ const menus = [
     { label: "For Creators", copy: "Find aligned work and manage delivery clearly.", href: "/solutions/creators", icon: UserCircle },
   ], featured: { eyebrow: "Choose your path", title: "One system, shaped around how you work.", copy: "Compare workflows by role.", href: "/growth" } },
   { label: "Resources", items: [
+    { label: "Docs", copy: "Understand setup, imports, reporting, and workflows.", href: "/docs", icon: BookOpenText },
     { label: "Blog", copy: "Practical thinking for better growth operations.", href: "/blog", icon: Newspaper },
     { label: "Case Studies", copy: "See operating problems translated into decisions.", href: "/case-studies", icon: ChartLineUp },
   ], featured: { eyebrow: "Latest field note", title: "Growth without readiness is an expensive illusion.", copy: "6 min read · Growth operations", href: "/blog/growth-without-operational-readiness" } },
+  { label: "Start", items: [
+    { label: "Book appointment", copy: "Guided walkthrough before workspace setup.", href: "/book", icon: CalendarCheck },
+    { label: "Apply online", copy: "Share your growth workflow first.", href: "/apply", icon: ClipboardText },
+    { label: "Create workspace", copy: "Start self-serve when you are ready.", href: "/auth/sign-up", icon: Storefront },
+  ], featured: { eyebrow: "Assisted setup", title: "If the workflow is messy, start with a human map.", copy: "Brief → execution → data → reports → next action.", href: "/book" } },
 ] as const;
 
 export function MarketingHeader() {
@@ -41,9 +47,9 @@ export function MarketingHeader() {
           <button type="button" className={isGroupActive(menu.items) ? "active" : ""} aria-expanded={activeMenu === menu.label} onClick={() => setActiveMenu(activeMenu === menu.label ? null : menu.label)} onMouseEnter={() => setActiveMenu(menu.label)} onFocus={() => setActiveMenu(menu.label)}>{menu.label}<CaretDown /></button>
           <div className="nav-dropdown"><div className="nav-mega-links">{menu.items.map(({ label, copy, href, icon: Icon }) => <Link href={href} key={href} onClick={closeNavigation} className={pathname === href || pathname.startsWith(`${href}/`) ? "active" : ""}><span><Icon weight="duotone" /></span><div><strong>{label}</strong><small>{copy}</small></div><ArrowRight /></Link>)}</div><Link className="nav-mega-feature" href={menu.featured.href} onClick={closeNavigation}><span>{menu.featured.eyebrow}</span><strong>{menu.featured.title}</strong><small>{menu.featured.copy}</small><b>Explore <ArrowRight /></b></Link></div>
         </div>)}
-        <div className="mobile-nav-actions"><LanguageToggle inverse /><Link href="/auth/sign-in" onClick={closeNavigation}>Sign in</Link><Link className="button button-light" href="/auth/sign-up" onClick={closeNavigation}>Start free <ArrowRight weight="bold" /></Link></div>
+        <div className="mobile-nav-actions"><LanguageToggle inverse /><Link href="/auth/sign-in" onClick={closeNavigation}>Sign in</Link><Link className="button button-light" href="/book" onClick={closeNavigation}>Book appointment <ArrowRight weight="bold" /></Link></div>
       </nav>
-      <div className="header-actions"><LanguageToggle inverse /><Link href="/auth/sign-in">Sign in</Link><Link className="button button-light" href="/auth/sign-up">Start free <ArrowRight weight="bold" /></Link></div>
+      <div className="header-actions"><LanguageToggle inverse /><Link href="/auth/sign-in">Sign in</Link><Link className="button button-light" href="/book">Book appointment <ArrowRight weight="bold" /></Link></div>
       <button className="menu-button" type="button" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>{mobileOpen ? <X /> : <List />}</button>
     </div>
   </header>;
