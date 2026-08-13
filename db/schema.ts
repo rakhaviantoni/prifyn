@@ -948,6 +948,48 @@ export const reportSchedules = pgTable("report_schedules", {
   updatedAt,
 }, (table) => [index("report_schedules_due_idx").on(table.status, table.nextSendAt), index("report_schedules_org_idx").on(table.organizationId)]);
 
+export const emailPreferences = pgTable("email_preferences", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  leadAlerts: boolean("lead_alerts").default(true).notNull(),
+  reportEmails: boolean("report_emails").default(true).notNull(),
+  teamInvites: boolean("team_invites").default(true).notNull(),
+  billingEmails: boolean("billing_emails").default(true).notNull(),
+  campaignApprovals: boolean("campaign_approvals").default(true).notNull(),
+  recipients: jsonb("recipients").$type<string[]>().default([]).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("email_preferences_org_uidx").on(table.organizationId)]);
+
+export const webhookEndpoints = pgTable("webhook_endpoints", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  url: text("url").notNull(),
+  secret: text("secret").notNull(),
+  events: jsonb("events").$type<string[]>().default([]).notNull(),
+  status: text("status").default("active").notNull(),
+  lastDeliveredAt: timestamp("last_delivered_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [index("webhook_endpoints_org_status_idx").on(table.organizationId, table.status)]);
+
+export const webhookDeliveries = pgTable("webhook_deliveries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  webhookEndpointId: uuid("webhook_endpoint_id").notNull().references(() => webhookEndpoints.id, { onDelete: "cascade" }),
+  outboxEventId: uuid("outbox_event_id").notNull().references(() => outboxEvents.id, { onDelete: "cascade" }),
+  status: text("status").default("pending").notNull(),
+  statusCode: integer("status_code"),
+  attemptCount: integer("attempt_count").default(0).notNull(),
+  responseBody: text("response_body"),
+  error: text("error"),
+  deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [index("webhook_deliveries_endpoint_idx").on(table.webhookEndpointId, table.createdAt), index("webhook_deliveries_event_idx").on(table.outboxEventId)]);
+
 export const auditEvents = pgTable("audit_events", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").references(() => organization.id, { onDelete: "set null" }),

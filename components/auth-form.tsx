@@ -3,7 +3,7 @@
 
 import { Buildings, Info, UserCircle, UsersThree } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 
 type AccountType = "brand" | "agency" | "creator";
 
@@ -47,6 +47,11 @@ export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");
+
+  useEffect(() => {
+    const invite = new URLSearchParams(window.location.search).get("invite");
+    if (invite) window.localStorage.setItem("prifyn-pending-invite", invite);
+  }, []);
 
   async function completeWorkspaceOnboarding(input: { accountType: AccountType; workspaceName: string; displayName?: string }) {
     const response = await fetch("/api/onboarding/workspace", {

@@ -56,6 +56,7 @@ const privateRoutes = [
   ["/app/settings/imports", "Data Imports"],
   ["/app/settings/team", "Company owners can invite users"],
   ["/app/settings/billing", "Workspace billing"],
+  ["/app/settings/notifications", "Email & webhooks"],
   ["/creator", "Creator command center"],
   ["/creator/onboarding", "Creator onboarding"],
   ["/creator/profile", "Creator identity"],

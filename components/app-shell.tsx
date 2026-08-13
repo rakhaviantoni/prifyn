@@ -32,6 +32,7 @@ const intelligenceNav = [
   ["Data Imports", "/app/settings/imports", Table],
   ["Team & Access", "/app/settings/team", UsersThree],
   ["Billing & Usage", "/app/settings/billing", CreditCard],
+  ["Email & Webhooks", "/app/settings/notifications", Bell],
   ["Settings", "/app/settings", GearSix],
 ] as const;
 
@@ -127,6 +128,21 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     }).catch(() => undefined);
   }, []);
   useEffect(() => {
+    const inviteId = window.localStorage.getItem("prifyn-pending-invite");
+    if (!inviteId) return;
+    void fetch("/api/team/invitations/accept", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ inviteId }),
+    }).then(response => {
+      if (!response.ok) return;
+      window.localStorage.removeItem("prifyn-pending-invite");
+      showNotice("Workspace invitation accepted.");
+      window.setTimeout(() => window.location.reload(), 450);
+    }).catch(() => undefined);
+  }, []);
+  useEffect(() => {
     if (workspaceHome !== "/" || !pathname.startsWith("/app")) return;
     const cleanPath = pathname.replace(/^\/app(?=\/|$)/, "") || "/";
     window.history.replaceState(window.history.state, "", `${cleanPath}${window.location.search}${window.location.hash}`);
@@ -162,9 +178,18 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     const id = String(form.get("id") ?? "") || undefined;
     const name = String(form.get("name") ?? "").trim();
     const type = String(form.get("type") ?? "").trim() || "brand";
-    const logoUrl = String(form.get("logoUrl") ?? "").trim();
+    let logoUrl = String(form.get("logoUrl") ?? "").trim();
+    const logoFile = form.get("logoFile");
     if (!name) return;
     try {
+      if (logoFile instanceof File && logoFile.size > 0) {
+        const logoForm = new FormData();
+        logoForm.set("logo", logoFile);
+        const upload = await fetch("/api/brands/logo", { method: "POST", credentials: "include", body: logoForm });
+        const uploadData = await upload.json().catch(() => ({})) as { logoUrl?: string; error?: string };
+        if (!upload.ok || !uploadData.logoUrl) throw new Error(uploadData.error || "Logo upload failed");
+        logoUrl = uploadData.logoUrl;
+      }
       const response = await fetch("/api/brands", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ id, name, type, logoUrl }) });
       if (!response.ok) throw new Error("Brand save failed");
       const data = await response.json() as { brand: OperatingBrand };
@@ -203,7 +228,7 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     </aside>
     {mobileOpen && <button className="mobile-sidebar-backdrop" type="button" aria-label="Close workspace menu" onClick={closeMobile} />}
     <main className="app-main"><header className="app-topbar"><button className="mobile-app-menu" type="button" aria-label="Open workspace menu" aria-controls="workspace-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><List /></button><div className="app-mobile-brand"><Brand href={workspaceHome} compact /></div><label className="app-search"><MagnifyingGlass /><input aria-label="Search workspace" placeholder="Search campaigns, creators, insights" onKeyDown={event => event.key === "Enter" && showNotice("Search will improve as more campaigns, creators, and reports are added.")} /></label><div className="topbar-actions"><LanguageToggle /><button className="icon-button theme-toggle" type="button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications" onClick={() => showNotice("You have three decisions requiring attention.")}><Bell /></button><WorkspaceLink className="button button-dark" href="/app/ads-window"><Plus weight="bold" /> New campaign</WorkspaceLink></div></header>{children}</main>
-    {brandDialogOpen && <div className="dialog-backdrop" onMouseDown={() => setBrandDialogOpen(false)}><section className="dialog-card brand-dialog" role="dialog" aria-modal="true" aria-labelledby="brand-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setBrandDialogOpen(false)}><X /></button><span className="section-kicker">Brand profile</span><h2 id="brand-dialog-title">Edit operating brand</h2><p>This brand profile is used for campaigns, imports, reports, channel connections, and team review context.</p><form className="dialog-form" action={saveBrand}><input type="hidden" name="id" value={brandFormId} /><label className="field"><span>Brand name</span><input name="name" required defaultValue={editingBrand?.name === "Operating brand" ? "" : editingBrand?.name ?? activeBrand.name === "Operating brand" ? "" : activeBrand.name} placeholder="e.g. Your brand" /></label><label className="field"><span>Logo URL</span><input name="logoUrl" type="url" defaultValue={editingBrand?.logoUrl ?? activeBrand.logoUrl ?? ""} placeholder="https://yourcdn.com/brand-logo.png" /><small className="field-help">Use a square PNG/SVG logo. File upload can be connected to R2 later.</small></label><label className="field"><span>Brand type</span><select name="type" defaultValue={editingBrand?.type ?? activeBrand.type ?? "brand"}><option value="brand">Brand</option><option value="agency-client">Agency client</option><option value="business-unit">Business unit</option><option value="creator-brand">Creator brand</option></select></label><div className="dialog-actions"><WorkspaceLink className="button button-outline" href="/app/settings/team">Manage team</WorkspaceLink><button className="button button-outline" type="button" onClick={() => { setBrandDialogOpen(false); setEditingBrand(null); }}>Cancel</button><button className="button button-dark" type="submit"><CheckCircle weight="fill" /> Save brand</button></div></form></section></div>}
+    {brandDialogOpen && <div className="dialog-backdrop" onMouseDown={() => setBrandDialogOpen(false)}><section className="dialog-card brand-dialog" role="dialog" aria-modal="true" aria-labelledby="brand-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setBrandDialogOpen(false)}><X /></button><span className="section-kicker">Brand profile</span><h2 id="brand-dialog-title">Edit operating brand</h2><p>This brand profile is used for campaigns, imports, reports, channel connections, and team review context.</p><form className="dialog-form" action={saveBrand}><input type="hidden" name="id" value={brandFormId} /><label className="field"><span>Brand name</span><input name="name" required defaultValue={editingBrand?.name === "Operating brand" ? "" : editingBrand?.name ?? activeBrand.name === "Operating brand" ? "" : activeBrand.name} placeholder="e.g. Your brand" /></label><label className="field"><span>Upload logo</span><input name="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" /><small className="field-help">Square PNG, JPG, WebP, or SVG up to 2 MB.</small></label><label className="field"><span>Logo URL</span><input name="logoUrl" type="url" defaultValue={editingBrand?.logoUrl ?? activeBrand.logoUrl ?? ""} placeholder="https://yourcdn.com/brand-logo.png" /><small className="field-help">Use this if the logo is already hosted.</small></label><label className="field"><span>Brand type</span><select name="type" defaultValue={editingBrand?.type ?? activeBrand.type ?? "brand"}><option value="brand">Brand</option><option value="agency-client">Agency client</option><option value="business-unit">Business unit</option><option value="creator-brand">Creator brand</option></select></label><div className="dialog-actions"><WorkspaceLink className="button button-outline" href="/app/settings/team">Manage team</WorkspaceLink><button className="button button-outline" type="button" onClick={() => { setBrandDialogOpen(false); setEditingBrand(null); }}>Cancel</button><button className="button button-dark" type="submit"><CheckCircle weight="fill" /> Save brand</button></div></form></section></div>}
     {notice && <div className="toast" role="status"><CirclesFour weight="fill" />{notice}</div>}
   </div>;
 }
