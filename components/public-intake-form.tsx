@@ -10,27 +10,39 @@ const urgency = ["This week", "This month", "Exploring", "Already running campai
 
 export function PublicIntakeForm({ type }: { type: IntakeType }) {
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const isAppointment = type === "appointment";
 
-  function submit(form: FormData) {
+  async function submit(form: FormData) {
     const entries = Object.fromEntries(form.entries());
-    const subject = isAppointment ? "PRIFYN appointment request" : "PRIFYN Growth OS application";
-    const body = [
-      subject,
-      "",
-      `Name: ${entries.name ?? ""}`,
-      `Email: ${entries.email ?? ""}`,
-      `Company / Brand: ${entries.company ?? ""}`,
-      `Role: ${entries.role ?? ""}`,
-      `Primary channel: ${entries.channel ?? ""}`,
-      `Urgency: ${entries.urgency ?? ""}`,
-      `Monthly campaign spend: ${entries.spend ?? ""}`,
-      `Main problem: ${entries.problem ?? ""}`,
-      `Preferred time: ${entries.preferredTime ?? ""}`,
-    ].join("\n");
-    const mailto = `mailto:hello@prifyn.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setSubmitted(true);
-    window.location.href = mailto;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const response = await fetch("/api/public/intake", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          type,
+          name: entries.name,
+          email: entries.email,
+          company: entries.company,
+          role: entries.role,
+          channel: entries.channel,
+          urgency: entries.urgency,
+          spend: entries.spend,
+          preferredTime: entries.preferredTime,
+          problem: entries.problem,
+        }),
+      });
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Request could not be saved.");
+      setSubmitted(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Request could not be saved.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return <section className="surface public-intake-card">
@@ -45,8 +57,9 @@ export function PublicIntakeForm({ type }: { type: IntakeType }) {
       <label className="field"><span>Monthly campaign spend</span><input name="spend" placeholder="e.g. Rp20m–Rp100m, or not sure yet" /></label>
       {isAppointment && <label className="field"><span>Preferred time</span><input name="preferredTime" placeholder="e.g. Tue/Thu afternoon WIB" /></label>}
       <label className="field"><span>Main problem</span><textarea name="problem" required placeholder="Example: we run Meta Ads and KOL manually, but reports are late and we cannot see which campaign creates leads/orders." /></label>
-      <button className="button button-dark button-large" type="submit">{isAppointment ? "Prepare appointment request" : "Submit application"} <ArrowRight weight="bold" /></button>
+      <button className="button button-dark button-large" type="submit" disabled={submitting || submitted}>{submitted ? "Saved" : submitting ? "Saving…" : isAppointment ? "Book appointment" : "Submit application"} <ArrowRight weight="bold" /></button>
     </form>
-    {submitted && <div className="intake-success" role="status"><CheckCircle weight="fill" /><span><strong>Request prepared.</strong><small>Your email app should open with the details. Send it to continue.</small></span></div>}
+    {submitted && <div className="intake-success" role="status"><CheckCircle weight="fill" /><span><strong>Request saved.</strong><small>PRIFYN received this lead. We will review the workflow and follow up from the PRIFYN workspace.</small></span></div>}
+    {error && <div className="intake-success error" role="alert"><ClipboardText weight="fill" /><span><strong>Could not save request.</strong><small>{error}</small></span></div>}
   </section>;
 }

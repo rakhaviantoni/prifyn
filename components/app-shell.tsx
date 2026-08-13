@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import {
-  Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, GearSix,
+  Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, Funnel, GearSix,
   House, IdentificationBadge, List, MagnifyingGlass, Megaphone, Moon, PencilSimple, PlugsConnected,
   Plus, SignOut, Sparkle, Sun, Table, UsersThree, X,
 } from "@phosphor-icons/react";
@@ -14,6 +14,7 @@ import { useWorkspaceHref, WorkspaceLink } from "./workspace-link";
 const mainNav = [
   ["Today", "/app", House],
   ["Ads Manager", "/app/ads-window", Megaphone],
+  ["Lead Inbox", "/app/leads", Funnel],
   ["Campaigns", "/app/campaigns", CirclesFour],
   ["Reports", "/app/reports", ChartLine],
 ] as const;
@@ -157,7 +158,7 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
       <div className="workspace-switcher single-brand-card"><button className="workspace-button" type="button" onClick={() => { setEditingBrand(activeBrand.id === "pending" ? null : activeBrand); setBrandDialogOpen(true); }}><b>{activeBrand.initials}</b><div><strong>{activeBrand.name}</strong><span>{activeBrand.detail}</span></div><PencilSimple /></button></div>
       <div className="app-sidebar-scroll">
         <span className="app-nav-label">Workspace</span>
-        <nav className="app-nav" aria-label="Workspace navigation">{mainNav.slice(0, 2).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Today" && <b className="app-nav-badge">Setup</b>}</WorkspaceLink>)}<div className={`app-nav-group ${kolOpen ? "open" : ""}`}><div><WorkspaceLink href="/app/kol-window" onClick={closeMobile} className={kolNav.some(([, href]) => isActive(href)) ? "active" : ""}><UsersThree weight={kolNav.some(([, href]) => isActive(href)) ? "fill" : "regular"} /><span>KOL Campaigns</span></WorkspaceLink><button type="button" aria-label="Toggle KOL Campaigns menu" aria-expanded={kolOpen} onClick={() => setKolOpen(value => !value)}><CaretDown /></button></div><div className="app-subnav">{kolNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Creator Discovery" && <small>Beta</small>}</WorkspaceLink>)}</div></div>{mainNav.slice(2).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
+        <nav className="app-nav" aria-label="Workspace navigation">{mainNav.slice(0, 3).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Today" && <b className="app-nav-badge">Setup</b>}</WorkspaceLink>)}<div className={`app-nav-group ${kolOpen ? "open" : ""}`}><div><WorkspaceLink href="/app/kol-window" onClick={closeMobile} className={kolNav.some(([, href]) => isActive(href)) ? "active" : ""}><UsersThree weight={kolNav.some(([, href]) => isActive(href)) ? "fill" : "regular"} /><span>KOL Campaigns</span></WorkspaceLink><button type="button" aria-label="Toggle KOL Campaigns menu" aria-expanded={kolOpen} onClick={() => setKolOpen(value => !value)}><CaretDown /></button></div><div className="app-subnav">{kolNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Creator Discovery" && <small>Beta</small>}</WorkspaceLink>)}</div></div>{mainNav.slice(3).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
         <span className="app-nav-label">Intelligence</span>
         <nav className="app-nav" aria-label="Intelligence navigation">{intelligenceNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
       </div>

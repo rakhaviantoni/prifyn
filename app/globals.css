@@ -781,6 +781,28 @@ svg { flex: none; }
 .report-source-card h2 { margin: 10px 0 6px; font-family: var(--font-serif); font-size: 22px; font-weight: 500; }
 .report-source-card p { margin: 0 0 12px; color: var(--muted); font-size: 8px; line-height: 1.6; }
 .report-source-card > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 8px; }
+.leads-page { max-width: 1320px; }
+.lead-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px; }
+.lead-kpi-grid article { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: center; padding: 18px; }
+.lead-kpi-grid svg { width: 24px; color: var(--green); }
+.lead-kpi-grid span, .lead-kpi-grid strong { display: block; }
+.lead-kpi-grid strong { margin-bottom: 4px; font-family: var(--font-serif); font-size: 28px; font-weight: 480; }
+.lead-kpi-grid span { color: var(--muted); font-size: 9px; }
+.lead-inbox-table { overflow: hidden; }
+.lead-inbox-list { display: grid; }
+.lead-inbox-list article { display: grid; grid-template-columns: 42px minmax(0, 1fr) 150px; gap: 14px; align-items: start; padding: 16px; border-bottom: 1px solid var(--line); }
+.lead-inbox-list article:last-child { border-bottom: 0; }
+.lead-source-mark { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 12px; background: var(--sage-2); color: var(--green); }
+.lead-source-mark svg { width: 22px; }
+.lead-inbox-list header { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; }
+.lead-inbox-list strong { font-size: 11px; text-transform: capitalize; }
+.lead-inbox-list p { margin: 8px 0 10px; color: var(--muted); font-size: 9.5px; line-height: 1.6; }
+.lead-meta-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.lead-meta-row span { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border-radius: 999px; background: var(--paper); color: var(--muted); font-size: 7.5px; }
+.lead-meta-row svg { width: 12px; }
+.lead-inbox-list aside { display: grid; justify-items: end; gap: 5px; }
+.lead-inbox-list aside strong { color: var(--green); font-size: 8px; }
+.lead-inbox-list aside small { color: var(--muted); font-size: 7.5px; text-align: right; }
 .workflow-page { max-width: 1400px; }
 .workflow-health { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 99px; background: var(--white); color: var(--muted); font-size: 8px; font-weight: 750; }
 .workflow-health i { width: 7px; height: 7px; border-radius: 50%; background: #a0a9a4; }
@@ -1508,7 +1530,7 @@ svg { flex: none; }
 .theme-dark .page-tabs button.active { background: #27352e; color: #fff; }
 .theme-dark .reports-filter-bar select, .theme-dark .report-bar-chart i { background: #1a241f; color: #edf4ef; }
 .theme-dark .import-action-card { background: linear-gradient(135deg, #0c120f, #1c2b23); }
-.theme-dark .guided-flow-card, .theme-dark .intake-path-card, .theme-dark .docs-flow-card article { background: #1a241f; }
+.theme-dark .guided-flow-card, .theme-dark .intake-path-card, .theme-dark .docs-flow-card article, .theme-dark .lead-meta-row span { background: #1a241f; }
 .theme-dark .status-pill.neutral { background: #303a35; color: #bdc7c1; }
 .theme-dark .connection-card, .theme-dark .connection-provider-mark { background: #1a241f; }
 .theme-dark .provider-tiktok, .theme-dark .provider-posthog { color: #fff; }
@@ -1718,6 +1740,10 @@ svg { flex: none; }
   .settings-card { grid-template-columns: 42px 1fr; }
   .settings-card > .status-pill { grid-column: 2; justify-self: start; }
   .settings-card .button { grid-column: 2; }
+  .lead-kpi-grid { grid-template-columns: 1fr; }
+  .lead-inbox-list article { grid-template-columns: 1fr; }
+  .lead-inbox-list aside { justify-items: start; }
+  .lead-inbox-list aside small { text-align: left; }
   .report-explainer { grid-template-columns: 1fr auto; }
   .report-explainer span { grid-column: 1 / -1; grid-row: 2; }
   .report-command { align-items: stretch; flex-direction: column; }

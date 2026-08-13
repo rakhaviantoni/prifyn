@@ -43,6 +43,7 @@ const routes = [
 const privateRoutes = [
   ["/app", "Decision inbox"],
   ["/app/ads-window", "Ads Manager"],
+  ["/app/leads", "Lead Inbox"],
   ["/app/kol-window", "KOL Campaigns"],
   ["/app/campaigns", "Campaign operations"],
   ["/app/creators", "Creator intelligence"],
