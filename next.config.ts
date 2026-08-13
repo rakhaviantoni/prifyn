@@ -12,6 +12,7 @@ const workspaceRoutes = [
   "copilot",
   "creators",
   "kol-window",
+  "leads",
   "reports",
   "settings",
   "talent-pipeline",

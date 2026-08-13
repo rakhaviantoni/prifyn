@@ -102,6 +102,26 @@ test("app and creator subdomain roots resolve to gated workspaces", async () => 
   assert.equal(creatorLocation.searchParams.get("returnTo"), "/creator");
 });
 
+test("app subdomain clean dashboard paths resolve through workspace routes", async () => {
+  for (const path of ["/leads", "/settings/imports", "/creators/nabila-putri"]) {
+    const response = await request(path, { headers: { host: "app.prifyn.rakhaviantoni.com" }, redirect: "manual" });
+    assert.equal(response.status, 307, path);
+    const location = new URL(response.headers.get("location"), "http://localhost");
+    assert.equal(location.pathname, "/auth/sign-in", path);
+    assert.equal(location.searchParams.get("returnTo"), "/app", path);
+  }
+});
+
+test("creator subdomain clean dashboard paths resolve through creator routes", async () => {
+  for (const path of ["/profile", "/opportunities", "/performance"]) {
+    const response = await request(path, { headers: { host: "creator.prifyn.rakhaviantoni.com" }, redirect: "manual" });
+    assert.equal(response.status, 307, path);
+    const location = new URL(response.headers.get("location"), "http://localhost");
+    assert.equal(location.pathname, "/auth/sign-in", path);
+    assert.equal(location.searchParams.get("returnTo"), "/creator", path);
+  }
+});
+
 test("preview route redirects to the demo sandbox", async () => {
   const response = await request("/preview", { redirect: "manual" });
   assert.equal(response.status, 307);
