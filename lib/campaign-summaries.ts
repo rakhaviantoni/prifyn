@@ -59,6 +59,7 @@ type ImportedCampaignRow = {
   revenue: string | number | null;
   conversions: string | number | null;
   orders: string | number | null;
+  leads: string | number | null;
   clicks: string | number | null;
   impressions: string | number | null;
   reach: string | number | null;
@@ -159,6 +160,7 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
         coalesce(sum((ir.normalized_metrics->>'revenue_idr')::numeric), 0) as revenue,
         coalesce(sum((ir.normalized_metrics->>'conversions')::numeric), 0) as conversions,
         coalesce(sum((ir.normalized_metrics->>'orders')::numeric), 0) as orders,
+        coalesce(sum((ir.normalized_metrics->>'lead_count')::numeric), 0) as leads,
         coalesce(sum((ir.normalized_metrics->>'clicks')::numeric), 0) as clicks,
         coalesce(sum((ir.normalized_metrics->>'impressions')::numeric), 0) as impressions,
         coalesce(sum((ir.normalized_metrics->>'reach')::numeric), 0) as reach,
@@ -181,15 +183,16 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
         const spend = numberValue(row.spend);
         const revenue = numberValue(row.revenue);
         const orders = numberValue(row.orders) || numberValue(row.conversions);
+        const leads = numberValue(row.leads);
         const clicks = numberValue(row.clicks);
-        const results = numberValue(row.results) || orders;
+        const results = orders || leads || numberValue(row.results);
         const roas = spend > 0 && revenue > 0 ? `${(revenue / spend).toFixed(2)}x` : "Add revenue";
         const importedRows = numberValue(row.imported_rows);
         const campaignName = row.campaign_name ?? "Imported campaign";
         const missingEvidence = [
           clicks ? "" : "Clicks / landing visits",
           revenue ? "" : "Revenue or GMV",
-          orders ? "" : "Orders / leads",
+          orders || leads ? "" : "Orders or leads",
         ].filter(Boolean);
         return {
           name: campaignName,
@@ -200,7 +203,7 @@ export async function getWorkspaceCampaignSummaries(): Promise<CampaignSummary[]
           revenue: formatIdr(revenue),
           roas,
           end: formatDate(row.period_end),
-          note: `${importedRows} imported ad row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${results ? ` · ${Math.round(results).toLocaleString("id-ID")} ${row.result_type || "results"}` : ""}.`,
+          note: `${importedRows} imported row${importedRows === 1 ? "" : "s"} from ${sourceLabel(row.source_type)}. Spend ${formatIdr(spend)}${results ? ` · ${Math.round(results).toLocaleString("id-ID")} ${leads ? "leads" : row.result_type || "results"}` : ""}.`,
           nextAction: revenue > 0 && spend > 0 ? "Review performance" : "Add outcome data",
           tracking: row.source_type ? `Imported export · ${sourceLabel(row.source_type)}` : "Imported export",
           source: "import" as const,

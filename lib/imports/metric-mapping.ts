@@ -1,4 +1,4 @@
-export type ImportSourceType = "meta_ads" | "tiktok_ads" | "google_ads" | "shopee" | "tokopedia" | "affiliate_links";
+export type ImportSourceType = "meta_ads" | "tiktok_ads" | "google_ads" | "shopee" | "tokopedia" | "affiliate_links" | "lead_capture";
 
 export type ImportTemplate = {
   id: ImportSourceType;
@@ -121,6 +121,27 @@ export const importTemplates: ImportTemplate[] = [
       reporting_starts: ["Date"],
     },
     notes: "Prepared for manual marketplace performance import while official partner access is pending.",
+  },
+  {
+    id: "lead_capture",
+    label: "Lead capture export",
+    platform: "CRM Lite",
+    supportedExtensions: [".csv", ".xlsx"],
+    requiredColumns: ["Name", "Phone", "Source", "Campaign", "Status"],
+    optionalColumns: ["Email", "Ad", "Creator", "Date", "Channel"],
+    metricMap: {
+      contact_name: ["Name", "Lead Name", "Customer Name"],
+      contact_phone: ["Phone", "Phone Number", "WhatsApp"],
+      contact_email: ["Email", "Email Address"],
+      source_name: ["Source"],
+      campaign_name: ["Campaign", "Campaign Name"],
+      ad_name: ["Ad", "Ad Name"],
+      creator_name: ["Creator", "KOL", "Influencer"],
+      lead_status: ["Status", "Lead Status"],
+      platform: ["Channel", "Platform"],
+      reporting_starts: ["Date", "Created Date"],
+    },
+    notes: "MVP CRM Lite import: connect ads/KOL activity to leads before full commerce or ERP attribution exists.",
   },
   {
     id: "affiliate_links",

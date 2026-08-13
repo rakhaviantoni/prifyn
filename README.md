@@ -1,11 +1,22 @@
 # PRIFYN Growth OS
 
-PRIFYN is an AI-native growth operating system for SMEs. The MVP is organized around two connected workflows:
+PRIFYN is an AI-native Business Operating System, starting with Growth OS.
+
+The MVP is organized around Campaign Management as the core system of record. Ads and KOL are execution channels under the same campaign lifecycle:
 
 - **Ads Manager:** campaign setup, creative, cross-platform launch, reporting, user journey, and ROAS.
 - **KOL Campaigns:** brief, KOL selection, submissions, revision/approval, publish scheduling, performance, and ROAS.
 
-Both workflows follow the same operating rhythm: **Setup → Launch/Collaboration → Results**.
+Both workflows follow the same operating rhythm:
+
+**PLAN → EXECUTE → MEASURE → UNDERSTAND → IMPROVE → REPEAT**
+
+MVP 1 also includes CRM Lite for lead capture and basic attribution so PRIFYN can answer:
+
+- Which campaign generated attention?
+- Which campaign generated leads?
+- Which ad or creator generated qualified leads?
+- Which evidence is still missing before revenue or profit conclusions?
 
 ## Run locally
 
@@ -17,7 +28,7 @@ cp .env.example .env.local
 npm run dev
 ```
 
-Google OAuth, production database, storage, and AI credentials can remain empty while using the product preview. Safe demo fallbacks are provided where appropriate.
+Google OAuth, production database, storage, and AI credentials can remain empty while running local sandbox routes. Production app routes should use real database and auth credentials.
 
 ## Validation
 
@@ -35,10 +46,7 @@ The PostgreSQL schema is defined in `db/schema.ts`. Generated migrations are add
 npm run db:migrate
 ```
 
-Migration order:
-
-1. `drizzle/0000_amusing_human_fly.sql` — workspace, auth, CRM, campaign, creator, reporting, attribution, and explainable-AI foundation.
-2. `drizzle/0001_large_lester.sql` — Ads Window, KOL Window, platform connection, execution reference, reporting, publishing, and KOL performance entities.
+Current migrations live in `drizzle/0000_*.sql` through `drizzle/0007_growth_loop_foundation.sql`. The latest migration adds the Growth OS loop foundation: lead capture events, creator interview summaries, and campaign attribution records.
 
 Do not edit applied migration files. Change `db/schema.ts`, then generate the next migration:
 
@@ -48,12 +56,15 @@ npm run db:generate
 
 ## MVP integration policy
 
+- Campaign lifecycle, manual imports, lead capture, attribution, and explainable recommendations come before deep OAuth automation.
 - Meta, Google, and TikTok are the initial API connector targets.
 - Tokopedia and Shopee retain a manual/CSV bridge until partner API access is confirmed.
 - LinkedIn is represented in the KOL platform taxonomy and remains a later Ads connector.
 - KOL sourcing uses the curated PRIFYN database for MVP; external sourcing providers remain future connectors.
 - Platform campaigns are created in draft/paused state and require human confirmation before activation.
 - Recommendations and optimizations must retain reason, evidence, confidence, limitations, and recommended action.
+
+See [`docs/growth-os-mvp-blueprint.md`](docs/growth-os-mvp-blueprint.md) for the current product/architecture guardrails.
 
 ## Credentials to provide later
 

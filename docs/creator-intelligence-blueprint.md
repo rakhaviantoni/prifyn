@@ -19,11 +19,11 @@ Product position: A creator relationship and campaign operating system—not an 
 
 ### Brand journey
 
-`Invite team → Define campaign → Discover creators → Review AI fit → Shortlist/compare → Invite or review applications → Agree terms → Track content → Review/revise → Approve → Release payment → Review performance → Rebook`
+`Invite team → Define campaign → Discover creators → Review AI Interview Summary + fit → Shortlist/compare → Invite or review applications → Agree terms → Track content → Review/revise → Approve → Release payment → Review performance → Rebook`
 
 Decision points:
 
-- Is the creator relevant to this campaign?
+- Is the creator relevant to this campaign, and why?
 - Is the evidence complete and fresh enough to trust?
 - What risks require human review?
 - Who owns the next action and when is it due?
@@ -48,6 +48,31 @@ Progressive onboarding:
 Applications use their own lifecycle:
 
 `Draft → Submitted → Screening → Shortlisted → Interview/clarification → Offered → Accepted | Rejected | Withdrawn`
+
+### AI Interview Summary
+
+When creators apply, the brand should not be forced to open dozens of TikTok/Instagram links first. PRIFYN should generate a recruiter-style summary for each applicant.
+
+Required fields:
+
+- Creator summary
+- Campaign match score
+- Why this creator fits
+- Potential risks
+- Evidence used
+- Confidence
+- Recommended next action
+
+Example:
+
+`Sarah Foodie — Match 94%. Food creator in Surabaya focused on restaurant and cafe reviews. Engagement is stable at 6.8%, style is natural and educational, and prior F&B campaign history is relevant. Strongest signal is storytelling and viewer retention. Main risk is posting consistency. Recommendation: shortlist and confirm publish schedule.`
+
+Explainability requirements:
+
+- Scores must never be black-box.
+- Every recommendation must show evidence and confidence.
+- Risks should be visible before shortlist/approval.
+- Missing evidence should reduce confidence rather than fabricate certainty.
 
 ---
 

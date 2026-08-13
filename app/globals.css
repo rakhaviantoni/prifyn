@@ -1435,7 +1435,7 @@ svg { flex: none; }
 .theme-dark .app-alert strong { color: var(--text); }
 .theme-dark .mode-banner, .theme-dark .campaign-next-action { background: rgba(71,143,106,.18); }
 .theme-dark .live-mode-banner { background: linear-gradient(135deg, rgba(71,143,106,.2), rgba(26,36,31,.92)); }
-.theme-dark .today-command-card:not(.primary), .theme-dark .campaign-detail-grid > div, .theme-dark .campaign-performance-grid > div, .theme-dark .missing-evidence-list a, .theme-dark .available-metrics-list article, .theme-dark .import-detail-metrics > div, .theme-dark .meta-account-note, .theme-dark .selected-submissions article, .theme-dark .buzzer-dynamic-grid label, .theme-dark .buzzer-dynamic-grid > div, .theme-dark .import-file-summary > span, .theme-dark .import-flow-card b { background: #1a241f; }
+.theme-dark .today-command-card:not(.primary), .theme-dark .campaign-detail-grid > div, .theme-dark .campaign-performance-grid > div, .theme-dark .candidate-interview-summary b, .theme-dark .ai-interview-columns > div, .theme-dark .missing-evidence-list a, .theme-dark .available-metrics-list article, .theme-dark .import-detail-metrics > div, .theme-dark .meta-account-note, .theme-dark .selected-submissions article, .theme-dark .buzzer-dynamic-grid label, .theme-dark .buzzer-dynamic-grid > div, .theme-dark .import-file-summary > span, .theme-dark .import-flow-card b { background: #1a241f; }
 .theme-dark .import-warning-card { background: #392e20; }
 .theme-dark .import-warning-card p { color: #e6b976; }
 .theme-dark .results-command select,
@@ -1632,6 +1632,7 @@ svg { flex: none; }
   .report-command .button { width: 100%; justify-content: center; }
   .report-action-row { align-items: stretch; flex-direction: column; }
   .report-action-row button { width: fit-content; }
+  .ai-interview-columns { grid-template-columns: 1fr; }
   .auth-language { top: 16px; right: 16px; }
   .workflow-grid { grid-template-columns: 1fr; }
   .workflow-steps.ads-workflow-steps { grid-template-columns: 1fr 1fr; }
@@ -1981,6 +1982,15 @@ svg { flex: none; }
 .candidate-activity { display: flex !important; flex-wrap: wrap; gap: 5px !important; margin: -3px 0 10px; }
 .candidate-activity span { display: inline-flex; align-items: center; gap: 4px; padding: 4px 7px; border-radius: 99px; background: var(--sage-2); color: var(--green); font-size: 8px; font-weight: 700; }
 .candidate-activity svg { width: 11px; height: 11px; }
+.candidate-interview-summary { margin: 10px 0; padding: 10px; border: 1px solid color-mix(in srgb, var(--green) 24%, var(--line)); border-radius: 12px; background: linear-gradient(135deg, color-mix(in srgb, var(--sage-2) 72%, transparent), var(--paper)); }
+.candidate-interview-summary > span { display: inline-flex; align-items: center; gap: 5px; color: var(--green); font-size: 7px; font-weight: 850; letter-spacing: .06em; text-transform: uppercase; }
+.candidate-interview-summary p { margin: 7px 0; color: var(--ink); font-size: 8.5px; line-height: 1.5; }
+.candidate-interview-summary div { display: flex; flex-wrap: wrap; gap: 5px; }
+.candidate-interview-summary strong { width: 100%; color: var(--muted); font-size: 7px; text-transform: uppercase; letter-spacing: .08em; }
+.candidate-interview-summary b { padding: 4px 6px; border-radius: 999px; background: var(--paper-2); font-size: 7px; font-weight: 750; }
+.candidate-interview-summary aside { display: flex; align-items: flex-start; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--line); color: #b06d1d; }
+.candidate-interview-summary aside svg { width: 12px; flex: 0 0 auto; }
+.candidate-interview-summary aside small { font-size: 7.5px; line-height: 1.4; }
 .pipeline-add { width: 100%; min-height: 58px; display: flex; align-items: center; gap: 10px; padding: 9px 11px; border: 1px dashed #aeb8b1; border-radius: 10px; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; text-align: left; transition: border-color .2s, background .2s, transform .2s; }
 .pipeline-add > span:first-child { width: 31px; height: 31px; display: grid; flex: none; place-items: center; border-radius: 8px; background: var(--white); color: var(--green); box-shadow: 0 1px 5px rgba(19,39,29,.08); }
 .pipeline-add svg { width: 14px; height: 14px; }
@@ -2042,6 +2052,16 @@ svg { flex: none; }
 .review-confidence span, .review-confidence strong { display: block; font-size: 7px; line-height: 1.45; }
 .review-confidence span { color: var(--muted); }
 .review-confidence strong { color: var(--green); }
+.ai-interview-dialog-card { margin: 14px 0; padding: 14px; border: 1px solid color-mix(in srgb, var(--green) 30%, var(--line)); border-radius: 16px; background: linear-gradient(135deg, var(--paper), var(--sage-2)); }
+.ai-interview-dialog-card > span { display: inline-flex; align-items: center; gap: 6px; color: var(--green); font-size: 10px; font-weight: 850; }
+.ai-interview-dialog-card > p { margin: 10px 0 12px; color: var(--ink); font-size: 10px; line-height: 1.65; }
+.ai-interview-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.ai-interview-columns > div { display: grid; align-content: start; gap: 7px; padding: 10px; border-radius: 12px; background: color-mix(in srgb, var(--paper) 72%, transparent); border: 1px solid var(--line); }
+.ai-interview-columns strong { font-size: 9px; }
+.ai-interview-columns b { display: flex; align-items: flex-start; gap: 6px; color: var(--muted); font-size: 8px; line-height: 1.45; }
+.ai-interview-columns b svg { width: 12px; margin-top: 1px; flex: 0 0 auto; }
+.ai-interview-columns div:first-child b svg { color: var(--green); }
+.ai-interview-columns div:last-child b svg { color: #b06d1d; }
 .review-action-grid { display: grid; grid-template-columns: auto 1fr 1fr; gap: 7px; }
 .member-cell { display: flex; gap: 9px; align-items: center; }
 .member-cell > b { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 50%; background: #15201b; color: var(--sage); font-size: 7px; }

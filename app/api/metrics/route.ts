@@ -43,9 +43,12 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
   const revenue = totals.revenue_idr ?? 0;
   const clicks = totals.clicks ?? 0;
   const impressions = totals.impressions ?? 0;
-  const orders = totals.orders ?? totals.conversions ?? totals.results ?? 0;
+  const leads = totals.lead_count ?? 0;
+  const orders = totals.orders ?? totals.conversions ?? 0;
+  const outcomes = orders || leads || totals.results || 0;
   const creatorCost = totals.creator_cost_idr ?? 0;
   const metricLabels: Record<string, string> = {
+    lead_count: "Leads",
     spend_idr: "Spend",
     impressions: "Impressions",
     reach: "Reach",
@@ -72,7 +75,8 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
       revenue: sourceRevenue,
       impressions: metrics.impressions ?? 0,
       clicks: metrics.clicks ?? 0,
-      orders: metrics.orders ?? metrics.conversions ?? metrics.results ?? 0,
+      leads: metrics.lead_count ?? 0,
+      orders: metrics.orders ?? metrics.conversions ?? 0,
       roas: safeDivide(sourceRevenue, sourceSpend),
     };
   }).sort((a, b) => b.spend - a.spend);
@@ -87,7 +91,8 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
       revenue: subjectRevenue,
       impressions: metrics.metrics.impressions ?? 0,
       clicks: metrics.metrics.clicks ?? 0,
-      orders: metrics.metrics.orders ?? metrics.metrics.conversions ?? metrics.metrics.results ?? 0,
+      leads: metrics.metrics.lead_count ?? 0,
+      orders: metrics.metrics.orders ?? metrics.metrics.conversions ?? 0,
       roas: safeDivide(subjectRevenue, subjectSpend),
     };
   }).sort((a, b) => (b.revenue + b.spend) - (a.revenue + a.spend)).slice(0, 10);
@@ -97,7 +102,7 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
     totals,
     derived: {
       ctr: safeDivide(clicks, impressions),
-      cvr: safeDivide(orders, clicks),
+      cvr: safeDivide(outcomes, clicks),
       roas: safeDivide(revenue, spend || creatorCost),
       cpc: safeDivide(spend, clicks),
       cpm: impressions > 0 ? spend / impressions * 1000 : null,
@@ -110,7 +115,7 @@ function buildSummary(facts: Fact[], importCount: number): MetricSummary {
     bySubject: subjectRows,
     creator: {
       trackedClicks: clicks,
-      orders,
+      orders: outcomes,
       revenue,
       creatorCost,
       roas: safeDivide(revenue, creatorCost || spend),

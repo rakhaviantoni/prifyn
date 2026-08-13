@@ -25,6 +25,7 @@ const ImportPayload = z.object({
 const requiredImportTables = ["workspaces", "workspace_members", "organizations", "organization_members", "import_jobs", "import_mappings", "import_rows", "performance_facts"];
 
 const numericMetrics = new Set([
+  "lead_count",
   "results",
   "cost_per_result_idr",
   "spend_idr",
@@ -47,6 +48,11 @@ const dimensionMetrics = new Set([
   "delivery_status",
   "result_type",
   "attribution_setting",
+  "contact_name",
+  "contact_phone",
+  "contact_email",
+  "source_name",
+  "lead_status",
   "product_name",
   "creator_name",
   "platform",
@@ -120,11 +126,13 @@ function normalizeRows(jobId: string, payload: z.infer<typeof ImportPayload>) {
     const raw = rowObject(payload.headers, row);
     const dimensions = Object.fromEntries([...dimensionMetrics].map(metric => [metric, valueFor(payload.mapping, raw, metric) ?? null]).filter(([, value]) => value));
     const normalizedMetrics = Object.fromEntries([...numericMetrics].map(metric => [metric, parseNumber(valueFor(payload.mapping, raw, metric))]).filter(([, value]) => value !== null)) as Record<string, number>;
-    const subjectId = String(dimensions.ad_name ?? dimensions.campaign_name ?? dimensions.product_name ?? dimensions.creator_name ?? `row-${index + 1}`);
+    if (payload.sourceType === "lead_capture") normalizedMetrics.lead_count = 1;
+    const subjectId = String(dimensions.contact_email ?? dimensions.contact_phone ?? dimensions.contact_name ?? dimensions.ad_name ?? dimensions.campaign_name ?? dimensions.product_name ?? dimensions.creator_name ?? `row-${index + 1}`);
+    const subjectType = payload.sourceType === "lead_capture" ? "lead" : payload.sourceType.includes("affiliate") ? "creator_campaign" : "campaign";
     return {
       importJobId: jobId,
       rowNumber: index + 1,
-      subjectType: payload.sourceType.includes("affiliate") ? "creator_campaign" : "campaign",
+      subjectType,
       subjectId,
       dimensions: { ...dimensions, raw },
       normalizedMetrics,

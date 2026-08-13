@@ -50,6 +50,13 @@
       "when": 1786455600000,
       "tag": "0006_account_type_lock",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1786542000000,
+      "tag": "0007_growth_loop_foundation",
+      "breakpoints": true
     }
   ]
 }

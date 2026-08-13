@@ -12,8 +12,8 @@ export type MetricSummary = {
   factCount: number;
   sourceCount: number;
   availableMetrics: Array<{ key: string; label: string; value: number }>;
-  bySource: Array<{ source: string; spend: number; revenue: number; impressions: number; clicks: number; orders: number; roas: number | null }>;
-  bySubject: Array<{ subjectId: string; subjectType: string; spend: number; revenue: number; impressions: number; clicks: number; orders: number; roas: number | null }>;
+  bySource: Array<{ source: string; spend: number; revenue: number; impressions: number; clicks: number; leads: number; orders: number; roas: number | null }>;
+  bySubject: Array<{ subjectId: string; subjectType: string; spend: number; revenue: number; impressions: number; clicks: number; leads: number; orders: number; roas: number | null }>;
   creator: {
     trackedClicks: number;
     orders: number;

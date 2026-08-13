@@ -565,6 +565,27 @@ export const campaignObjectives = pgTable("campaign_objectives", {
   createdAt,
 }, (table) => [index("campaign_objectives_campaign_idx").on(table.campaignId)]);
 
+export const leadCaptureEvents = pgTable("lead_capture_events", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").references(() => campaigns.id, { onDelete: "set null" }),
+  leadId: uuid("lead_id").references(() => leads.id, { onDelete: "set null" }),
+  sourceChannel: text("source_channel").notNull(),
+  sourceType: text("source_type").notNull(),
+  sourceName: text("source_name"),
+  adCreativeId: uuid("ad_creative_id").references(() => adCreatives.id, { onDelete: "set null" }),
+  creatorId: uuid("creator_id").references(() => creators.id, { onDelete: "set null" }),
+  contactName: text("contact_name"),
+  contactEmail: text("contact_email"),
+  contactPhone: text("contact_phone"),
+  leadStatus: text("lead_status").default("new").notNull(),
+  capturedAt: timestamp("captured_at", { withTimezone: true }).defaultNow().notNull(),
+  rawPayload: jsonb("raw_payload").$type<Record<string, unknown>>().default({}).notNull(),
+  importJobId: uuid("import_job_id").references(() => importJobs.id, { onDelete: "set null" }),
+  createdAt,
+}, (table) => [index("lead_capture_events_campaign_idx").on(table.campaignId, table.capturedAt), index("lead_capture_events_org_status_idx").on(table.organizationId, table.leadStatus), index("lead_capture_events_creator_idx").on(table.creatorId)]);
+
 export const campaignParticipants = pgTable("campaign_participants", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
@@ -578,6 +599,25 @@ export const campaignParticipants = pgTable("campaign_participants", {
   createdAt,
   updatedAt,
 }, (table) => [uniqueIndex("campaign_participants_campaign_creator_uidx").on(table.campaignId, table.creatorId), index("campaign_participants_creator_idx").on(table.creatorId)]);
+
+export const creatorInterviewSummaries = pgTable("creator_interview_summaries", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  creatorId: uuid("creator_id").notNull().references(() => creators.id, { onDelete: "cascade" }),
+  participantId: uuid("participant_id").references(() => campaignParticipants.id, { onDelete: "cascade" }),
+  summary: text("summary").notNull(),
+  matchScore: numeric("match_score", { precision: 6, scale: 3 }),
+  confidence: numeric("confidence", { precision: 5, scale: 4 }),
+  whyMatch: jsonb("why_match").$type<string[]>().default([]).notNull(),
+  risks: jsonb("risks").$type<string[]>().default([]).notNull(),
+  recommendation: text("recommendation").notNull(),
+  evidence: jsonb("evidence").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  model: text("model"),
+  policyVersion: text("policy_version").notNull(),
+  generatedAt: timestamp("generated_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+}, (table) => [uniqueIndex("creator_interview_summaries_campaign_creator_uidx").on(table.campaignId, table.creatorId), index("creator_interview_summaries_workspace_generated_idx").on(table.workspaceId, table.generatedAt)]);
 
 export const deliverables = pgTable("deliverables", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -673,6 +713,27 @@ export const trackingAssets = pgTable("tracking_assets", {
   validUntil: timestamp("valid_until", { withTimezone: true }),
   createdAt,
 }, (table) => [uniqueIndex("tracking_assets_workspace_code_uidx").on(table.workspaceId, table.displayCode), index("tracking_assets_campaign_idx").on(table.campaignId)]);
+
+export const campaignAttributions = pgTable("campaign_attributions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  campaignId: uuid("campaign_id").notNull().references(() => campaigns.id, { onDelete: "cascade" }),
+  leadId: uuid("lead_id").references(() => leads.id, { onDelete: "set null" }),
+  customerId: uuid("customer_id").references(() => companies.id, { onDelete: "set null" }),
+  creatorId: uuid("creator_id").references(() => creators.id, { onDelete: "set null" }),
+  adCreativeId: uuid("ad_creative_id").references(() => adCreatives.id, { onDelete: "set null" }),
+  trackingAssetId: uuid("tracking_asset_id").references(() => trackingAssets.id, { onDelete: "set null" }),
+  attributionLevel: text("attribution_level").default("lead").notNull(),
+  sourceChannel: text("source_channel").notNull(),
+  sourceDetail: text("source_detail"),
+  confidence: numeric("confidence", { precision: 5, scale: 4 }),
+  valueMinor: integer("value_minor").default(0).notNull(),
+  currency: text("currency").default("IDR").notNull(),
+  evidence: jsonb("evidence").$type<Array<Record<string, unknown>>>().default([]).notNull(),
+  attributedAt: timestamp("attributed_at", { withTimezone: true }).defaultNow().notNull(),
+  createdAt,
+}, (table) => [index("campaign_attributions_campaign_level_idx").on(table.campaignId, table.attributionLevel), index("campaign_attributions_lead_idx").on(table.leadId), index("campaign_attributions_creator_idx").on(table.creatorId)]);
 
 export const metricDefinitions = pgTable("metric_definitions", {
   id: uuid("id").defaultRandom().primaryKey(),
