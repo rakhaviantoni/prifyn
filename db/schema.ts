@@ -183,6 +183,7 @@ export const businessOrganizations = pgTable("organizations", {
   name: text("name").notNull(),
   slug: text("slug").notNull(),
   type: text("type").default("brand").notNull(),
+  logoUrl: text("logo_url"),
   status: text("status").default("active").notNull(),
   createdAt,
   updatedAt,

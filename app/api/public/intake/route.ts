@@ -2,6 +2,7 @@ import { and, desc, eq, ilike } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
 import { activities, businessOrganizations, companies, contacts, leads, organization } from "@/db/schema";
+import { leadConfirmationEmail, leadOwnerEmail, sendEmail } from "@/lib/email/resend";
 
 const IntakePayload = z.object({
   type: z.enum(["appointment", "application"]),
@@ -104,6 +105,16 @@ export async function POST(request: Request) {
 
       return { company, contact, lead };
     });
+
+    await Promise.allSettled([
+      sendEmail(leadOwnerEmail(payload)),
+      sendEmail(leadConfirmationEmail({
+        type: payload.type,
+        name: payload.name,
+        email: payload.email,
+        company: payload.company,
+      })),
+    ]);
 
     return Response.json({
       ok: true,

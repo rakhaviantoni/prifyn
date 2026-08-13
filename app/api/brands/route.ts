@@ -5,6 +5,7 @@ const BrandPayload = z.object({
   id: z.string().uuid().optional().nullable(),
   name: z.string().trim().min(2).max(120),
   type: z.string().trim().min(2).max(80).optional().nullable(),
+  logoUrl: z.string().trim().url().max(1000).optional().nullable().or(z.literal("")),
 });
 
 function toPublicBrand(brand: Awaited<ReturnType<typeof getWorkspaceContextFromRequest>>["brand"]) {
@@ -14,6 +15,7 @@ function toPublicBrand(brand: Awaited<ReturnType<typeof getWorkspaceContextFromR
     name: brand.name,
     detail: brandDetail(brand),
     type: brand.type,
+    logoUrl: brand.logoUrl,
   };
 }
 

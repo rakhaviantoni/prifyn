@@ -20,7 +20,7 @@ function PreviewToday({ authError }: { authError?: boolean }) {
 }
 
 function AuthErrorAlert() {
-  return <section className="surface app-alert" role="alert"><Warning weight="fill" /><div><strong>Google sign-in session expired or changed domains.</strong><p>Start Google sign-in again from this exact app domain. If it repeats, ask the workspace admin to review the production sign-in settings.</p></div><WorkspaceLink className="button button-outline" href="/auth/sign-in">Try again</WorkspaceLink></section>;
+  return <section className="surface app-alert auth-session-alert" role="alert"><span><Warning weight="fill" /></span><div><h2>Your sign-in session needs to be refreshed.</h2><p>For your security, PRIFYN could not finish the last Google sign-in attempt. Please sign in again from this app window.</p><div className="auth-session-actions"><WorkspaceLink className="button button-dark" href="/auth/sign-in">Sign in again</WorkspaceLink><small>If you use email and password, enter your password again to refresh access.</small></div></div></section>;
 }
 
 export function AccountConflictAlert({ target }: { target: "brand" | "creator" }) {

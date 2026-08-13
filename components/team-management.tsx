@@ -15,12 +15,24 @@ export function TeamManagement() {
     setNotice(value);
     window.setTimeout(() => setNotice(null), 2600);
   };
-  function invite(form: FormData) {
+  async function invite(form: FormData) {
     const email = String(form.get("email")); const role = String(form.get("role"));
     const scope = String(form.get("scope") ?? "All operating brands");
-    setMembers(current => [...current, { name: email.split("@")[0], email, initials: email.slice(0, 2).toUpperCase(), role, scope, status: "Invited" }]);
-    setInviting(false);
-    notify("Invitation drafted. Review access anytime from Team & access.");
+    try {
+      const response = await fetch("/api/team/invitations", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, role, scope }),
+      });
+      const data = await response.json().catch(() => ({})) as { error?: string; email?: { skipped?: boolean } };
+      if (!response.ok) throw new Error(data.error || "Invitation could not be sent.");
+      setMembers(current => current.some(member => member.email === email) ? current : [...current, { name: email.split("@")[0], email, initials: email.slice(0, 2).toUpperCase(), role, scope, status: "Invited" }]);
+      setInviting(false);
+      notify(data.email?.skipped ? "Invitation saved. Email delivery will start after Resend is connected." : "Invitation sent.");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "Invitation could not be sent.");
+    }
   }
   function updateSelected(form: FormData) {
     if (!selectedMember) return;

@@ -86,20 +86,21 @@ export async function getWorkspaceContextFromRequest(request: Request) {
   return getWorkspaceContextFromHeaders(request.headers);
 }
 
-export async function upsertWorkspaceBrand(headers: Headers, payload: { id?: string | null; name: string; type?: string | null }) {
+export async function upsertWorkspaceBrand(headers: Headers, payload: { id?: string | null; name: string; type?: string | null; logoUrl?: string | null }) {
   const { db, membership, session, brands } = await getWorkspaceBrandsFromHeaders(headers);
   const name = payload.name.trim();
   const type = payload.type?.trim() || "brand";
+  const logoUrl = payload.logoUrl?.trim() || null;
   if (!name) throw new Response("Brand name is required.", { status: 400 });
   const slug = slugify(name);
   const existingById = payload.id ? brands.find(item => item.id === payload.id) : undefined;
   if (existingById) {
-    const [updated] = await db.update(businessOrganizations).set({ name, slug, type, updatedAt: new Date() }).where(and(eq(businessOrganizations.workspaceId, membership.organizationId), eq(businessOrganizations.id, existingById.id))).returning();
+    const [updated] = await db.update(businessOrganizations).set({ name, slug, type, logoUrl, updatedAt: new Date() }).where(and(eq(businessOrganizations.workspaceId, membership.organizationId), eq(businessOrganizations.id, existingById.id))).returning();
     return { db, session, membership, brand: updated };
   }
   const duplicate = brands.find(item => item.slug === slug);
   if (duplicate) {
-    const [updated] = await db.update(businessOrganizations).set({ name, type, updatedAt: new Date() }).where(and(eq(businessOrganizations.workspaceId, membership.organizationId), eq(businessOrganizations.id, duplicate.id))).returning();
+    const [updated] = await db.update(businessOrganizations).set({ name, type, logoUrl, updatedAt: new Date() }).where(and(eq(businessOrganizations.workspaceId, membership.organizationId), eq(businessOrganizations.id, duplicate.id))).returning();
     return { db, session, membership, brand: updated };
   }
   const [created] = await db.insert(businessOrganizations).values({
@@ -107,6 +108,7 @@ export async function upsertWorkspaceBrand(headers: Headers, payload: { id?: str
     name,
     slug,
     type,
+    logoUrl,
   }).returning();
   await db.insert(organizationMembers).values({
     organizationId: created.id,
