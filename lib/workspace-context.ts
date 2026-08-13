@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq } from "drizzle-orm";
 import { getDb } from "@/db";
-import { businessOrganizations, member, organization, organizationMembers } from "@/db/schema";
+import { businessOrganizations, companies, member, organization, organizationMembers } from "@/db/schema";
 import { getAuth, isAuthConfigured } from "@/lib/auth/server";
 
 function slugify(value: string) {
@@ -114,6 +114,29 @@ export async function upsertWorkspaceBrand(headers: Headers, payload: { id?: str
     role: "owner",
   }).onConflictDoNothing();
   return { db, session, membership, brand: created };
+}
+
+export async function ensureWorkspaceBrandCompany(input: {
+  workspaceId: string;
+  organizationId: string;
+  name: string;
+  ownerUserId?: string | null;
+}) {
+  const db = getDb();
+  const [existing] = await db.select().from(companies).where(and(
+    eq(companies.workspaceId, input.workspaceId),
+    eq(companies.organizationId, input.organizationId),
+    eq(companies.name, input.name),
+  )).limit(1);
+  if (existing) return existing;
+  const [created] = await db.insert(companies).values({
+    workspaceId: input.workspaceId,
+    organizationId: input.organizationId,
+    name: input.name,
+    lifecycleStage: "customer",
+    ownerUserId: input.ownerUserId ?? null,
+  }).returning();
+  return created;
 }
 
 export async function getWorkspaceContextFromRequestLegacy(request: Request) {

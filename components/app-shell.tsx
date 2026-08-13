@@ -36,6 +36,7 @@ const intelligenceNav = [
 
 type ShellUser = { name?: string | null; email?: string | null };
 type OperatingBrand = { id: string; initials: string; name: string; detail: string; type?: string };
+type PendingOnboarding = { accountType?: string; workspaceName?: string; displayName?: string };
 
 function initialsFrom(value?: string | null) {
   const clean = (value ?? "").trim();
@@ -90,6 +91,39 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
         })
         .catch(() => setBrands(fallbackBrands));
     });
+  }, []);
+  useEffect(() => {
+    const raw = window.localStorage.getItem("prifyn-pending-onboarding");
+    if (!raw) return;
+    let payload: PendingOnboarding;
+    try {
+      payload = JSON.parse(raw) as PendingOnboarding;
+    } catch {
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      return;
+    }
+    if (!payload.accountType || !payload.workspaceName?.trim()) {
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      return;
+    }
+    void fetch("/api/onboarding/workspace", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        accountType: payload.accountType,
+        workspaceName: payload.workspaceName.trim(),
+        displayName: payload.displayName,
+      }),
+    }).then(async response => {
+      if (!response.ok) return;
+      const data = await response.json().catch(() => ({})) as { brand?: { id?: string; name?: string } };
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      if (data.brand?.id) setActiveBrandCookie(data.brand.id);
+      if (data.brand?.name) window.localStorage.setItem("prifyn-active-brand", data.brand.name);
+      showNotice(`${data.brand?.name ?? payload.workspaceName} is ready.`);
+      window.setTimeout(() => window.location.reload(), 450);
+    }).catch(() => undefined);
   }, []);
   useEffect(() => {
     if (workspaceHome !== "/" || !pathname.startsWith("/app")) return;

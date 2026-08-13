@@ -10,6 +10,7 @@ import { LanguageToggle } from "./language";
 const nav = [["Home", "/creator", House], ["My profile", "/creator/profile", UserCircle], ["Opportunities", "/creator/opportunities", Briefcase], ["Applications", "/creator/applications", Notebook], ["Campaigns", "/creator/campaigns", Sparkle], ["Payments", "/creator/payments", CurrencyCircleDollar], ["Performance", "/creator/performance", ChartLineUp]] as const;
 
 type ShellUser = { name?: string | null; email?: string | null };
+type PendingOnboarding = { accountType?: string; workspaceName?: string; displayName?: string };
 
 function displayName(user?: ShellUser) {
   return user?.name?.trim() || user?.email?.split("@")[0] || "Creator";
@@ -29,6 +30,35 @@ export function CreatorShell({ children, currentUser }: { children: ReactNode; c
   const userName = displayName(currentUser);
   const userInitials = initialsFrom(userName);
   useEffect(() => { const enabled = window.localStorage.getItem("prifyn-theme") === "dark"; document.documentElement.classList.toggle("theme-dark", enabled); queueMicrotask(() => setDark(enabled)); }, []);
+  useEffect(() => {
+    const raw = window.localStorage.getItem("prifyn-pending-onboarding");
+    if (!raw) return;
+    let payload: PendingOnboarding;
+    try {
+      payload = JSON.parse(raw) as PendingOnboarding;
+    } catch {
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      return;
+    }
+    if (!payload.accountType || !payload.workspaceName?.trim()) {
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      return;
+    }
+    void fetch("/api/onboarding/workspace", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        accountType: payload.accountType,
+        workspaceName: payload.workspaceName.trim(),
+        displayName: payload.displayName,
+      }),
+    }).then(response => {
+      if (!response.ok) return;
+      window.localStorage.removeItem("prifyn-pending-onboarding");
+      window.setTimeout(() => window.location.reload(), 450);
+    }).catch(() => undefined);
+  }, []);
   useEffect(() => {
     document.body.classList.toggle("mobile-nav-open", mobileOpen);
     const closeOnEscape = (event: KeyboardEvent) => event.key === "Escape" && setMobileOpen(false);

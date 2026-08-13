@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { brandDetail, brandInitials, getWorkspaceContextFromRequest, upsertWorkspaceBrand } from "@/lib/workspace-context";
+import { brandDetail, brandInitials, ensureWorkspaceBrandCompany, getWorkspaceContextFromRequest, upsertWorkspaceBrand } from "@/lib/workspace-context";
 
 const BrandPayload = z.object({
   id: z.string().uuid().optional().nullable(),
@@ -30,7 +30,15 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const payload = BrandPayload.parse(await request.json());
-    const { brand } = await upsertWorkspaceBrand(request.headers, payload);
+    const { brand, membership, session } = await upsertWorkspaceBrand(request.headers, payload);
+    if (brand.type !== "creator-brand") {
+      await ensureWorkspaceBrandCompany({
+        workspaceId: membership.organizationId,
+        organizationId: brand.id,
+        name: brand.name,
+        ownerUserId: session.user.id,
+      });
+    }
     return Response.json({ brand: toPublicBrand(brand) });
   } catch (error) {
     if (error instanceof Response) return error;
