@@ -3,10 +3,12 @@
 import {
   ArrowRight, CheckCircle, ChartLineUp, FileArrowUp, FileCsv, FileXls, Info,
   MagnifyingGlass, PlugsConnected, Table, Warning, X,
+  Sparkle,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import type JSZip from "jszip";
 import { detectImportTemplate, importTemplates, mapHeaders, parseCsvPreview } from "@/lib/imports/metric-mapping";
+import { WorkspaceLink } from "@/components/workspace-link";
 
 type ParsedPreview = { headers: string[]; rows: string[][]; totalRows: number; fileName?: string; extension?: string };
 type ImportBatch = { id: string; fileName: string; source: string; rows: number; acceptedRows?: number; rejectedRows?: number; importedAt: string; status: string };
@@ -20,11 +22,17 @@ type ImportDetail = {
 };
 
 const reportPatterns = [
-  ["Funnel journey", "Impressions → clicks → landing views → leads/orders → revenue → repeat purchase"],
-  ["Audience", "Age, gender, device, new vs returning, creator audience fit"],
-  ["Location", "Country, province, city, store/serviceable area"],
-  ["Creative", "Ad or creator asset, hook, CTA, format, fatigue, quality ranking"],
-  ["Commerce outcome", "Orders, GMV/revenue, cancellations, product, marketplace source"],
+  ["Performance", "Spend, reach, impressions, clicks, results, leads, orders, revenue"],
+  ["Audience & location", "Audience, placement, city, region, device, and marketplace area when exported"],
+  ["Creative", "Ad, post, hook, CTA, format, ranking, fatigue, and creator asset labels"],
+  ["Journey", "Impression → click → lead/order → revenue, depending on available files"],
+];
+
+const operatingFlow = [
+  ["Brief", "Define campaign objective, audience, channel, creative, KOL need, and target outcome."],
+  ["Execute", "Run Ads or KOL activity with clear owner, CTA, tracking link, coupon, or proof rule."],
+  ["Measure", "Import performance, leads, affiliate, order, or marketplace exports."],
+  ["Improve", "Review recommendation, missing evidence, and next action before scaling."],
 ];
 
 async function parseXlsxPreview(file: File): Promise<Omit<ParsedPreview, "fileName" | "extension">> {
@@ -278,9 +286,9 @@ export function ImportDataCenter() {
       <aside className="stack">
         <section className="surface import-history-card"><div className="surface-head"><h2>Imported reports</h2><span>{importedBatches.length ? `${importedBatches.length} recent` : "None yet"}</span></div>{importedBatches.length ? <div className="import-history-list">{importedBatches.map(batch => <article key={batch.id}><CheckCircle weight="fill" /><button type="button" onClick={() => void openImport(batch)}><strong>{batch.fileName}</strong><small>{batch.source} · {batch.rows} rows · {new Date(batch.importedAt).toLocaleDateString("en-GB")}</small></button><span className="status-pill">{loadingImportId === batch.id ? "Opening…" : "Open"}</span></article>)}</div> : <div className="import-empty compact"><FileArrowUp weight="duotone" /><p>Finished imports will appear here with source, row count, and report status.</p></div>}</section>
         <section className="surface import-sources-card"><div className="surface-head"><h2>Supported sources</h2></div>{importTemplates.map(template => <article key={template.id} className={detected?.template.id === template.id ? "active" : ""}><div><strong>{template.label}</strong><small>{template.platform} · {template.supportedExtensions.join(", ")}</small></div><span>{template.requiredColumns.length} required</span></article>)}</section>
-        <section className="surface import-flow-card"><ChartLineUp weight="duotone" /><h2>What happens after import</h2>{[["Rows become ads/campaign metrics", "/app/ads-window"], ["Campaign results become report evidence", "/app/reports"], ["Creator data appears after affiliate/KOL imports", "/creator/performance"]].map(([item, href], index) => <a key={item} href={href}><b>{importedBatches.length ? <CheckCircle weight="fill" /> : index + 1}</b><span>{item}</span><ArrowRight /></a>)}</section>
-        <section className="surface import-pattern-card"><Table weight="duotone" /><h2>Report coverage from attachments</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
-        <section className="surface import-warning-card"><Warning weight="duotone" /><h2>Important</h2><p>Google login does not connect Ads, GA4, or YouTube automatically. Every marketing/commerce channel needs a separate authorization or export import.</p><a href="/app/settings/connections">Open connections <ArrowRight /></a></section>
+        <section className="surface import-flow-card polished"><ChartLineUp weight="duotone" /><h2>Growth loop</h2>{operatingFlow.map(([title, detail], index) => <article key={title}><b>{index + 1}</b><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
+        <section className="surface import-pattern-card polished"><Table weight="duotone" /><h2>Report coverage</h2>{reportPatterns.map(([title, detail]) => <article key={title}><CheckCircle weight="fill" /><div><strong>{title}</strong><small>{detail}</small></div></article>)}</section>
+        <section className="surface import-action-card"><Sparkle weight="fill" /><div><h2>Next best action</h2><p>{importedBatches.length ? "Open Reports to review what can already be trusted, then import missing leads, orders, revenue, or creator evidence." : "Upload one recent export first. PRIFYN will show what is measurable and what evidence is still missing."}</p></div><div><WorkspaceLink className="button button-dark" href="/app/reports">Open Reports <ArrowRight /></WorkspaceLink><WorkspaceLink className="button button-outline" href="/app/ads-window">Open Ads Manager</WorkspaceLink></div></section>
       </aside>
     </section>
     {selectedImport && <div className="dialog-backdrop" role="presentation" onMouseDown={() => setSelectedImport(null)}>

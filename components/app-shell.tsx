@@ -2,9 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import {
-  ArrowsLeftRight, Bell, Buildings, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, GearSix,
+  Bell, CaretDown, ChartLine, CheckCircle, CirclesFour, CreditCard, GearSix,
   House, IdentificationBadge, List, MagnifyingGlass, Megaphone, Moon, PencilSimple, PlugsConnected,
-  Plus, PlusCircle, SignOut, Sparkle, Sun, Table, UsersThree, X,
+  Plus, SignOut, Sparkle, Sun, Table, UsersThree, X,
 } from "@phosphor-icons/react";
 import { ReactNode, useEffect, useState } from "react";
 import { Brand } from "./brand";
@@ -64,7 +64,6 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
   const [dark, setDark] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [kolOpen, setKolOpen] = useState(() => pathname.startsWith("/app/kol-window") || pathname.startsWith("/app/talent-pipeline") || pathname.startsWith("/app/creators"));
-  const [brandOpen, setBrandOpen] = useState(false);
   const [brandDialogOpen, setBrandDialogOpen] = useState(false);
   const [brands, setBrands] = useState<OperatingBrand[]>(fallbackBrands);
   const [activeBrand, setActiveBrand] = useState<OperatingBrand>(defaultBrand());
@@ -106,7 +105,6 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     const openBrandManager = () => {
       setEditingBrand(activeBrand.id === "pending" ? null : activeBrand);
       setBrandDialogOpen(true);
-      setBrandOpen(false);
       setMobileOpen(false);
     };
     window.addEventListener("prifyn-open-brand-manager", openBrandManager);
@@ -124,15 +122,6 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     await authClient.signOut();
     window.location.assign(new URL("/auth/sign-in", window.location.origin).toString());
   };
-  const selectBrand = (brand: OperatingBrand) => {
-    setActiveBrand(brand);
-    setBrandOpen(false);
-    setActiveBrandCookie(brand.id);
-    window.localStorage.setItem("prifyn-active-brand", brand.name);
-    window.dispatchEvent(new CustomEvent("prifyn-brand-change", { detail: brand.name }));
-    showNotice(`${brand.name} is now the active brand.`);
-    window.setTimeout(() => window.location.reload(), 350);
-  };
   const saveBrand = async (form: FormData) => {
     const id = String(form.get("id") ?? "") || undefined;
     const name = String(form.get("name") ?? "").trim();
@@ -148,7 +137,6 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
       setActiveBrandCookie(data.brand.id);
       window.localStorage.setItem("prifyn-active-brand", data.brand.name);
       setBrandDialogOpen(false);
-      setBrandOpen(false);
       setEditingBrand(null);
       showNotice(`${name} saved as operating brand.`);
       window.setTimeout(() => window.location.reload(), 350);
@@ -161,11 +149,12 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
     if (href === "/app" || href === "/app/settings") return workspacePath === href;
     return workspacePath === href || workspacePath.startsWith(`${href}/`);
   };
+  const brandFormId = editingBrand?.id ?? (activeBrand.id !== "pending" ? activeBrand.id : "");
 
   return <div className="app-layout">
     <aside id="workspace-navigation" className={`app-sidebar ${mobileOpen ? "mobile-open" : ""}`} aria-label="Workspace menu">
       <div className="app-sidebar-header"><Brand href={workspaceHome} inverse /><button className="mobile-sidebar-close" type="button" aria-label="Close workspace menu" onClick={closeMobile}><X /></button></div>
-      <div className="workspace-switcher"><button className="workspace-button" type="button" aria-expanded={brandOpen} onClick={() => setBrandOpen(value => !value)}><b>{activeBrand.initials}</b><div><strong>{activeBrand.name}</strong><span>{activeBrand.detail}</span></div><CaretDown className={brandOpen ? "rotated" : ""} /></button>{brandOpen && <div className="workspace-menu" role="menu" aria-label="Brand menu">{brands.map(brand => <button type="button" role="menuitem" key={brand.id} className={brand.id === activeBrand.id ? "active" : ""} onClick={() => selectBrand(brand)}><b>{brand.initials}</b><span><strong>{brand.name}</strong><small>{brand.detail}</small></span>{brand.id === activeBrand.id ? <CheckCircle weight="fill" /> : <Buildings />}</button>)}<button type="button" role="menuitem" onClick={() => { setEditingBrand(activeBrand.id === "pending" ? null : activeBrand); setBrandDialogOpen(true); setBrandOpen(false); }}><b><PencilSimple weight="fill" /></b><span><strong>Edit brand profile</strong><small>Update the active operating brand</small></span><PencilSimple /></button><button type="button" role="menuitem" onClick={() => { setEditingBrand(null); setBrandDialogOpen(true); setBrandOpen(false); }}><b><PlusCircle weight="fill" /></b><span><strong>Add brand</strong><small>Create another operating brand slot</small></span><PlusCircle /></button><WorkspaceLink href="/app/settings/team" role="menuitem" onClick={() => setBrandOpen(false)}><b><UsersThree weight="fill" /></b><span><strong>Team access</strong><small>Invite members and assign roles</small></span><GearSix /></WorkspaceLink></div>}</div>
+      <div className="workspace-switcher single-brand-card"><button className="workspace-button" type="button" onClick={() => { setEditingBrand(activeBrand.id === "pending" ? null : activeBrand); setBrandDialogOpen(true); }}><b>{activeBrand.initials}</b><div><strong>{activeBrand.name}</strong><span>{activeBrand.detail}</span></div><PencilSimple /></button></div>
       <div className="app-sidebar-scroll">
         <span className="app-nav-label">Workspace</span>
         <nav className="app-nav" aria-label="Workspace navigation">{mainNav.slice(0, 2).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Today" && <b className="app-nav-badge">Setup</b>}</WorkspaceLink>)}<div className={`app-nav-group ${kolOpen ? "open" : ""}`}><div><WorkspaceLink href="/app/kol-window" onClick={closeMobile} className={kolNav.some(([, href]) => isActive(href)) ? "active" : ""}><UsersThree weight={kolNav.some(([, href]) => isActive(href)) ? "fill" : "regular"} /><span>KOL Campaigns</span></WorkspaceLink><button type="button" aria-label="Toggle KOL Campaigns menu" aria-expanded={kolOpen} onClick={() => setKolOpen(value => !value)}><CaretDown /></button></div><div className="app-subnav">{kolNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span>{label === "Creator Discovery" && <small>Beta</small>}</WorkspaceLink>)}</div></div>{mainNav.slice(2).map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
@@ -173,11 +162,11 @@ export function AppShell({ children, currentUser }: { children: ReactNode; curre
         <nav className="app-nav" aria-label="Intelligence navigation">{intelligenceNav.map(([label, href, Icon]) => <WorkspaceLink href={href} key={href} onClick={closeMobile} className={isActive(href) ? "active" : ""}><Icon weight={isActive(href) ? "fill" : "regular"} /><span>{label}</span></WorkspaceLink>)}</nav>
       </div>
       <div className="mobile-sidebar-actions"><WorkspaceLink className="button button-light" href="/app/ads-window" onClick={closeMobile}><Plus weight="bold" /> New campaign</WorkspaceLink><div><LanguageToggle /><button className="icon-button theme-toggle" type="button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications" onClick={() => showNotice("You have three decisions requiring attention.")}><Bell /></button></div></div>
-      <div className="app-user"><b>{userInitials}</b><div><strong>{userName}</strong><span>{currentUser?.email ?? "Signed in"}</span></div><WorkspaceLink href="/creator" aria-label="Switch to creator portal" title="Switch to creator portal without signing out"><ArrowsLeftRight /></WorkspaceLink><button type="button" aria-label="Sign out from all PRIFYN portals" title="Sign out from all PRIFYN portals" onClick={signOut}><SignOut /></button></div>
+      <div className="app-user"><b>{userInitials}</b><div><strong>{userName}</strong><span>{currentUser?.email ?? "Signed in"}</span></div><button type="button" aria-label="Sign out" title="Sign out" onClick={signOut}><SignOut /></button></div>
     </aside>
     {mobileOpen && <button className="mobile-sidebar-backdrop" type="button" aria-label="Close workspace menu" onClick={closeMobile} />}
     <main className="app-main"><header className="app-topbar"><button className="mobile-app-menu" type="button" aria-label="Open workspace menu" aria-controls="workspace-navigation" aria-expanded={mobileOpen} onClick={() => setMobileOpen(true)}><List /></button><div className="app-mobile-brand"><Brand href={workspaceHome} compact /></div><label className="app-search"><MagnifyingGlass /><input aria-label="Search workspace" placeholder="Search campaigns, creators, insights" onKeyDown={event => event.key === "Enter" && showNotice("Search will improve as more campaigns, creators, and reports are added.")} /></label><div className="topbar-actions"><LanguageToggle /><button className="icon-button theme-toggle" type="button" aria-label={dark ? "Use light theme" : "Use dark theme"} onClick={toggleTheme}><Sun className="theme-icon-sun" /><Moon className="theme-icon-moon" /></button><button className="icon-button" type="button" aria-label="Notifications" onClick={() => showNotice("You have three decisions requiring attention.")}><Bell /></button><WorkspaceLink className="button button-dark" href="/app/ads-window"><Plus weight="bold" /> New campaign</WorkspaceLink></div></header>{children}</main>
-    {brandDialogOpen && <div className="dialog-backdrop" onMouseDown={() => setBrandDialogOpen(false)}><section className="dialog-card brand-dialog" role="dialog" aria-modal="true" aria-labelledby="brand-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setBrandDialogOpen(false)}><X /></button><span className="section-kicker">Operating brands</span><h2 id="brand-dialog-title">{editingBrand ? "Edit brand profile" : "Add operating brand"}</h2><p>Use brand slots for real operating brands, client accounts, or business units. The active brand controls campaigns, imports, reports, connections, and team review context.</p><div className="brand-dialog-list">{brands.map(brand => <article key={brand.id} className={brand.id === activeBrand.id ? "active" : ""}><span><Buildings weight="duotone" /></span><div><strong>{brand.name}</strong><small>{brand.detail}</small></div><button type="button" onClick={() => selectBrand(brand)}>{brand.id === activeBrand.id ? "Active" : "Use"}</button></article>)}</div><form className="dialog-form" action={saveBrand}><input type="hidden" name="id" value={editingBrand?.id ?? ""} /><label className="field"><span>Brand name</span><input name="name" required defaultValue={editingBrand?.name === "Operating brand" ? "" : editingBrand?.name ?? ""} placeholder="e.g. Your brand" /></label><label className="field"><span>Brand type</span><select name="type" defaultValue={editingBrand?.type ?? "brand"}><option value="brand">Brand</option><option value="agency-client">Agency client</option><option value="business-unit">Business unit</option><option value="creator-brand">Creator brand</option></select></label><div className="dialog-actions"><button className="button button-outline" type="button" onClick={() => { setBrandDialogOpen(false); setEditingBrand(null); }}>Cancel</button><button className="button button-dark" type="submit"><CheckCircle weight="fill" /> Save brand</button></div></form></section></div>}
+    {brandDialogOpen && <div className="dialog-backdrop" onMouseDown={() => setBrandDialogOpen(false)}><section className="dialog-card brand-dialog" role="dialog" aria-modal="true" aria-labelledby="brand-dialog-title" onMouseDown={event => event.stopPropagation()}><button className="dialog-close" type="button" aria-label="Close" onClick={() => setBrandDialogOpen(false)}><X /></button><span className="section-kicker">Brand profile</span><h2 id="brand-dialog-title">Edit operating brand</h2><p>This brand profile is used for campaigns, imports, reports, channel connections, and team review context.</p><form className="dialog-form" action={saveBrand}><input type="hidden" name="id" value={brandFormId} /><label className="field"><span>Brand name</span><input name="name" required defaultValue={editingBrand?.name === "Operating brand" ? "" : editingBrand?.name ?? activeBrand.name === "Operating brand" ? "" : activeBrand.name} placeholder="e.g. Your brand" /></label><label className="field"><span>Brand type</span><select name="type" defaultValue={editingBrand?.type ?? activeBrand.type ?? "brand"}><option value="brand">Brand</option><option value="agency-client">Agency client</option><option value="business-unit">Business unit</option><option value="creator-brand">Creator brand</option></select></label><div className="dialog-actions"><WorkspaceLink className="button button-outline" href="/app/settings/team">Manage team</WorkspaceLink><button className="button button-outline" type="button" onClick={() => { setBrandDialogOpen(false); setEditingBrand(null); }}>Cancel</button><button className="button button-dark" type="submit"><CheckCircle weight="fill" /> Save brand</button></div></form></section></div>}
     {notice && <div className="toast" role="status"><CirclesFour weight="fill" />{notice}</div>}
   </div>;
 }
