@@ -758,6 +758,14 @@ svg { flex: none; }
 .reports-filter-bar label { display: grid; gap: 6px; }
 .reports-filter-bar span { color: var(--muted); font-size: 7px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
 .reports-filter-bar select { height: 38px; width: 100%; padding: 0 11px; border: 1px solid var(--line); border-radius: 9px; background: var(--paper); color: var(--ink); font-size: 9px; }
+.report-schedule-card { display: grid; gap: 14px; margin: 0 0 14px; padding: 18px; border-color: rgba(40,117,83,.22); background: linear-gradient(135deg, var(--paper), var(--sage-2)); }
+.report-schedule-form { display: grid; gap: 12px; }
+.schedule-toggle { display: flex; gap: 10px; align-items: flex-start; padding: 12px; border: 1px solid var(--line); border-radius: 14px; background: color-mix(in srgb, var(--white) 82%, transparent); }
+.schedule-toggle input { margin-top: 3px; accent-color: var(--green); }
+.schedule-toggle strong, .schedule-toggle small { display: block; }
+.schedule-toggle strong { font-size: 10px; }
+.schedule-toggle small { margin-top: 3px; color: var(--muted); font-size: 8px; line-height: 1.5; }
+.report-schedule-form textarea { min-height: 70px; resize: vertical; }
 .report-command { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 16px; padding: 22px; }
 .report-command h2 { margin: 4px 0; font-family: var(--font-serif); font-size: 24px; font-weight: 500; }
 .report-command p { margin: 0; max-width: 700px; color: var(--muted); font-size: 9.5px; line-height: 1.6; }

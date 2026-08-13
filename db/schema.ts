@@ -927,6 +927,27 @@ export const outboxEvents = pgTable("outbox_events", {
   lastError: text("last_error"),
 }, (table) => [index("outbox_unpublished_idx").on(table.publishedAt, table.occurredAt)]);
 
+export const reportSchedules = pgTable("report_schedules", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
+  organizationId: uuid("organization_id").notNull().references(() => businessOrganizations.id, { onDelete: "cascade" }),
+  createdByUserId: text("created_by_user_id").references(() => user.id, { onDelete: "set null" }),
+  name: text("name").default("Growth report").notNull(),
+  cadence: text("cadence").default("weekly").notNull(),
+  dayOfWeek: integer("day_of_week").default(1).notNull(),
+  dayOfMonth: integer("day_of_month").default(1).notNull(),
+  sendTime: text("send_time").default("09:00").notNull(),
+  timezone: text("timezone").default("Asia/Jakarta").notNull(),
+  recipients: jsonb("recipients").$type<string[]>().default([]).notNull(),
+  views: jsonb("views").$type<string[]>().default(["Executive"]).notNull(),
+  filters: jsonb("filters").$type<Record<string, unknown>>().default({}).notNull(),
+  status: text("status").default("active").notNull(),
+  lastSentAt: timestamp("last_sent_at", { withTimezone: true }),
+  nextSendAt: timestamp("next_send_at", { withTimezone: true }).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [index("report_schedules_due_idx").on(table.status, table.nextSendAt), index("report_schedules_org_idx").on(table.organizationId)]);
+
 export const auditEvents = pgTable("audit_events", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").references(() => organization.id, { onDelete: "set null" }),
