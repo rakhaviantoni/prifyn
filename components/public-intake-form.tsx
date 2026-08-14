@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowRight, CalendarBlank, CheckCircle, Clock, ClipboardText, Lightning, Megaphone, UsersThree } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 type IntakeType = "appointment" | "application";
 
@@ -12,23 +12,42 @@ const channels = [
   { value: "Reporting only", label: "Reports", copy: "Turn existing exports into decisions and next actions.", icon: ClipboardText },
 ];
 const urgency = ["This week", "This month", "Already running campaigns", "Exploring"];
-const appointmentSlots = [
-  { value: "Morning walkthrough · 09:00–11:00 WIB", title: "Morning", time: "09:00–11:00 WIB", note: "Best for owner-led teams" },
-  { value: "Midday walkthrough · 12:00–14:00 WIB", title: "Midday", time: "12:00–14:00 WIB", note: "Quick campaign mapping" },
-  { value: "Afternoon walkthrough · 15:00–17:00 WIB", title: "Afternoon", time: "15:00–17:00 WIB", note: "Best for team review" },
+type AppointmentSlot = { id: string; label: string; startTime: string; endTime: string; timezone: string; note: string; status: string; sortOrder: number };
+
+const defaultAppointmentSlots: AppointmentSlot[] = [
+  { id: "morning", label: "Morning", startTime: "09:00", endTime: "11:00", timezone: "Asia/Jakarta", note: "Best for owner-led teams", status: "active", sortOrder: 10 },
+  { id: "midday", label: "Midday", startTime: "12:00", endTime: "14:00", timezone: "Asia/Jakarta", note: "Quick campaign mapping", status: "active", sortOrder: 20 },
+  { id: "afternoon", label: "Afternoon", startTime: "15:00", endTime: "17:00", timezone: "Asia/Jakarta", note: "Best for team review", status: "active", sortOrder: 30 },
 ];
 
 export function PublicIntakeForm({ type }: { type: IntakeType }) {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState(appointmentSlots[0].value);
+  const [slots, setSlots] = useState(defaultAppointmentSlots);
+  const [selectedSlot, setSelectedSlot] = useState(defaultAppointmentSlots[0].id);
   const [customTime, setCustomTime] = useState("");
   const isAppointment = type === "appointment";
+  const selectedSlotValue = slots.find(slot => slot.id === selectedSlot);
+
+  useEffect(() => {
+    if (!isAppointment) return;
+    let active = true;
+    void (async () => {
+      const response = await fetch("/api/public/appointment-slots");
+      const data = await response.json().catch(() => ({})) as { slots?: AppointmentSlot[] };
+      if (!active || !response.ok || !data.slots?.length) return;
+      setSlots(data.slots);
+      setSelectedSlot(current => data.slots!.some(slot => slot.id === current) ? current : data.slots![0].id);
+    })();
+    return () => { active = false; };
+  }, [isAppointment]);
 
   async function submit(form: FormData) {
     const entries = Object.fromEntries(form.entries());
-    const preferredTime = isAppointment ? customTime.trim() || selectedSlot : undefined;
+    const preferredTime = isAppointment
+      ? customTime.trim() || (selectedSlotValue ? `${selectedSlotValue.label} walkthrough · ${selectedSlotValue.startTime}–${selectedSlotValue.endTime} ${selectedSlotValue.timezone}` : undefined)
+      : undefined;
     setSubmitting(true);
     setError(null);
     try {
@@ -68,7 +87,7 @@ export function PublicIntakeForm({ type }: { type: IntakeType }) {
       <fieldset className="intake-fieldset"><legend>Your details</legend><div className="field-row"><label className="field"><span>Name</span><input name="name" required placeholder="Your name" /></label><label className="field"><span>Work email</span><input name="email" required type="email" placeholder="you@company.com" /></label></div><div className="field-row"><label className="field"><span>Company / brand</span><input name="company" required placeholder="Brand or agency name" /></label><label className="field"><span>Your role</span><input name="role" placeholder="Owner, marketer, agency, creator manager..." /></label></div></fieldset>
       <fieldset className="intake-fieldset"><legend>What should we help with first?</legend><div className="intake-choice-grid">{channels.map(({ value, label, copy, icon: Icon }, index) => <label className="intake-choice" key={value}><input type="radio" name="channel" value={value} defaultChecked={index === 0} /><span><Icon weight="duotone" /><strong>{label}</strong><small>{copy}</small></span></label>)}</div></fieldset>
       <fieldset className="intake-fieldset"><legend>Readiness</legend><div className="field-row"><label className="field"><span>Timing</span><select name="urgency" defaultValue={isAppointment ? "This week" : "This month"}>{urgency.map(item => <option key={item}>{item}</option>)}</select></label><label className="field"><span>Monthly campaign spend</span><input name="spend" placeholder="e.g. Rp20m–Rp100m, or not sure yet" /></label></div></fieldset>
-      {isAppointment && <fieldset className="intake-fieldset"><legend>Preferred walkthrough time</legend><div className="appointment-slots">{appointmentSlots.map(slot => <button className={selectedSlot === slot.value && !customTime ? "selected" : ""} type="button" key={slot.value} onClick={() => { setSelectedSlot(slot.value); setCustomTime(""); }}><CalendarBlank weight="duotone" /><span><strong>{slot.title}</strong><small><Clock />{slot.time}</small><em>{slot.note}</em></span></button>)}</div><label className="field custom-time-field"><span>Need another time?</span><input value={customTime} onChange={event => setCustomTime(event.target.value)} placeholder="Example: Tuesday or Thursday afternoon WIB" /></label></fieldset>}
+      {isAppointment && <fieldset className="intake-fieldset"><legend>Preferred walkthrough time</legend><div className="appointment-slots">{slots.map(slot => <button className={selectedSlot === slot.id && !customTime ? "selected" : ""} type="button" key={slot.id} onClick={() => { setSelectedSlot(slot.id); setCustomTime(""); }}><CalendarBlank weight="duotone" /><span><strong>{slot.label}</strong><small><Clock />{slot.startTime}–{slot.endTime}</small><em>{slot.note || slot.timezone}</em></span></button>)}</div><label className="field custom-time-field"><span>Need another time?</span><input value={customTime} onChange={event => setCustomTime(event.target.value)} placeholder="Example: Tuesday or Thursday afternoon WIB" /></label></fieldset>}
       <label className="field problem-field"><span>{isAppointment ? "What should we map during the walkthrough?" : "What problem should PRIFYN review first?"}</span><textarea name="problem" required placeholder="Example: we run Meta Ads and KOL manually, but reports are late and we cannot see which campaign creates leads/orders." /></label>
       <button className="button button-dark button-large intake-submit" type="submit" disabled={submitting || submitted}>{submitted ? "Request saved" : submitting ? "Saving request…" : isAppointment ? "Request walkthrough" : "Send application"} <ArrowRight weight="bold" /></button>
     </form>

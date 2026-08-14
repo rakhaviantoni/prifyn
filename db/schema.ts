@@ -240,6 +240,19 @@ export const leads = pgTable("leads", {
   updatedAt,
 }, (table) => [index("leads_organization_status_idx").on(table.organizationId, table.status)]);
 
+export const appointmentSlots = pgTable("appointment_slots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  label: text("label").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  timezone: text("timezone").default("Asia/Jakarta").notNull(),
+  note: text("note"),
+  status: text("status").default("active").notNull(),
+  sortOrder: integer("sort_order").default(0).notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [index("appointment_slots_status_sort_idx").on(table.status, table.sortOrder)]);
+
 export const activities = pgTable("activities", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: text("workspace_id").notNull().references(() => organization.id, { onDelete: "cascade" }),
