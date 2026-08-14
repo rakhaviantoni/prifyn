@@ -529,6 +529,8 @@ svg { flex: none; }
 /* Authentication */
 .auth-page { min-height: 100vh; display: grid; grid-template-columns: 1fr 1fr; background: var(--paper); }
 .auth-brand-panel { position: relative; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 36px 48px; background: var(--ink); color: #fff; }
+.auth-page-creator .auth-brand-panel { background: linear-gradient(145deg, #171d2d, #332852); }
+.auth-page-admin .auth-brand-panel { background: linear-gradient(145deg, #101614, #24362d); }
 .auth-brand-panel::after { content: ""; position: absolute; right: -300px; bottom: -300px; width: 700px; height: 700px; border-radius: 50%; border: 1px solid rgba(165,227,190,.18); box-shadow: 0 0 0 90px rgba(165,227,190,.025), 0 0 0 180px rgba(165,227,190,.018); }
 .auth-quote { position: relative; z-index: 1; max-width: 540px; }
 .auth-quote blockquote { margin: 0; font-family: var(--font-sans); font-size: clamp(35px, 4vw, 55px); font-weight: 560; letter-spacing: -.05em; line-height: 1.03; }
@@ -537,9 +539,11 @@ svg { flex: none; }
 .auth-form-panel { display: grid; place-items: center; padding: 50px 24px; }
 .auth-form-wrap { width: min(410px, 100%); }
 .auth-mobile-brand { display: none; margin-bottom: 40px; }
+.auth-context-pill { display: inline-flex; align-items: center; min-height: 26px; margin-bottom: 14px; padding: 0 10px; border: 1px solid rgba(40,117,83,.16); border-radius: 999px; background: var(--sage-2); color: var(--green); font-size: 9px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .auth-form-wrap h1 { margin: 0; font-size: 31px; letter-spacing: -.04em; }
 .auth-form-wrap > p { margin: 9px 0 30px; color: var(--muted); font-size: 11px; }
 .auth-form-wrap > p a { color: var(--green); font-weight: 750; }
+.auth-form-wrap > .auth-context-note { margin: -18px 0 26px; color: #52615a; font-size: 11px; line-height: 1.6; }
 .google-button { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: center; gap: 10px; border: 1px solid var(--line); border-radius: 9px; background: var(--white); color: var(--ink); cursor: pointer; font-size: 10px; font-weight: 700; }
 .google-button:hover { border-color: #9ba59f; }
 .google-g { width: 18px; height: 18px; display: block; }

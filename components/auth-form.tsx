@@ -43,11 +43,11 @@ function getProductionCallbackUrl(accountType?: AccountType) {
   return url.toString();
 }
 
-export function AuthForm({ mode }: { mode: "sign-in" | "sign-up" }) {
+export function AuthForm({ mode, initialAccountType = "brand" }: { mode: "sign-in" | "sign-up"; initialAccountType?: AccountType }) {
   const router = useRouter();
   const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [accountType, setAccountType] = useState<AccountType>("brand");
+  const [accountType, setAccountType] = useState<AccountType>(initialAccountType);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [workspaceName, setWorkspaceName] = useState("");

@@ -33,7 +33,7 @@ const routes = [
   ["/case-studies", "Real interviews"],
   ["/case-studies/restaurant-campaign-readiness", "Why the existing workflow broke down"],
   ["/case-studies/marketplace-footwear-operations", "footwear seller"],
-  ["/auth/sign-in", "Welcome back"],
+  ["/auth/sign-in", "Sign in to PRIFYN"],
   ["/auth/sign-up", "Create your workspace"],
   ["/demo", "Preview sandbox"],
   ["/demo/creator", "Demo creator"],
@@ -78,6 +78,20 @@ test("server-renders every public and product route", async () => {
     assert.match(html, /PRIFYN/, path);
     assert.doesNotMatch(html, /codex-preview|Your site is taking shape|react-loading-skeleton/, path);
   }
+});
+
+test("auth page copy matches the requested workspace context", async () => {
+  const appResponse = await request("/auth/sign-in", { headers: { host: "app.prifyn.my.id" } });
+  assert.equal(appResponse.status, 200);
+  assert.match(await appResponse.text(), /Continue to your brand workspace/i);
+
+  const creatorResponse = await request("/auth/sign-in", { headers: { host: "creator.prifyn.my.id" } });
+  assert.equal(creatorResponse.status, 200);
+  assert.match(await creatorResponse.text(), /Sign in as creator/i);
+
+  const adminResponse = await request("/auth/sign-in?returnTo=/admin");
+  assert.equal(adminResponse.status, 200);
+  assert.match(await adminResponse.text(), /PRIFYN admin sign in/i);
 });
 
 test("private workspaces require authentication", async () => {
