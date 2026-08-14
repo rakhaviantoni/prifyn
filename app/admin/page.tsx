@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminBusinessManager } from "@/components/admin-business-manager";
 import { getAdminSession } from "@/lib/admin/access";
@@ -17,7 +18,7 @@ export default async function AdminPage() {
   if (!admin) {
     const cookie = requestHeaders.get("cookie") ?? "";
     if (!cookie.includes("better-auth")) redirect("/auth/sign-in?returnTo=/admin");
-    return <main className="admin-denied"><section className="surface"><span>PRIFYN Admin</span><h1>Access restricted.</h1><p>This console is only available to approved PRIFYN operators.</p><a className="button button-dark" href="/app">Back to workspace</a></section></main>;
+    return <main className="admin-denied"><section className="surface"><span>PRIFYN Admin</span><h1>Access restricted.</h1><p>This console is only available to approved PRIFYN operators.</p><Link className="button button-dark" href="/">Back to PRIFYN</Link></section></main>;
   }
   return <AdminBusinessManager metrics={emptyOverview.metrics} leads={emptyOverview.leads} imports={emptyOverview.imports} loadOverview />;
 }
