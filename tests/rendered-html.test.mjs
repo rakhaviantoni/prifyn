@@ -89,6 +89,14 @@ test("private workspaces require authentication", async () => {
   }
 });
 
+test("admin business manager requires authentication", async () => {
+  const response = await request("/admin", { redirect: "manual" });
+  assert.equal(response.status, 307);
+  const location = new URL(response.headers.get("location"), "http://localhost");
+  assert.equal(location.pathname, "/auth/sign-in");
+  assert.equal(location.searchParams.get("returnTo"), "/admin");
+});
+
 test("app and creator subdomain roots resolve to gated workspaces", async () => {
   const appResponse = await request("/", { headers: { host: "app.prifyn.rakhaviantoni.com" }, redirect: "manual" });
   assert.equal(appResponse.status, 307);

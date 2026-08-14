@@ -35,11 +35,12 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | `SUPABASE_URL` | Supabase project URL, such as `https://project.supabase.co` |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase service role key for Storage uploads |
 | `SUPABASE_STORAGE_BUCKET` | Storage bucket for uploaded assets, default `prifyn-assets` |
+| `PRIFYN_ADMIN_EMAILS` | Comma-separated emails allowed to open PRIFYN Business Manager, for example `privynindonesia@gmail.com` |
 | `REPORT_SCHEDULE_SECRET` | Bearer token used by the scheduled report runner |
 | `WEBHOOK_DELIVERY_SECRET` | Bearer token used by the webhook delivery runner |
-| `SUMOPOD_BASE_URL` | `https://ai.sumopod.com/v1` unless the provider specifies another endpoint |
-| `SUMOPOD_API_KEY` | SumoPod API key |
-| `SUMOPOD_MODEL` | Enabled model identifier |
+| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` unless the provider specifies another OpenAI-compatible endpoint |
+| `DEEPSEEK_API_KEY` | DeepSeek API key for Ask PRIFYN |
+| `DEEPSEEK_MODEL` | Enabled model identifier, such as `deepseek-chat` |
 
 Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash.
 

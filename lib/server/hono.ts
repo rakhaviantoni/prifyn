@@ -2,7 +2,9 @@ import { createHmac } from "node:crypto";
 import { Hono } from "hono";
 import { and, eq, isNull, lte } from "drizzle-orm";
 import { getDb } from "@/db";
-import { businessOrganizations, outboxEvents, reportSchedules, webhookDeliveries, webhookEndpoints } from "@/db/schema";
+import { activities, businessOrganizations, leads, outboxEvents, reportSchedules, webhookDeliveries, webhookEndpoints } from "@/db/schema";
+import { adminOrderStages } from "@/lib/admin/order-flow";
+import { getAdminSession } from "@/lib/admin/access";
 import { productUrl, reportReadyEmail, sendEmail } from "@/lib/email/resend";
 import { simpleReportPdf } from "@/lib/reports/pdf";
 import { nextReportSendAt, type ReportCadence } from "@/lib/reports/schedules";
@@ -186,4 +188,38 @@ prifynService.post("/api/webhooks/deliver", async c => {
   }
 
   return c.json({ ok: true, events: events.length, deliveries });
+});
+
+prifynService.post("/api/admin/leads/:leadId/stage", async c => {
+  const admin = await getAdminSession(c.req.raw.headers);
+  if (!admin) return c.json({ ok: false, error: "Admin access is required." }, 403);
+  const leadId = c.req.param("leadId");
+  const body = await c.req.json().catch(() => ({})) as { status?: string; note?: string };
+  const status = body.status?.trim();
+  if (!status || !(adminOrderStages as readonly string[]).includes(status)) return c.json({ ok: false, error: "Choose a valid order stage." }, 400);
+
+  const db = getDb();
+  const [existing] = await db.select().from(leads).where(eq(leads.id, leadId)).limit(1);
+  if (!existing) return c.json({ ok: false, error: "Lead not found." }, 404);
+  const [updated] = await db.update(leads).set({ status, updatedAt: new Date() }).where(eq(leads.id, leadId)).returning();
+  await db.insert(activities).values({
+    workspaceId: updated.workspaceId,
+    subjectType: "lead",
+    subjectId: updated.id,
+    type: "admin_stage_update",
+    actorUserId: admin.user.id,
+    metadata: {
+      previousStatus: existing.status,
+      nextStatus: status,
+      note: body.note || null,
+    },
+  });
+  await db.insert(outboxEvents).values({
+    workspaceId: updated.workspaceId,
+    aggregateType: "lead",
+    aggregateId: updated.id,
+    eventType: "lead.stage_updated",
+    payload: { leadId: updated.id, previousStatus: existing.status, nextStatus: status, note: body.note || null },
+  });
+  return c.json({ ok: true, lead: { id: updated.id, status: updated.status } });
 });
