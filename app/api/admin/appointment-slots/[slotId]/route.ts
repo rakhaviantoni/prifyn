@@ -11,6 +11,12 @@ const SlotUpdatePayload = z.object({
   endTime: z.string().trim().min(4).max(16).optional(),
   timezone: z.string().trim().min(3).max(80).optional(),
   note: z.string().trim().max(160).optional().nullable(),
+  durationMinutes: z.coerce.number().int().min(15).max(180).optional(),
+  bufferMinutes: z.coerce.number().int().min(0).max(120).optional(),
+  maxBookingsPerDay: z.coerce.number().int().min(1).max(20).optional(),
+  ownerName: z.string().trim().max(120).optional().nullable(),
+  ownerEmail: z.string().trim().email().max(160).optional().nullable().or(z.literal("")),
+  meetingLocation: z.string().trim().max(200).optional().nullable(),
   status: z.enum(["active", "paused"]).optional(),
   sortOrder: z.coerce.number().int().min(0).max(1000).optional(),
 });

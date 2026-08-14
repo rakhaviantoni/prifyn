@@ -19,12 +19,37 @@ type Lead = {
   urgency: string;
   spend: string;
   problem: string;
+  preferredTime?: string;
+  meetingDate?: string;
+  meetingTime?: string;
+  meetingOwnerName?: string;
+  meetingOwnerEmail?: string;
+  meetingStatus?: string;
+  meetingOutcome?: string;
+  meetingNextStep?: string;
 };
 
 type ImportItem = { id: string; sourceType: string; status: string; acceptedRows: number; totalRows: number; brand: string; createdAt: string };
 type Metrics = { users: number; workspaces: number; operatingBrands: number; leads: number; imports: number; webhooks: number };
 type Overview = { metrics: Metrics; leads: Lead[]; imports: ImportItem[] };
-type AppointmentSlot = { id: string; label: string; availableDate: string; startTime: string; endTime: string; timezone: string; note: string; status: string; sortOrder: number };
+type AppointmentSlot = {
+  id: string;
+  label: string;
+  availableDate: string;
+  startTime: string;
+  endTime: string;
+  timezone: string;
+  note: string;
+  durationMinutes: number;
+  bufferMinutes: number;
+  maxBookingsPerDay: number;
+  ownerName: string;
+  ownerEmail: string;
+  meetingLocation: string;
+  status: string;
+  sortOrder: number;
+};
+type BlackoutDate = { id: string; date: string; reason: string | null; status: string };
 
 const opsFlow = [
   { title: "Lead captured", stage: "intake_received", copy: "A book/apply request enters the PRIFYN queue." },
@@ -75,6 +100,8 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
   const [overviewLoading, setOverviewLoading] = useState(loadOverview);
   const [slots, setSlots] = useState<AppointmentSlot[]>([]);
   const [slotsLoading, setSlotsLoading] = useState(true);
+  const [blackouts, setBlackouts] = useState<BlackoutDate[]>([]);
+  const [blackoutsLoading, setBlackoutsLoading] = useState(true);
 
   async function loadBusinessOverview(showNotice = false) {
     setOverviewLoading(true);
@@ -130,6 +157,15 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
     setSlotsLoading(false);
   }
 
+  async function loadBlackouts() {
+    setBlackoutsLoading(true);
+    const response = await fetch("/api/admin/blackout-dates", { credentials: "include" });
+    const data = await response.json().catch(() => ({})) as { dates?: BlackoutDate[]; error?: string };
+    if (response.ok) setBlackouts(data.dates ?? []);
+    else setNotice(data.error || "Blackout dates could not be loaded.");
+    setBlackoutsLoading(false);
+  }
+
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -139,6 +175,19 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
       if (response.ok) setSlots(data.slots ?? []);
       else setNotice(data.error || "Availability could not be loaded.");
       setSlotsLoading(false);
+    })();
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const response = await fetch("/api/admin/blackout-dates", { credentials: "include" });
+      const data = await response.json().catch(() => ({})) as { dates?: BlackoutDate[]; error?: string };
+      if (!active) return;
+      if (response.ok) setBlackouts(data.dates ?? []);
+      else setNotice(data.error || "Blackout dates could not be loaded.");
+      setBlackoutsLoading(false);
     })();
     return () => { active = false; };
   }, []);
@@ -157,6 +206,12 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
         endTime: form.get("endTime"),
         note: form.get("note"),
         availableDate: form.get("availableDate"),
+        durationMinutes: form.get("durationMinutes"),
+        bufferMinutes: form.get("bufferMinutes"),
+        maxBookingsPerDay: form.get("maxBookingsPerDay"),
+        ownerName: form.get("ownerName"),
+        ownerEmail: form.get("ownerEmail"),
+        meetingLocation: form.get("meetingLocation"),
         status: "active",
         sortOrder: slots.length ? Math.max(...slots.map(slot => slot.sortOrder)) + 10 : 10,
       }),
@@ -168,6 +223,72 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
     } else {
       const data = await response.json().catch(() => ({})) as { error?: string };
       setNotice(data.error || "Slot could not be added.");
+    }
+    window.setTimeout(() => setNotice(null), 2600);
+  }
+
+  async function createBlackout(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setNotice("Blocking date…");
+    const response = await fetch("/api/admin/blackout-dates", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ date: form.get("date"), reason: form.get("reason") }),
+    });
+    if (response.ok) {
+      event.currentTarget.reset();
+      await loadBlackouts();
+      setNotice("Date blocked.");
+    } else {
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      setNotice(data.error || "Date could not be blocked.");
+    }
+    window.setTimeout(() => setNotice(null), 2600);
+  }
+
+  async function toggleBlackout(date: BlackoutDate) {
+    const status = date.status === "active" ? "paused" : "active";
+    setNotice(status === "active" ? "Blocking date…" : "Opening date…");
+    const response = await fetch(`/api/admin/blackout-dates/${date.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ status }),
+    });
+    if (response.ok) {
+      await loadBlackouts();
+      setNotice(status === "active" ? "Date blocked." : "Date opened.");
+    } else {
+      setNotice("Date could not be updated.");
+    }
+    window.setTimeout(() => setNotice(null), 2600);
+  }
+
+  async function saveMeetingOutcome(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!selected) return;
+    const form = new FormData(event.currentTarget);
+    setNotice("Saving meeting notes…");
+    const response = await fetch(`/api/admin/leads/${selected.id}/meeting`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        ownerName: form.get("ownerName"),
+        ownerEmail: form.get("ownerEmail"),
+        meetingStatus: form.get("meetingStatus"),
+        outcome: form.get("outcome"),
+        nextStep: form.get("nextStep"),
+      }),
+    });
+    if (response.ok) {
+      setNotice("Meeting notes saved.");
+      await loadBusinessOverview(false);
+    } else {
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      setNotice(data.error || "Meeting notes could not be saved.");
     }
     window.setTimeout(() => setNotice(null), 2600);
   }
@@ -331,12 +452,27 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
                 <div><span>Current step</span><strong>{stageLabel(selected.status)}</strong></div>
                 <div><span>Client setup</span><strong>{selected.workspace}</strong><small>{selected.brand}</small></div>
                 <div><span>Urgency</span><strong>{selected.urgency || "Not shared"}</strong></div>
+                <div><span>Meeting</span><strong>{selected.meetingDate || "Not scheduled"}</strong><small>{selected.meetingTime || selected.preferredTime || "No time selected"}</small></div>
               </div>
               <div className="admin-actions">
                 <a className="button button-dark" href={`mailto:${selected.email}`}><EnvelopeSimple /> Email client</a>
                 <button className="button button-outline" type="button" onClick={() => updateStage(selected.id, "approval_requested")}><Lightning /> Ask approval</button>
                 <button className="button button-outline" type="button" onClick={() => updateStage(selected.id, "internal_brief")}><ClipboardText /> Prepare brief</button>
               </div>
+              <form className="admin-meeting-form" key={selected.id} onSubmit={saveMeetingOutcome}>
+                <div className="admin-meeting-title">
+                  <CalendarBlank weight="duotone" />
+                  <span><strong>Meeting owner & outcome</strong><small>Keep the handoff clear after every discovery or review call.</small></span>
+                </div>
+                <div className="admin-slot-form-row">
+                  <label><span>PRIFYN owner</span><input name="ownerName" defaultValue={selected.meetingOwnerName || ""} placeholder="e.g. Rakha / Growth Ops" /></label>
+                  <label><span>Owner email</span><input name="ownerEmail" type="email" defaultValue={selected.meetingOwnerEmail || ""} placeholder="owner@prifyn.com" /></label>
+                </div>
+                <label><span>Meeting status</span><select name="meetingStatus" defaultValue={selected.meetingStatus || "scheduled"}><option value="requested">Requested</option><option value="scheduled">Scheduled</option><option value="completed">Completed</option><option value="reschedule_needed">Reschedule needed</option><option value="cancelled">Cancelled</option></select></label>
+                <label><span>Outcome notes</span><textarea name="outcome" defaultValue={selected.meetingOutcome || ""} placeholder="What did we learn? What is the client trying to fix first?" /></label>
+                <label><span>Next step</span><input name="nextStep" defaultValue={selected.meetingNextStep || ""} placeholder="e.g. prepare media plan, ask for exports, send proposal" /></label>
+                <button className="button button-outline" type="submit"><CheckCircle weight="fill" /> Save meeting notes</button>
+              </form>
             </section>
           )}
 
@@ -366,7 +502,7 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
                         <button key={`${day.date}-${slot.id}`} type="button" className={slot.status === "active" ? "active" : ""} onClick={() => toggleSlot(slot)}>
                           <b>{slot.startTime}</b>
                           <span>{slot.endTime}</span>
-                          <small>{slot.label}</small>
+                          <small>{slot.label} · {slot.durationMinutes}m</small>
                         </button>
                       ))
                     ) : index === 0 ? (
@@ -386,7 +522,7 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
                   <div>
                     <strong>{slot.label}</strong>
                     <small>{slot.availableDate || "Weekly"} · {slot.startTime}–{slot.endTime} · {slot.timezone}</small>
-                    <em>{slot.note || "Shown as an available walkthrough window."}</em>
+                    <em>{slot.durationMinutes} min call · {slot.bufferMinutes} min buffer · max {slot.maxBookingsPerDay}/day{slot.ownerName ? ` · ${slot.ownerName}` : ""}</em>
                   </div>
                   <button type="button" className={slot.status === "active" ? "active" : ""} onClick={() => toggleSlot(slot)}>
                     {slot.status === "active" ? "Active" : "Paused"}
@@ -418,8 +554,49 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
                 <span>Booking note</span>
                 <input name="note" placeholder="Best for owner-led teams" />
               </label>
+              <div className="admin-slot-form-row">
+                <label><span>Duration</span><input name="durationMinutes" type="number" min="15" max="180" defaultValue="45" /></label>
+                <label><span>Buffer</span><input name="bufferMinutes" type="number" min="0" max="120" defaultValue="15" /></label>
+              </div>
+              <label>
+                <span>Max bookings per day</span>
+                <input name="maxBookingsPerDay" type="number" min="1" max="20" defaultValue="4" />
+              </label>
+              <div className="admin-slot-form-row">
+                <label><span>PRIFYN owner</span><input name="ownerName" placeholder="PRIFYN Growth Team" /></label>
+                <label><span>Owner email</span><input name="ownerEmail" type="email" placeholder="privynindonesia@gmail.com" /></label>
+              </div>
+              <label>
+                <span>Meeting location</span>
+                <input name="meetingLocation" placeholder="Google Meet invite follows by email" />
+              </label>
               <button className="button button-outline" type="submit"><Plus /> Add availability</button>
             </form>
+
+            <div className="admin-blackouts">
+              <div className="surface-head">
+                <div>
+                  <h2>Blackout dates</h2>
+                  <span>Block holidays, travel days, or fully unavailable PRIFYN ops days.</span>
+                </div>
+                <button type="button" onClick={() => loadBlackouts()}><ArrowClockwise /> Refresh</button>
+              </div>
+              <form className="admin-slot-form compact" onSubmit={createBlackout}>
+                <div className="admin-slot-form-row">
+                  <label><span>Date</span><input name="date" type="date" required /></label>
+                  <label><span>Reason</span><input name="reason" placeholder="Holiday, workshop, full day review..." /></label>
+                </div>
+                <button className="button button-outline" type="submit"><Plus /> Block date</button>
+              </form>
+              <div className="admin-slot-list">
+                {blackoutsLoading ? <span>Loading blackout dates…</span> : blackouts.length ? blackouts.map(date => (
+                  <article key={date.id}>
+                    <div><strong>{date.date}</strong><small>{date.reason || "Unavailable"}</small><em>{date.status === "active" ? "Blocked from public booking" : "Open for booking"}</em></div>
+                    <button type="button" className={date.status === "active" ? "active" : ""} onClick={() => toggleBlackout(date)}>{date.status === "active" ? "Blocked" : "Open"}</button>
+                  </article>
+                )) : <span>No blackout dates yet.</span>}
+              </div>
+            </div>
           </section>
 
           <section className="surface admin-detail">

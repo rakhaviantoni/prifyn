@@ -1,8 +1,8 @@
-import { and, desc, eq, ilike } from "drizzle-orm";
+import { and, desc, eq, ilike, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db";
-import { activities, businessOrganizations, companies, contacts, leads, organization } from "@/db/schema";
-import { leadConfirmationEmail, leadOwnerEmail, sendEmail } from "@/lib/email/resend";
+import { activities, appointmentBlackoutDates, appointmentBookings, appointmentSlots, businessOrganizations, companies, contacts, leads, organization } from "@/db/schema";
+import { calendarInviteAttachment, leadConfirmationEmail, leadOwnerEmail, productUrl, sendEmail } from "@/lib/email/resend";
 
 const IntakePayload = z.object({
   type: z.enum(["appointment", "application"]),
@@ -14,6 +14,8 @@ const IntakePayload = z.object({
   urgency: z.string().trim().max(80).optional().nullable(),
   spend: z.string().trim().max(120).optional().nullable(),
   preferredTime: z.string().trim().max(160).optional().nullable(),
+  preferredDate: z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/).optional().nullable(),
+  selectedSlotId: z.string().trim().uuid().optional().nullable(),
   problem: z.string().trim().min(10).max(3000),
 });
 
@@ -53,6 +55,8 @@ export async function POST(request: Request) {
     const db = getDb();
     const { workspaceId, brand } = await resolvePrifynBrand(db);
     const source = payload.type === "appointment" ? "book_appointment" : "apply_online";
+    let calendarInvite: ReturnType<typeof calendarInviteAttachment> | null = null;
+    let confirmedPreferredTime = payload.preferredTime || null;
 
     const created = await db.transaction(async tx => {
       const [company] = await tx.insert(companies).values({
@@ -103,6 +107,78 @@ export async function POST(request: Request) {
         },
       });
 
+      if (payload.type === "appointment" && payload.selectedSlotId) {
+        const [slot] = await tx.select().from(appointmentSlots).where(and(eq(appointmentSlots.id, payload.selectedSlotId), eq(appointmentSlots.status, "active"))).limit(1);
+        if (!slot) throw new Error("The selected walkthrough window is no longer available.");
+
+        const requestedDate = payload.preferredDate || slot.availableDate;
+        if (!requestedDate) throw new Error("Choose a preferred walkthrough date.");
+
+        const [blackout] = await tx.select().from(appointmentBlackoutDates).where(and(eq(appointmentBlackoutDates.date, requestedDate), eq(appointmentBlackoutDates.status, "active"))).limit(1);
+        if (blackout) throw new Error("That date is unavailable. Please choose another walkthrough date.");
+
+        const [bookingCount] = await tx.select({ count: sql<number>`count(*)::int` }).from(appointmentBookings).where(and(
+          eq(appointmentBookings.requestedDate, requestedDate),
+          ne(appointmentBookings.status, "cancelled"),
+        ));
+        if ((bookingCount?.count ?? 0) >= slot.maxBookingsPerDay) throw new Error("That day is fully booked. Please choose another date.");
+
+        const rescheduleToken = crypto.randomUUID();
+        const cancelToken = crypto.randomUUID();
+        const ownerEmail = slot.ownerEmail || process.env.PRIFYN_INTAKE_EMAIL || "privynindonesia@gmail.com";
+        const ownerName = slot.ownerName || "PRIFYN Growth Team";
+        const meetingLocation = slot.meetingLocation || "Online meeting";
+
+        await tx.insert(appointmentBookings).values({
+          leadId: lead.id,
+          slotId: slot.id,
+          requestedDate,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          timezone: slot.timezone,
+          contactName: payload.name,
+          contactEmail: payload.email,
+          companyName: payload.company,
+          ownerName,
+          ownerEmail,
+          meetingLocation,
+          status: "requested",
+          rescheduleToken,
+          cancelToken,
+        });
+
+        confirmedPreferredTime = `${slot.label} walkthrough · ${requestedDate} · ${slot.startTime}–${slot.endTime} ${slot.timezone}`;
+        calendarInvite = calendarInviteAttachment({
+          title: `PRIFYN walkthrough · ${payload.company}`,
+          date: requestedDate,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          description: `PRIFYN walkthrough for ${payload.company}. Reschedule: ${productUrl(`/book?reschedule=${rescheduleToken}`)} Cancel: ${productUrl(`/book?cancel=${cancelToken}`)}`,
+          location: meetingLocation,
+          organizerEmail: ownerEmail,
+          attendeeEmail: payload.email,
+        });
+
+        await tx.insert(activities).values({
+          workspaceId,
+          subjectType: "lead",
+          subjectId: lead.id,
+          type: "appointment_booking_requested",
+          metadata: {
+            requestedDate,
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            timezone: slot.timezone,
+            slotLabel: slot.label,
+            ownerName,
+            ownerEmail,
+            meetingLocation,
+            rescheduleUrl: productUrl(`/book?reschedule=${rescheduleToken}`),
+            cancelUrl: productUrl(`/book?cancel=${cancelToken}`),
+          },
+        });
+      }
+
       return { company, contact, lead };
     });
 
@@ -113,6 +189,8 @@ export async function POST(request: Request) {
         name: payload.name,
         email: payload.email,
         company: payload.company,
+        preferredTime: confirmedPreferredTime,
+        calendarInvite,
       })),
     ]);
 
@@ -126,6 +204,7 @@ export async function POST(request: Request) {
     }, { status: 201 });
   } catch (error) {
     if (error instanceof z.ZodError) return Response.json({ ok: false, error: "Please complete the required fields.", issues: error.issues }, { status: 400 });
+    if (error instanceof Error && /walkthrough|booked|available|date/i.test(error.message)) return Response.json({ ok: false, error: error.message }, { status: 409 });
     return Response.json({ ok: false, error: "PRIFYN could not save this request right now." }, { status: 503 });
   }
 }

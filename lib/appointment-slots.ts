@@ -10,14 +10,20 @@ export type AppointmentSlot = {
   endTime: string;
   timezone: string;
   note: string;
+  durationMinutes: number;
+  bufferMinutes: number;
+  maxBookingsPerDay: number;
+  ownerName: string;
+  ownerEmail: string;
+  meetingLocation: string;
   status: string;
   sortOrder: number;
 };
 
 export const fallbackAppointmentSlots: AppointmentSlot[] = [
-  { id: "morning", label: "Morning", availableDate: "", startTime: "09:00", endTime: "11:00", timezone: "Asia/Jakarta", note: "Best for owner-led teams", status: "active", sortOrder: 10 },
-  { id: "midday", label: "Midday", availableDate: "", startTime: "12:00", endTime: "14:00", timezone: "Asia/Jakarta", note: "Quick campaign mapping", status: "active", sortOrder: 20 },
-  { id: "afternoon", label: "Afternoon", availableDate: "", startTime: "15:00", endTime: "17:00", timezone: "Asia/Jakarta", note: "Best for team review", status: "active", sortOrder: 30 },
+  { id: "morning", label: "Morning", availableDate: "", startTime: "09:00", endTime: "11:00", timezone: "Asia/Jakarta", note: "Best for owner-led teams", durationMinutes: 45, bufferMinutes: 15, maxBookingsPerDay: 4, ownerName: "PRIFYN Growth Team", ownerEmail: "privynindonesia@gmail.com", meetingLocation: "Google Meet invite follows by email", status: "active", sortOrder: 10 },
+  { id: "midday", label: "Midday", availableDate: "", startTime: "12:00", endTime: "14:00", timezone: "Asia/Jakarta", note: "Quick campaign mapping", durationMinutes: 30, bufferMinutes: 15, maxBookingsPerDay: 4, ownerName: "PRIFYN Growth Team", ownerEmail: "privynindonesia@gmail.com", meetingLocation: "Google Meet invite follows by email", status: "active", sortOrder: 20 },
+  { id: "afternoon", label: "Afternoon", availableDate: "", startTime: "15:00", endTime: "17:00", timezone: "Asia/Jakarta", note: "Best for team review", durationMinutes: 45, bufferMinutes: 15, maxBookingsPerDay: 4, ownerName: "PRIFYN Growth Team", ownerEmail: "privynindonesia@gmail.com", meetingLocation: "Google Meet invite follows by email", status: "active", sortOrder: 30 },
 ];
 
 function serializeSlot(row: typeof appointmentSlots.$inferSelect): AppointmentSlot {
@@ -29,6 +35,12 @@ function serializeSlot(row: typeof appointmentSlots.$inferSelect): AppointmentSl
     endTime: row.endTime,
     timezone: row.timezone,
     note: row.note ?? "",
+    durationMinutes: row.durationMinutes,
+    bufferMinutes: row.bufferMinutes,
+    maxBookingsPerDay: row.maxBookingsPerDay,
+    ownerName: row.ownerName ?? "",
+    ownerEmail: row.ownerEmail ?? "",
+    meetingLocation: row.meetingLocation ?? "",
     status: row.status,
     sortOrder: row.sortOrder,
   };

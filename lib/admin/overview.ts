@@ -43,7 +43,12 @@ export async function getAdminOverview() {
 
   const ids = leadRows.map(row => row.id);
   const activityRows = ids.length ? await db.select().from(activities).where(inArray(activities.subjectId, ids)).orderBy(desc(activities.occurredAt)) : [];
-  const activityByLead = new Map(activityRows.map(row => [row.subjectId, row.metadata ?? {}]));
+  const activitiesByLead = new Map<string, typeof activityRows>();
+  for (const row of activityRows) {
+    const current = activitiesByLead.get(row.subjectId) ?? [];
+    current.push(row);
+    activitiesByLead.set(row.subjectId, current);
+  }
 
   const recentImports = await db.select({
     id: importJobs.id,
@@ -68,7 +73,10 @@ export async function getAdminOverview() {
       webhooks: webhooksRow?.count ?? 0,
     },
     leads: leadRows.map(row => {
-      const metadata = activityByLead.get(row.id) as Record<string, unknown> | undefined;
+      const leadActivities = activitiesByLead.get(row.id) ?? [];
+      const intake = leadActivities.find(activity => activity.type === "appointment" || activity.type === "application")?.metadata as Record<string, unknown> | undefined;
+      const booking = leadActivities.find(activity => activity.type === "appointment_booking_requested")?.metadata as Record<string, unknown> | undefined;
+      const meeting = leadActivities.find(activity => activity.type === "meeting_outcome")?.metadata as Record<string, unknown> | undefined;
       return {
         id: row.id,
         status: row.status || "intake_received",
@@ -79,10 +87,18 @@ export async function getAdminOverview() {
         brand: row.brand || "No brand",
         workspace: row.workspace || "No workspace",
         createdAt: row.createdAt?.toISOString() ?? new Date().toISOString(),
-        channel: typeof metadata?.channel === "string" ? metadata.channel : "",
-        urgency: typeof metadata?.urgency === "string" ? metadata.urgency : "",
-        spend: typeof metadata?.spend === "string" ? metadata.spend : "",
-        problem: typeof metadata?.problem === "string" ? metadata.problem : "",
+        channel: typeof intake?.channel === "string" ? intake.channel : "",
+        urgency: typeof intake?.urgency === "string" ? intake.urgency : "",
+        spend: typeof intake?.spend === "string" ? intake.spend : "",
+        problem: typeof intake?.problem === "string" ? intake.problem : "",
+        preferredTime: typeof intake?.preferredTime === "string" ? intake.preferredTime : "",
+        meetingDate: typeof booking?.requestedDate === "string" ? booking.requestedDate : "",
+        meetingTime: typeof booking?.startTime === "string" && typeof booking?.endTime === "string" ? `${booking.startTime}–${booking.endTime}` : "",
+        meetingOwnerName: typeof meeting?.ownerName === "string" ? meeting.ownerName : typeof booking?.ownerName === "string" ? booking.ownerName : "",
+        meetingOwnerEmail: typeof meeting?.ownerEmail === "string" ? meeting.ownerEmail : typeof booking?.ownerEmail === "string" ? booking.ownerEmail : "",
+        meetingStatus: typeof meeting?.meetingStatus === "string" ? meeting.meetingStatus : "",
+        meetingOutcome: typeof meeting?.outcome === "string" ? meeting.outcome : "",
+        meetingNextStep: typeof meeting?.nextStep === "string" ? meeting.nextStep : "",
       };
     }),
     imports: recentImports.map(row => ({

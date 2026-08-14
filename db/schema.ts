@@ -248,11 +248,53 @@ export const appointmentSlots = pgTable("appointment_slots", {
   endTime: text("end_time").notNull(),
   timezone: text("timezone").default("Asia/Jakarta").notNull(),
   note: text("note"),
+  durationMinutes: integer("duration_minutes").default(30).notNull(),
+  bufferMinutes: integer("buffer_minutes").default(15).notNull(),
+  maxBookingsPerDay: integer("max_bookings_per_day").default(4).notNull(),
+  ownerName: text("owner_name"),
+  ownerEmail: text("owner_email"),
+  meetingLocation: text("meeting_location"),
   status: text("status").default("active").notNull(),
   sortOrder: integer("sort_order").default(0).notNull(),
   createdAt,
   updatedAt,
 }, (table) => [index("appointment_slots_status_sort_idx").on(table.status, table.sortOrder)]);
+
+export const appointmentBlackoutDates = pgTable("appointment_blackout_dates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  date: text("date").notNull(),
+  reason: text("reason"),
+  status: text("status").default("active").notNull(),
+  createdAt,
+  updatedAt,
+}, (table) => [uniqueIndex("appointment_blackout_dates_date_uidx").on(table.date), index("appointment_blackout_dates_status_idx").on(table.status)]);
+
+export const appointmentBookings = pgTable("appointment_bookings", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  leadId: uuid("lead_id").references(() => leads.id, { onDelete: "cascade" }),
+  slotId: uuid("slot_id").references(() => appointmentSlots.id, { onDelete: "set null" }),
+  requestedDate: text("requested_date").notNull(),
+  startTime: text("start_time").notNull(),
+  endTime: text("end_time").notNull(),
+  timezone: text("timezone").default("Asia/Jakarta").notNull(),
+  contactName: text("contact_name").notNull(),
+  contactEmail: text("contact_email").notNull(),
+  companyName: text("company_name").notNull(),
+  ownerName: text("owner_name"),
+  ownerEmail: text("owner_email"),
+  meetingLocation: text("meeting_location"),
+  status: text("status").default("requested").notNull(),
+  rescheduleToken: text("reschedule_token").notNull(),
+  cancelToken: text("cancel_token").notNull(),
+  reminderSentAt: timestamp("reminder_sent_at", { withTimezone: true }),
+  createdAt,
+  updatedAt,
+}, (table) => [
+  uniqueIndex("appointment_bookings_reschedule_uidx").on(table.rescheduleToken),
+  uniqueIndex("appointment_bookings_cancel_uidx").on(table.cancelToken),
+  index("appointment_bookings_date_status_idx").on(table.requestedDate, table.status),
+  index("appointment_bookings_lead_idx").on(table.leadId),
+]);
 
 export const activities = pgTable("activities", {
   id: uuid("id").defaultRandom().primaryKey(),

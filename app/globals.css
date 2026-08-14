@@ -369,6 +369,8 @@ svg { flex: none; }
 .intake-mini-list span { display: flex; align-items: center; gap: 9px; color: var(--green); font-size: 10px; font-weight: 750; }
 .public-intake-card { position: relative; overflow: hidden; padding: 26px; box-shadow: 0 26px 80px rgba(20,31,25,.1); }
 .public-intake-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, var(--green), var(--sage), #e6b96d); }
+.appointment-token-card { position: relative; overflow: hidden; padding: 26px; box-shadow: 0 26px 80px rgba(20,31,25,.1); }
+.appointment-token-card::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: linear-gradient(90deg, #18211d, var(--green), var(--sage)); }
 .intake-form-head { display: grid; grid-template-columns: 46px 1fr; gap: 14px; align-items: start; margin-bottom: 20px; }
 .intake-form-head > span { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 12px; background: var(--sage-2); color: var(--green); }
 .intake-form-head svg { width: 24px; }
@@ -392,6 +394,9 @@ svg { flex: none; }
 .intake-choice strong { font-size: 12px; }
 .intake-choice small { color: var(--muted); font-size: 10px; line-height: 1.45; }
 .appointment-slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.booking-date-picker { display: grid; grid-template-columns: 42px 1fr; gap: 12px; align-items: center; padding: 12px; border: 1px solid rgba(40,117,83,.22); border-radius: 16px; background: var(--sage-2); }
+.booking-date-picker > svg { width: 24px; height: 24px; color: var(--green); justify-self: center; }
+.booking-date-picker .field { margin: 0; }
 .appointment-slots button { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: start; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--white); color: var(--ink); cursor: pointer; text-align: left; transition: border-color .16s ease, background .16s ease, box-shadow .16s ease, transform .16s ease; }
 .appointment-slots button:hover { transform: translateY(-1px); border-color: rgba(40,117,83,.24); box-shadow: 0 14px 36px rgba(20,31,25,.07); }
 .appointment-slots button.selected { border-color: rgba(40,117,83,.58); background: var(--sage-2); box-shadow: inset 0 0 0 1px rgba(40,117,83,.08); }
@@ -906,6 +911,17 @@ svg { flex: none; }
 .admin-detail-grid small { margin-top: 3px; color: var(--muted); font-size: 9px; }
 .admin-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .admin-actions .button svg { width: 14px; }
+.admin-meeting-form { display: grid; gap: 10px; margin-top: 16px; padding: 14px; border: 1px solid rgba(40,117,83,.18); border-radius: 18px; background: linear-gradient(180deg, var(--sage-2), var(--paper)); }
+.admin-meeting-title { display: grid; grid-template-columns: 36px 1fr; gap: 10px; align-items: center; }
+.admin-meeting-title > svg { width: 36px; height: 36px; padding: 8px; border-radius: 12px; background: var(--paper); color: var(--green); }
+.admin-meeting-title strong, .admin-meeting-title small { display: block; }
+.admin-meeting-title strong { font-size: 13px; }
+.admin-meeting-title small { margin-top: 3px; color: var(--muted); font-size: 10px; line-height: 1.45; }
+.admin-meeting-form label { display: grid; gap: 6px; }
+.admin-meeting-form label span { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
+.admin-meeting-form input, .admin-meeting-form select, .admin-meeting-form textarea { width: 100%; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font-size: 11px; }
+.admin-meeting-form input, .admin-meeting-form select { min-height: 40px; padding: 0 11px; }
+.admin-meeting-form textarea { min-height: 96px; padding: 11px; resize: vertical; line-height: 1.5; }
 .admin-slots .surface-head { align-items: flex-start; }
 .admin-slots .surface-head h2 { display: inline-flex; align-items: center; gap: 8px; }
 .admin-slots .surface-head h2 svg { width: 20px; height: 20px; color: var(--green); }
@@ -937,10 +953,14 @@ svg { flex: none; }
 .admin-slot-list article > button.active { border-color: rgba(40,117,83,.24); background: var(--sage-2); color: var(--green); }
 .admin-slot-form { display: grid; gap: 10px; margin-top: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 18px; background: linear-gradient(180deg, var(--paper), var(--paper-2)); }
 .admin-slot-form div { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.admin-slot-form .admin-slot-form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .admin-slot-form label { display: grid; gap: 6px; }
 .admin-slot-form label span { color: var(--muted); font-size: 8px; font-weight: 850; letter-spacing: .08em; text-transform: uppercase; }
 .admin-slot-form input { min-height: 40px; width: 100%; padding: 0 11px; border: 1px solid var(--line); border-radius: 12px; background: var(--paper); color: var(--ink); font-size: 11px; }
 .admin-slot-form .button { width: 100%; min-height: 40px; }
+.admin-slot-form.compact { margin-top: 10px; padding: 12px; }
+.admin-blackouts { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.admin-blackouts .surface-head { margin-bottom: 0; }
 .admin-denied { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--paper-2); }
 .admin-denied section { max-width: 460px; padding: 28px; text-align: center; }
 .report-explainer { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; margin-bottom: 14px; padding: 12px 14px; border: 1px solid rgba(40,117,83,.22); border-radius: 9px; background: var(--sage-2); font-size: 8px; }
@@ -1947,7 +1967,7 @@ svg { flex: none; }
   .admin-lead-list article { grid-template-columns: 1fr; }
   .admin-empty-inbox { grid-template-columns: 1fr; margin: 12px; }
   .admin-empty-actions { min-width: 0; }
-  .admin-slot-form div { grid-template-columns: 1fr; }
+  .admin-slot-form div, .admin-slot-form .admin-slot-form-row { grid-template-columns: 1fr; }
   .connections-toolbar { align-items: stretch; flex-direction: column; }
   .connections-tabs { width: 100%; flex-wrap: nowrap; justify-content: flex-start; overflow-x: auto; }
   .connections-tabs button { white-space: nowrap; }

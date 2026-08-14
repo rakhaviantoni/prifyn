@@ -7,6 +7,7 @@ type SendEmailInput = {
   text?: string;
   replyTo?: string;
   tags?: Array<{ name: string; value: string }>;
+  attachments?: Array<{ filename: string; content: string; contentType?: string }>;
 };
 
 type EmailResult = { ok: true; id?: string; skipped?: false } | { ok: true; skipped: true; reason: string } | { ok: false; error: string };
@@ -56,6 +57,7 @@ export async function sendEmail(input: SendEmailInput): Promise<EmailResult> {
         text: input.text,
         reply_to: input.replyTo,
         tags: input.tags,
+        attachments: input.attachments,
       }),
     });
     const data = await response.json().catch(() => ({})) as { id?: string; message?: string; name?: string };
@@ -90,15 +92,85 @@ export function leadOwnerEmail(input: {
   };
 }
 
-export function leadConfirmationEmail(input: { type: "appointment" | "application"; name: string; email: string; company: string }) {
+function icsTimestamp(date: Date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function calendarDate(date: string, time: string) {
+  return new Date(`${date}T${time}:00+07:00`);
+}
+
+function escapeIcs(value?: string | null) {
+  return String(value ?? "").replaceAll("\\", "\\\\").replaceAll(",", "\\,").replaceAll(";", "\\;").replaceAll("\n", "\\n");
+}
+
+export function calendarInviteAttachment(input: {
+  title: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  description: string;
+  location?: string | null;
+  organizerEmail?: string | null;
+  attendeeEmail?: string | null;
+}) {
+  const start = calendarDate(input.date, input.startTime);
+  const end = calendarDate(input.date, input.endTime);
+  const uid = `prifyn-${input.date}-${input.startTime}-${input.attendeeEmail || "guest"}@prifyn.com`;
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//PRIFYN//Growth OS//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${escapeIcs(uid)}`,
+    `DTSTAMP:${icsTimestamp(new Date())}`,
+    `DTSTART:${icsTimestamp(start)}`,
+    `DTEND:${icsTimestamp(end)}`,
+    `SUMMARY:${escapeIcs(input.title)}`,
+    `DESCRIPTION:${escapeIcs(input.description)}`,
+    `LOCATION:${escapeIcs(input.location || "Online meeting")}`,
+    input.organizerEmail ? `ORGANIZER;CN=PRIFYN:mailto:${input.organizerEmail}` : "ORGANIZER;CN=PRIFYN:mailto:hello@prifyn.com",
+    input.attendeeEmail ? `ATTENDEE;ROLE=REQ-PARTICIPANT;PARTSTAT=NEEDS-ACTION;RSVP=TRUE:mailto:${input.attendeeEmail}` : "",
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].filter(Boolean).join("\r\n");
+  return {
+    filename: "prifyn-walkthrough.ics",
+    content: Buffer.from(ics).toString("base64"),
+    contentType: "text/calendar",
+  };
+}
+
+export function leadConfirmationEmail(input: {
+  type: "appointment" | "application";
+  name: string;
+  email: string;
+  company: string;
+  preferredTime?: string | null;
+  calendarInvite?: ReturnType<typeof calendarInviteAttachment> | null;
+}) {
   const isAppointment = input.type === "appointment";
-  const body = `<p>Hi ${escapeHtml(input.name)},</p><p>We received your ${isAppointment ? "walkthrough request" : "application"} for <strong>${escapeHtml(input.company)}</strong>. The PRIFYN team will review your growth workflow and follow up with the clearest next step.</p><p>Before the call, it helps to prepare any Ads/KOL reports, campaign objectives, and current reporting pain points.</p>`;
+  const body = `<p>Hi ${escapeHtml(input.name)},</p><p>We received your ${isAppointment ? "walkthrough request" : "application"} for <strong>${escapeHtml(input.company)}</strong>. The PRIFYN team will review your growth workflow and follow up with the clearest next step.</p>${input.preferredTime ? `<p><strong>Preferred time:</strong> ${escapeHtml(input.preferredTime)}</p>` : ""}<p>Before the call, it helps to prepare any Ads/KOL reports, campaign objectives, and current reporting pain points.</p>`;
   return {
     to: input.email,
     subject: isAppointment ? "We received your PRIFYN walkthrough request" : "We received your PRIFYN application",
     html: htmlShell("Request received", body),
     text: `Hi ${input.name}, we received your PRIFYN request for ${input.company}. We will follow up with the clearest next step.`,
+    attachments: input.calendarInvite ? [input.calendarInvite] : undefined,
     tags: [{ name: "category", value: "lead_confirmation" }],
+  };
+}
+
+export function meetingReminderEmail(input: { to: EmailRecipient; name: string; company: string; time: string; rescheduleUrl?: string; cancelUrl?: string }) {
+  const body = `<p>Hi ${escapeHtml(input.name)},</p><p>A quick reminder for your PRIFYN walkthrough with <strong>${escapeHtml(input.company)}</strong>.</p><p><strong>${escapeHtml(input.time)}</strong></p>${input.rescheduleUrl ? `<p><a href="${input.rescheduleUrl}" style="color:#287553;font-weight:800">Reschedule</a>${input.cancelUrl ? ` · <a href="${input.cancelUrl}" style="color:#287553;font-weight:800">Cancel</a>` : ""}</p>` : ""}`;
+  return {
+    to: input.to,
+    subject: `Reminder: PRIFYN walkthrough for ${input.company}`,
+    html: htmlShell("Walkthrough reminder", body),
+    text: `Reminder: PRIFYN walkthrough for ${input.company} at ${input.time}`,
+    tags: [{ name: "category", value: "meeting_reminder" }],
   };
 }
 
