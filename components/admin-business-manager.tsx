@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowClockwise, CalendarBlank, ChartLineUp, CheckCircle, ClipboardText, Database, EnvelopeSimple, Funnel, Lightning, PlugsConnected, Plus, Sparkle, UsersThree } from "@phosphor-icons/react";
+import { ArrowClockwise, CalendarBlank, ChartLineUp, CheckCircle, ClipboardText, Database, EnvelopeSimple, Funnel, Lightning, PencilSimple, PlugsConnected, Plus, Sparkle, X, UsersThree } from "@phosphor-icons/react";
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { adminOrderStages, stageLabel } from "@/lib/admin/order-flow";
@@ -102,6 +102,7 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
   const [slotsLoading, setSlotsLoading] = useState(true);
   const [blackouts, setBlackouts] = useState<BlackoutDate[]>([]);
   const [blackoutsLoading, setBlackoutsLoading] = useState(true);
+  const [editingSlot, setEditingSlot] = useState<AppointmentSlot | null>(null);
 
   async function loadBusinessOverview(showNotice = false) {
     setOverviewLoading(true);
@@ -227,6 +228,40 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
     window.setTimeout(() => setNotice(null), 2600);
   }
 
+  async function updateSlot(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editingSlot) return;
+    const form = new FormData(event.currentTarget);
+    setNotice("Saving availability…");
+    const response = await fetch(`/api/admin/appointment-slots/${editingSlot.id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({
+        label: form.get("label"),
+        availableDate: form.get("availableDate"),
+        startTime: form.get("startTime"),
+        endTime: form.get("endTime"),
+        note: form.get("note"),
+        durationMinutes: form.get("durationMinutes"),
+        bufferMinutes: form.get("bufferMinutes"),
+        maxBookingsPerDay: form.get("maxBookingsPerDay"),
+        ownerName: form.get("ownerName"),
+        ownerEmail: form.get("ownerEmail"),
+        meetingLocation: form.get("meetingLocation"),
+      }),
+    });
+    if (response.ok) {
+      setEditingSlot(null);
+      await loadSlots();
+      setNotice("Availability updated.");
+    } else {
+      const data = await response.json().catch(() => ({})) as { error?: string };
+      setNotice(data.error || "Availability could not be updated.");
+    }
+    window.setTimeout(() => setNotice(null), 2600);
+  }
+
   async function createBlackout(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -341,6 +376,9 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
 
   const activeSlots = slots.filter(slot => slot.status === "active").length;
   const calendarDays = getUpcomingBusinessDays();
+  const recurringSlots = slots.filter(slot => !slot.availableDate);
+  const datedSlots = slots.filter(slot => slot.availableDate);
+  const activeBlackoutDates = new Set(blackouts.filter(date => date.status === "active").map(date => date.date));
 
   return (
     <div className="admin-page">
@@ -487,19 +525,23 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
 
             <div className="admin-calendar-board" aria-label="Recurring walkthrough availability">
               {calendarDays.map((day, index) => {
-                const daySlots = slots.filter(slot => !slot.availableDate || slot.availableDate === day.date);
+                const daySlots = datedSlots.filter(slot => slot.availableDate === day.date);
+                const isBlocked = activeBlackoutDates.has(day.date);
                 return (
-                <article key={day.date}>
+                <article key={day.date} className={isBlocked ? "blocked" : ""}>
                   <header>
-                    <strong>{day.day}</strong>
-                    <span>{day.label}</span>
+                    <span>{day.day}</span>
+                    <strong>{day.label}</strong>
+                    {isBlocked && <em>Blocked</em>}
                   </header>
                   <div className="admin-calendar-grid">
                     {slotsLoading ? (
                       <small>Loading…</small>
+                    ) : isBlocked ? (
+                      <small>This date is blocked from public booking.</small>
                     ) : daySlots.length ? (
                       daySlots.map(slot => (
-                        <button key={`${day.date}-${slot.id}`} type="button" className={slot.status === "active" ? "active" : ""} onClick={() => toggleSlot(slot)}>
+                        <button key={`${day.date}-${slot.id}`} type="button" className={slot.status === "active" ? "active" : ""} onClick={() => setEditingSlot(slot)}>
                           <b>{slot.startTime}</b>
                           <span>{slot.endTime}</span>
                           <small>{slot.label} · {slot.durationMinutes}m</small>
@@ -516,6 +558,21 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
               })}
             </div>
 
+            <div className="admin-recurring-strip">
+              <div>
+                <strong>Weekly windows</strong>
+                <span>{recurringSlots.length ? `${recurringSlots.length} recurring option${recurringSlots.length === 1 ? "" : "s"} shown on open booking dates` : "No recurring windows yet"}</span>
+              </div>
+              <div>
+                {recurringSlots.slice(0, 4).map(slot => (
+                  <button key={slot.id} type="button" className={slot.status === "active" ? "active" : ""} onClick={() => setEditingSlot(slot)}>
+                    <b>{slot.startTime}</b>
+                    <span>{slot.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="admin-slot-list">
               {slots.length ? slots.map(slot => (
                 <article key={slot.id}>
@@ -524,14 +581,53 @@ export function AdminBusinessManager({ metrics, leads, imports, loadOverview = f
                     <small>{slot.availableDate || "Weekly"} · {slot.startTime}–{slot.endTime} · {slot.timezone}</small>
                     <em>{slot.durationMinutes} min call · {slot.bufferMinutes} min buffer · max {slot.maxBookingsPerDay}/day{slot.ownerName ? ` · ${slot.ownerName}` : ""}</em>
                   </div>
-                  <button type="button" className={slot.status === "active" ? "active" : ""} onClick={() => toggleSlot(slot)}>
-                    {slot.status === "active" ? "Active" : "Paused"}
-                  </button>
+                  <div className="admin-slot-actions">
+                    <button type="button" onClick={() => setEditingSlot(slot)}><PencilSimple /> Edit</button>
+                    <button type="button" className={slot.status === "active" ? "active" : ""} onClick={() => toggleSlot(slot)}>
+                      {slot.status === "active" ? "Active" : "Paused"}
+                    </button>
+                  </div>
                 </article>
               )) : null}
             </div>
 
+            {editingSlot && (
+              <form className="admin-slot-form admin-edit-slot-form" key={editingSlot.id} onSubmit={updateSlot}>
+                <div className="admin-form-headline">
+                  <div><span>Edit availability</span><strong>{editingSlot.label}</strong></div>
+                  <button type="button" onClick={() => setEditingSlot(null)}><X /> Cancel</button>
+                </div>
+                <label>
+                  <span>Window label</span>
+                  <input name="label" defaultValue={editingSlot.label} required />
+                </label>
+                <label>
+                  <span>Date</span>
+                  <input name="availableDate" type="date" defaultValue={editingSlot.availableDate || ""} />
+                </label>
+                <div className="admin-slot-form-row">
+                  <label><span>Start</span><input name="startTime" type="time" defaultValue={editingSlot.startTime} required /></label>
+                  <label><span>End</span><input name="endTime" type="time" defaultValue={editingSlot.endTime} required /></label>
+                </div>
+                <label><span>Booking note</span><input name="note" defaultValue={editingSlot.note || ""} placeholder="Best for owner-led teams" /></label>
+                <div className="admin-slot-form-row">
+                  <label><span>Duration</span><input name="durationMinutes" type="number" min="15" max="180" defaultValue={editingSlot.durationMinutes} /></label>
+                  <label><span>Buffer</span><input name="bufferMinutes" type="number" min="0" max="120" defaultValue={editingSlot.bufferMinutes} /></label>
+                </div>
+                <label><span>Max bookings per day</span><input name="maxBookingsPerDay" type="number" min="1" max="20" defaultValue={editingSlot.maxBookingsPerDay} /></label>
+                <div className="admin-slot-form-row">
+                  <label><span>PRIFYN owner</span><input name="ownerName" defaultValue={editingSlot.ownerName || ""} placeholder="PRIFYN Growth Team" /></label>
+                  <label><span>Owner email</span><input name="ownerEmail" type="email" defaultValue={editingSlot.ownerEmail || ""} placeholder="privynindonesia@gmail.com" /></label>
+                </div>
+                <label><span>Meeting location</span><input name="meetingLocation" defaultValue={editingSlot.meetingLocation || ""} placeholder="Google Meet invite follows by email" /></label>
+                <button className="button button-dark" type="submit"><CheckCircle weight="fill" /> Save changes</button>
+              </form>
+            )}
+
             <form className="admin-slot-form" onSubmit={createSlot}>
+              <div className="admin-form-headline">
+                <div><span>New availability</span><strong>Add another booking window</strong></div>
+              </div>
               <label>
                 <span>Window label</span>
                 <input name="label" placeholder="Morning walkthrough" required />
