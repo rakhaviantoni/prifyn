@@ -98,36 +98,40 @@ test("admin business manager requires authentication", async () => {
 });
 
 test("app and creator subdomain roots resolve to gated workspaces", async () => {
-  const appResponse = await request("/", { headers: { host: "app.prifyn.rakhaviantoni.com" }, redirect: "manual" });
-  assert.equal(appResponse.status, 307);
-  const appLocation = new URL(appResponse.headers.get("location"), "http://localhost");
-  assert.equal(appLocation.pathname, "/auth/sign-in");
-  assert.equal(appLocation.searchParams.get("returnTo"), "/app");
+  for (const host of ["app.prifyn.my.id", "app.prifyn.rakhaviantoni.com"]) {
+    const appResponse = await request("/", { headers: { host }, redirect: "manual" });
+    assert.equal(appResponse.status, 307, host);
+    const appLocation = new URL(appResponse.headers.get("location"), "http://localhost");
+    assert.equal(appLocation.pathname, "/auth/sign-in", host);
+    assert.equal(appLocation.searchParams.get("returnTo"), "/app", host);
+  }
 
-  const creatorResponse = await request("/", { headers: { host: "creator.prifyn.rakhaviantoni.com" }, redirect: "manual" });
-  assert.equal(creatorResponse.status, 307);
-  const creatorLocation = new URL(creatorResponse.headers.get("location"), "http://localhost");
-  assert.equal(creatorLocation.pathname, "/auth/sign-in");
-  assert.equal(creatorLocation.searchParams.get("returnTo"), "/creator");
+  for (const host of ["creator.prifyn.my.id", "creator.prifyn.rakhaviantoni.com"]) {
+    const creatorResponse = await request("/", { headers: { host }, redirect: "manual" });
+    assert.equal(creatorResponse.status, 307, host);
+    const creatorLocation = new URL(creatorResponse.headers.get("location"), "http://localhost");
+    assert.equal(creatorLocation.pathname, "/auth/sign-in", host);
+    assert.equal(creatorLocation.searchParams.get("returnTo"), "/creator", host);
+  }
 });
 
 test("app subdomain clean dashboard paths resolve through workspace routes", async () => {
-  for (const path of ["/leads", "/settings/imports", "/creators/nabila-putri"]) {
-    const response = await request(path, { headers: { host: "app.prifyn.rakhaviantoni.com" }, redirect: "manual" });
-    assert.equal(response.status, 307, path);
+  for (const host of ["app.prifyn.my.id", "app.prifyn.rakhaviantoni.com"]) for (const path of ["/leads", "/settings/imports", "/creators/nabila-putri"]) {
+    const response = await request(path, { headers: { host }, redirect: "manual" });
+    assert.equal(response.status, 307, `${host}${path}`);
     const location = new URL(response.headers.get("location"), "http://localhost");
-    assert.equal(location.pathname, "/auth/sign-in", path);
-    assert.equal(location.searchParams.get("returnTo"), "/app", path);
+    assert.equal(location.pathname, "/auth/sign-in", `${host}${path}`);
+    assert.equal(location.searchParams.get("returnTo"), "/app", `${host}${path}`);
   }
 });
 
 test("creator subdomain clean dashboard paths resolve through creator routes", async () => {
-  for (const path of ["/profile", "/opportunities", "/performance"]) {
-    const response = await request(path, { headers: { host: "creator.prifyn.rakhaviantoni.com" }, redirect: "manual" });
-    assert.equal(response.status, 307, path);
+  for (const host of ["creator.prifyn.my.id", "creator.prifyn.rakhaviantoni.com"]) for (const path of ["/profile", "/opportunities", "/performance"]) {
+    const response = await request(path, { headers: { host }, redirect: "manual" });
+    assert.equal(response.status, 307, `${host}${path}`);
     const location = new URL(response.headers.get("location"), "http://localhost");
-    assert.equal(location.pathname, "/auth/sign-in", path);
-    assert.equal(location.searchParams.get("returnTo"), "/creator", path);
+    assert.equal(location.pathname, "/auth/sign-in", `${host}${path}`);
+    assert.equal(location.searchParams.get("returnTo"), "/creator", `${host}${path}`);
   }
 });
 

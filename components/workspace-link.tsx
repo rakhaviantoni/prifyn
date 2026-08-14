@@ -7,10 +7,11 @@ import { useSyncExternalStore } from "react";
 
 const subscribeToHost = () => () => undefined;
 const serverAppHost = () => false;
+const configuredHosts = (value?: string, fallback: string[] = []) => Array.from(new Set([...(value ?? "").split(",").map(host => host.trim()).filter(Boolean), ...fallback]));
 const browserAppHost = () => {
   const hostname = window.location.hostname;
-  const configured = process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME;
-  return configured ? hostname === configured : hostname === "app.prifyn.rakhaviantoni.com" || hostname.startsWith("app.");
+  const configured = configuredHosts(process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME, ["app.prifyn.my.id", "app.prifyn.rakhaviantoni.com"]);
+  return configured.includes(hostname) || hostname.startsWith("app.");
 };
 
 export function useWorkspaceHref(href: string) {

@@ -24,7 +24,7 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | Variable | Production value |
 | --- | --- |
 | `NEXT_PUBLIC_APP_URL` | The public HTTPS origin, such as `https://prifyn.netlify.app` or `https://app.prifyn.com` |
-| `PRIFYN_APP_HOSTNAME` | App subdomain hostname without protocol or path, such as `app.prifyn.rakhaviantoni.com` |
+| `PRIFYN_APP_HOSTNAME` | App subdomain hostname without protocol or path. Supports comma-separated hosts, such as `app.prifyn.my.id,app.prifyn.rakhaviantoni.com` |
 | `DATABASE_URL` | Supabase pooled PostgreSQL connection string |
 | `BETTER_AUTH_URL` | The same public HTTPS origin as `NEXT_PUBLIC_APP_URL` |
 | `BETTER_AUTH_SECRET` | A high-entropy secret of at least 32 characters |
@@ -42,7 +42,7 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | `DEEPSEEK_API_KEY` | DeepSeek API key for Ask PRIFYN |
 | `DEEPSEEK_MODEL` | Enabled model identifier, such as `deepseek-chat` |
 
-Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash.
+Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash. If app and creator run on subdomains, include every production origin in `BETTER_AUTH_TRUSTED_ORIGINS` and every hostname in `BETTER_AUTH_ALLOWED_HOSTS`.
 
 Brand logo uploads use Supabase Storage. Create the configured bucket before
 deploying upload features. If the bucket is public, PRIFYN stores public object

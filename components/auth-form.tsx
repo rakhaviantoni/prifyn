@@ -7,14 +7,18 @@ import { FormEvent, useEffect, useState } from "react";
 
 type AccountType = "brand" | "agency" | "creator";
 
+function configuredHosts(value: string | undefined, fallback: string[]) {
+  return Array.from(new Set([...(value ?? "").split(",").map(host => host.trim()).filter(Boolean), ...fallback]));
+}
+
 function isAppHost(hostname: string) {
-  const configured = process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME;
-  return hostname === configured || hostname.startsWith("app.");
+  const configured = configuredHosts(process.env.NEXT_PUBLIC_PRIFYN_APP_HOSTNAME, ["app.prifyn.my.id", "app.prifyn.rakhaviantoni.com"]);
+  return configured.includes(hostname) || hostname.startsWith("app.");
 }
 
 function isCreatorHost(hostname: string) {
-  const configured = process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME;
-  return hostname === configured || hostname.startsWith("creator.");
+  const configured = configuredHosts(process.env.NEXT_PUBLIC_PRIFYN_CREATOR_HOSTNAME, ["creator.prifyn.my.id", "creator.prifyn.rakhaviantoni.com"]);
+  return configured.includes(hostname) || hostname.startsWith("creator.");
 }
 
 function safeReturnTo(value: string | null) {

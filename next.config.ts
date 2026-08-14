@@ -1,11 +1,27 @@
 import type { NextConfig } from "next";
 
-const appHostname = process.env.PRIFYN_APP_HOSTNAME ?? "app.prifyn.rakhaviantoni.com";
-const creatorHostname = process.env.PRIFYN_CREATOR_HOSTNAME ?? "creator.prifyn.rakhaviantoni.com";
-const appHostPattern = appHostname.replaceAll(".", "\\.");
-const creatorHostPattern = creatorHostname.replaceAll(".", "\\.");
-const appHost = [{ type: "host" as const, value: appHostPattern }];
-const creatorHost = [{ type: "host" as const, value: creatorHostPattern }];
+function splitHosts(value: string | undefined, fallback: string[]) {
+  const hosts = (value ?? "")
+    .split(",")
+    .map(host => host.trim())
+    .filter(Boolean);
+  return Array.from(new Set([...hosts, ...fallback]));
+}
+
+function hostMatcher(hosts: string[]) {
+  return hosts.map(host => host.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|");
+}
+
+const appHostnames = splitHosts(process.env.PRIFYN_APP_HOSTNAME, [
+  "app.prifyn.my.id",
+  "app.prifyn.rakhaviantoni.com",
+]);
+const creatorHostnames = splitHosts(process.env.PRIFYN_CREATOR_HOSTNAME, [
+  "creator.prifyn.my.id",
+  "creator.prifyn.rakhaviantoni.com",
+]);
+const appHost = [{ type: "host" as const, value: hostMatcher(appHostnames) }];
+const creatorHost = [{ type: "host" as const, value: hostMatcher(creatorHostnames) }];
 const workspaceRoutes = [
   "ads-window",
   "campaigns",
