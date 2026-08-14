@@ -172,7 +172,7 @@ test("AI endpoint fails safely without provider credentials", async () => {
 test("auth endpoint fails safely until credentials are supplied", async () => {
   const response = await request("/api/auth/configured", { headers: { accept: "application/json" } });
   assert.equal(response.status, 503);
-  assert.deepEqual(await response.json(), { configured: false, reason: "credentials" });
+  assert.deepEqual(await response.json(), { configured: false, reason: "auth" });
 });
 
 test("ships requested foundation packages and schema migrations", async () => {

@@ -5,8 +5,12 @@ import { isAuthConfigured, isGoogleAuthConfigured } from "@/lib/auth/server";
 const requiredTables = ["users", "sessions", "accounts", "verifications", "user_profiles"];
 
 export async function GET() {
-  if (!isAuthConfigured() || !isGoogleAuthConfigured()) {
-    return Response.json({ configured: false, reason: "credentials" }, { status: 503 });
+  if (!isAuthConfigured()) {
+    return Response.json({ configured: false, reason: "auth" }, { status: 503 });
+  }
+
+  if (!isGoogleAuthConfigured()) {
+    return Response.json({ configured: false, reason: "google" }, { status: 503 });
   }
 
   try {
