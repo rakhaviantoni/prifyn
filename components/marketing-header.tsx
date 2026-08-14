@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpenText, Briefcase, CalendarCheck, CaretDown, ChartLineUp, ClipboardText, List, Newspaper, ShieldCheck, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
+import { ArrowRight, BookOpenText, Briefcase, CalendarCheck, CaretDown, ChartLineUp, ClipboardText, List, Newspaper, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand";
@@ -33,7 +33,6 @@ const menus = [
 const signInOptions = [
   { label: "Workspace login", copy: "For brand, agency, and operator teams.", href: "/auth/sign-in?returnTo=/app", icon: Storefront },
   { label: "Creator login", copy: "For creators managing applications and submissions.", href: "/auth/sign-in?returnTo=/creator", icon: UserCircle },
-  { label: "Admin login", copy: "For PRIFYN operators only.", href: "/auth/sign-in?returnTo=/admin", icon: ShieldCheck },
 ] as const;
 
 export function MarketingHeader() {

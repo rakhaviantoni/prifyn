@@ -100,7 +100,7 @@ test("marketing navbar exposes explicit sign-in destinations", async () => {
   const html = await response.text();
   assert.match(html, /Workspace login/i);
   assert.match(html, /Creator login/i);
-  assert.match(html, /Admin login/i);
+  assert.doesNotMatch(html, /Admin login/i);
   assert.match(html, /returnTo=\/creator/i);
 });
 
