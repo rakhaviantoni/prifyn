@@ -819,6 +819,11 @@ svg { flex: none; }
 .admin-hero span { color: var(--sage); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .12em; }
 .admin-hero h1 { max-width: 820px; margin: 10px 0; font-family: var(--font-serif); font-size: clamp(34px, 5vw, 64px); font-weight: 480; line-height: .95; letter-spacing: -.055em; }
 .admin-hero p { max-width: 760px; margin: 0; color: rgba(255,255,255,.68); font-size: 12px; line-height: 1.6; }
+.admin-loading { display: flex; align-items: center; gap: 12px; margin-top: 18px; padding: 16px 18px; border-color: rgba(40,117,83,.18); background: rgba(255,255,255,.82); }
+.admin-loading svg { width: 24px; color: var(--green); }
+.admin-loading strong, .admin-loading span { display: block; }
+.admin-loading strong { font-size: 13px; }
+.admin-loading span { margin-top: 4px; color: var(--muted); font-size: 11px; line-height: 1.5; }
 .admin-metrics { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
 .admin-metrics article { display: flex; gap: 10px; align-items: center; padding: 16px; }
 .admin-metrics svg { width: 22px; height: 22px; color: var(--green); }
