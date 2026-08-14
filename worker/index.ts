@@ -12,6 +12,7 @@ interface Env {
       };
     };
   };
+  [key: string]: unknown;
 }
 
 interface ExecutionContext {
@@ -25,8 +26,19 @@ interface ExecutionContext {
 // dangerouslyAllowSVG: true in next.config.js and uncomment below:
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
+function hydrateProcessEnv(env: Env) {
+  if (typeof process === "undefined" || !process.env) return;
+  for (const [key, value] of Object.entries(env)) {
+    if (typeof value === "string" && process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
 const worker = {
   async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
+    hydrateProcessEnv(env);
+
     const url = new URL(request.url);
 
     if (url.pathname === "/_vinext/image") {
