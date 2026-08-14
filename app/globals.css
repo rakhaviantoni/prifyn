@@ -72,9 +72,22 @@ svg { flex: none; }
 .nav-mega-feature > small { position: relative; margin-top: 7px; color: rgba(255,255,255,.48); font-size: 9px; }
 .nav-mega-feature > b { position: relative; display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 11px; border-top: 1px solid rgba(255,255,255,.1); color: var(--sage); font-size: 9px; }
 .nav-mega-feature > b svg { width: 12px; }
-.header-actions > a:first-child { color: rgba(255,255,255,.68); font-size: 12px; font-weight: 600; }
-.header-actions > a:first-child:hover { color: #fff; }
 .header-actions { display: flex; align-items: center; gap: 20px; }
+.signin-menu { position: relative; }
+.signin-menu > button { min-height: 38px; display: inline-flex; align-items: center; gap: 6px; padding: 0 13px; border: 1px solid transparent; border-radius: 999px; background: transparent; color: rgba(255,255,255,.76); cursor: pointer; font-size: 13px; font-weight: 720; line-height: 1; }
+.signin-menu > button:hover, .signin-menu.open > button { border-color: rgba(255,255,255,.12); background: rgba(255,255,255,.06); color: #fff; }
+.signin-menu > button svg { width: 12px; transition: transform .18s ease; }
+.signin-menu.open > button svg { transform: rotate(180deg); }
+.signin-dropdown { position: absolute; top: calc(100% + 10px); right: 0; width: 330px; display: grid; gap: 3px; padding: 8px; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; background: rgba(21,32,27,.98); box-shadow: 0 28px 75px rgba(0,0,0,.32); opacity: 0; visibility: hidden; transform: translateY(-5px); transition: opacity .16s ease, transform .16s ease, visibility .16s; }
+.signin-menu.open .signin-dropdown { opacity: 1; visibility: visible; transform: translateY(0); }
+.signin-dropdown > a { min-height: 68px; display: grid; grid-template-columns: 34px 1fr 14px; gap: 10px; align-items: center; padding: 10px; border-radius: 11px; }
+.signin-dropdown > a:hover { background: rgba(255,255,255,.07); }
+.signin-dropdown > a > span { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 8px; background: rgba(165,227,190,.1); color: var(--sage); }
+.signin-dropdown svg { width: 16px; }
+.signin-dropdown > a > svg { width: 12px; color: rgba(255,255,255,.32); }
+.signin-dropdown strong, .signin-dropdown small { display: block; }
+.signin-dropdown strong { color: #fff; font-size: 11px; }
+.signin-dropdown small { margin-top: 3px; color: rgba(255,255,255,.48); font-size: 9px; line-height: 1.35; }
 .button { min-height: 38px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 16px; border: 1px solid transparent; border-radius: 9px; font-size: 11px; font-weight: 750; line-height: 1; white-space: nowrap; transition: transform .18s ease, background .18s ease, border-color .18s ease; }
 .button:hover { transform: translateY(-1px); }
 .button svg { width: 15px; height: 15px; }
@@ -1719,7 +1732,11 @@ svg { flex: none; }
   .nav-mega-links > a { min-height: 62px; grid-template-columns: 32px 1fr 14px; }
   .nav-mega-feature { min-height: 145px; }
   .mobile-nav-actions { display: grid; gap: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,.1); }
-  .mobile-nav-actions > a:first-child { padding: 10px 12px; color: rgba(255,255,255,.7); font-size: 10px; }
+  .mobile-signin-list { display: grid; gap: 6px; padding: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; background: rgba(255,255,255,.04); }
+  .mobile-signin-list > span { color: rgba(255,255,255,.45); font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+  .mobile-signin-list > a { min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border-radius: 11px; color: rgba(255,255,255,.86); font-size: 12px; font-weight: 760; }
+  .mobile-signin-list > a:hover { background: rgba(255,255,255,.07); }
+  .mobile-signin-list svg { width: 16px; color: var(--sage); }
   .header-actions { display: none; }
   .menu-button { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.14); border-radius: 8px; background: transparent; color: #fff; }
   .hero-grid { gap: 50px; padding: 105px 0 115px; }
@@ -2943,25 +2960,6 @@ button:disabled { cursor: not-allowed; opacity: .58; transform: none; }
   gap: 10px;
 }
 
-.marketing-header .header-actions > a:first-child {
-  min-height: 38px;
-  display: inline-flex;
-  align-items: center;
-  padding: 0 13px;
-  border: 1px solid transparent;
-  border-radius: 999px;
-  color: rgba(255,255,255,.76);
-  font-size: 13px;
-  font-weight: 720;
-  line-height: 1;
-}
-
-.marketing-header .header-actions > a:first-child:hover {
-  border-color: rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: #fff;
-}
-
 .marketing-header .header-actions .button {
   min-height: 40px;
   padding-inline: 17px;
@@ -3068,18 +3066,11 @@ button:disabled { cursor: not-allowed; opacity: .58; transform: none; }
     gap: 10px;
     padding: 12px 2px 2px;
   }
-  .mobile-nav-actions > a:first-child {
-    min-height: 44px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid rgba(255,255,255,.12);
-    border-radius: 999px;
-    background: rgba(255,255,255,.05);
-    color: rgba(255,255,255,.86);
-    font-size: 13px;
-    font-weight: 760;
-  }
+  .mobile-signin-list { display: grid; gap: 6px; padding: 10px; border: 1px solid rgba(255,255,255,.1); border-radius: 15px; background: rgba(255,255,255,.04); }
+  .mobile-signin-list > span { color: rgba(255,255,255,.45); font-size: 9px; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+  .mobile-signin-list > a { min-height: 40px; display: flex; align-items: center; gap: 9px; padding: 0 10px; border-radius: 11px; color: rgba(255,255,255,.86); font-size: 12px; font-weight: 760; }
+  .mobile-signin-list > a:hover { background: rgba(255,255,255,.07); }
+  .mobile-signin-list svg { width: 16px; color: var(--sage); }
   .mobile-nav-actions .button {
     width: 100%;
     min-height: 46px;

@@ -94,6 +94,16 @@ test("auth page copy matches the requested workspace context", async () => {
   assert.match(await adminResponse.text(), /PRIFYN admin sign in/i);
 });
 
+test("marketing navbar exposes explicit sign-in destinations", async () => {
+  const response = await request("/");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /Workspace login/i);
+  assert.match(html, /Creator login/i);
+  assert.match(html, /Admin login/i);
+  assert.match(html, /returnTo=\/creator/i);
+});
+
 test("private workspaces require authentication", async () => {
   for (const [path] of privateRoutes) {
     const response = await request(path, { redirect: "manual" });

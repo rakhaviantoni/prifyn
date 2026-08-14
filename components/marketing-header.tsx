@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, BookOpenText, Briefcase, CalendarCheck, CaretDown, ChartLineUp, ClipboardText, List, Newspaper, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
+import { ArrowRight, BookOpenText, Briefcase, CalendarCheck, CaretDown, ChartLineUp, ClipboardText, List, Newspaper, ShieldCheck, Storefront, UserCircle, UsersThree, X } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand";
@@ -30,6 +30,12 @@ const menus = [
   ], featured: { eyebrow: "Assisted setup", title: "If the workflow is messy, start with a human map.", copy: "Brief → execution → data → reports → next action.", href: "/book" } },
 ] as const;
 
+const signInOptions = [
+  { label: "Workspace login", copy: "For brand, agency, and operator teams.", href: "/auth/sign-in?returnTo=/app", icon: Storefront },
+  { label: "Creator login", copy: "For creators managing applications and submissions.", href: "/auth/sign-in?returnTo=/creator", icon: UserCircle },
+  { label: "Admin login", copy: "For PRIFYN operators only.", href: "/auth/sign-in?returnTo=/admin", icon: ShieldCheck },
+] as const;
+
 export function MarketingHeader() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
@@ -47,9 +53,25 @@ export function MarketingHeader() {
           <button type="button" className={isGroupActive(menu.items) ? "active" : ""} aria-expanded={activeMenu === menu.label} onClick={() => setActiveMenu(activeMenu === menu.label ? null : menu.label)} onMouseEnter={() => setActiveMenu(menu.label)} onFocus={() => setActiveMenu(menu.label)}>{menu.label}<CaretDown /></button>
           <div className="nav-dropdown"><div className="nav-mega-links">{menu.items.map(({ label, copy, href, icon: Icon }) => <Link href={href} key={href} onClick={closeNavigation} className={pathname === href || pathname.startsWith(`${href}/`) ? "active" : ""}><span><Icon weight="duotone" /></span><div><strong>{label}</strong><small>{copy}</small></div><ArrowRight /></Link>)}</div><Link className="nav-mega-feature" href={menu.featured.href} onClick={closeNavigation}><span>{menu.featured.eyebrow}</span><strong>{menu.featured.title}</strong><small>{menu.featured.copy}</small><b>Explore <ArrowRight /></b></Link></div>
         </div>)}
-        <div className="mobile-nav-actions"><LanguageToggle inverse /><Link href="/auth/sign-in" onClick={closeNavigation}>Sign in</Link><Link className="button button-light" href="/book" onClick={closeNavigation}>Book appointment <ArrowRight weight="bold" /></Link></div>
+        <div className="mobile-nav-actions">
+          <LanguageToggle inverse />
+          <div className="mobile-signin-list">
+            <span>Sign in as</span>
+            {signInOptions.map(({ label, href, icon: Icon }) => <Link href={href} key={href} onClick={closeNavigation}><Icon weight="duotone" />{label}</Link>)}
+          </div>
+          <Link className="button button-light" href="/book" onClick={closeNavigation}>Book appointment <ArrowRight weight="bold" /></Link>
+        </div>
       </nav>
-      <div className="header-actions"><LanguageToggle inverse /><Link href="/auth/sign-in">Sign in</Link><Link className="button button-light" href="/book">Book appointment <ArrowRight weight="bold" /></Link></div>
+      <div className="header-actions">
+        <LanguageToggle inverse />
+        <div className={`signin-menu ${activeMenu === "Sign in" ? "open" : ""}`}>
+          <button type="button" aria-expanded={activeMenu === "Sign in"} onClick={() => setActiveMenu(activeMenu === "Sign in" ? null : "Sign in")} onMouseEnter={() => setActiveMenu("Sign in")} onFocus={() => setActiveMenu("Sign in")}>Sign in <CaretDown /></button>
+          <div className="signin-dropdown">
+            {signInOptions.map(({ label, copy, href, icon: Icon }) => <Link href={href} key={href} onClick={closeNavigation}><span><Icon weight="duotone" /></span><div><strong>{label}</strong><small>{copy}</small></div><ArrowRight /></Link>)}
+          </div>
+        </div>
+        <Link className="button button-light" href="/book">Book appointment <ArrowRight weight="bold" /></Link>
+      </div>
       <button className="menu-button" type="button" aria-label={mobileOpen ? "Close navigation" : "Open navigation"} aria-expanded={mobileOpen} onClick={() => setMobileOpen(!mobileOpen)}>{mobileOpen ? <X /> : <List />}</button>
     </div>
   </header>;
