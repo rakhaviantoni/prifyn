@@ -32,11 +32,21 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | `BETTER_AUTH_ALLOWED_HOSTS` | Optional comma-separated hostnames when one deploy serves multiple domains |
 | `GOOGLE_CLIENT_ID` | Google OAuth web client ID |
 | `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+| `SUPABASE_URL` | Supabase project URL, such as `https://project.supabase.co` |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only Supabase service role key for Storage uploads |
+| `SUPABASE_STORAGE_BUCKET` | Storage bucket for uploaded assets, default `prifyn-assets` |
+| `REPORT_SCHEDULE_SECRET` | Bearer token used by the scheduled report runner |
+| `WEBHOOK_DELIVERY_SECRET` | Bearer token used by the webhook delivery runner |
 | `SUMOPOD_BASE_URL` | `https://ai.sumopod.com/v1` unless the provider specifies another endpoint |
 | `SUMOPOD_API_KEY` | SumoPod API key |
 | `SUMOPOD_MODEL` | Enabled model identifier |
 
 Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash.
+
+Brand logo uploads use Supabase Storage. Create the configured bucket before
+deploying upload features. If the bucket is public, PRIFYN stores public object
+URLs for brand logos; private creator documents should use a separate private
+bucket later.
 
 ### Before a custom domain
 

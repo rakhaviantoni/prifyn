@@ -73,5 +73,9 @@ Copy `.env.example` to `.env.local` and populate the relevant values when availa
 - Google OAuth client ID and secret
 - PostgreSQL connection URL
 - AI gateway/provider base URL, model, and API key
-- Storage credentials
+- Supabase Storage credentials for logos/uploads
 - Platform connector credentials as each integration is enabled
+
+Backend-heavy endpoints are gradually moved behind `lib/server/hono.ts`. The
+Next routes stay as thin adapters, so PRIFYN can split selected services into
+standalone Hono microservices later without changing the product URLs.
