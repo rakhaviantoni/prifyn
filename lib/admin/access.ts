@@ -15,7 +15,11 @@ export function isPrifynAdminEmail(email?: string | null) {
 
 export async function getAdminSession(headers: Headers): Promise<AdminSession | null> {
   if (!isAuthConfigured()) return null;
-  const session = await getAuth().api.getSession({ headers });
-  if (!session?.user || !isPrifynAdminEmail(session.user.email)) return null;
-  return { user: { id: session.user.id, email: session.user.email, name: session.user.name } };
+  try {
+    const session = await getAuth().api.getSession({ headers });
+    if (!session?.user || !isPrifynAdminEmail(session.user.email)) return null;
+    return { user: { id: session.user.id, email: session.user.email, name: session.user.name } };
+  } catch {
+    return null;
+  }
 }
