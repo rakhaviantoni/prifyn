@@ -4,5 +4,60 @@ import { ArrowLeft, ArrowRight, CheckCircle } from "@phosphor-icons/react/dist/s
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingHeader } from "@/components/marketing-header";
 import { caseStudies } from "@/lib/resources-data";
+
 export function generateStaticParams() { return caseStudies.map(study => ({ slug: study.slug })); }
-export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) { const { slug } = await params; const study = caseStudies.find(item => item.slug === slug); if (!study) notFound(); return <div className="marketing-page"><div className="subpage-header"><MarketingHeader /></div><main><article className="case-detail"><header><div className="marketing-container"><Link href="/case-studies"><ArrowLeft /> All studies</Link><span className="section-kicker">{study.label} · {study.industry}</span><h1>{study.title}</h1><p>{study.summary}</p></div></header><div className="marketing-container case-detail-grid"><div><section><span>01 · Challenge</span><h2>Why the existing workflow broke down</h2><p>{study.challenge}</p></section><section><span>02 · Decision</span><h2>What the team should do next</h2><p>{study.decision}</p></section><section><span>03 · Operating outcome</span><h2>What becomes measurable</h2>{study.outcome.map(item => <p className="case-check" key={item}><CheckCircle weight="fill" />{item}</p>)}</section></div><aside>{study.metrics.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}<Link className="button button-dark" href="/auth/sign-up">Apply this workflow <ArrowRight /></Link></aside></div></article></main><MarketingFooter /></div>; }
+
+export default async function CaseStudyPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  const study = caseStudies.find(item => item.slug === slug);
+  if (!study) notFound();
+
+  return (
+    <div className="marketing-page">
+      <div className="subpage-header"><MarketingHeader /></div>
+      <main>
+        <article className="case-detail">
+          <header>
+            <div className="marketing-container case-detail-head">
+              <div>
+                <Link href="/case-studies"><ArrowLeft /> All studies</Link>
+                <span className="section-kicker">{study.label} · {study.industry}</span>
+                <h1>{study.title}</h1>
+                <p>{study.summary}</p>
+                <a className="case-source-link" href={study.sourceUrl} target="_blank" rel="noreferrer">Source field note: {study.sourceLabel}</a>
+              </div>
+              <div className={`case-detail-visual case-art-${study.image}`} aria-hidden="true">
+                <span>{study.industry}</span>
+                <b>PRIFYN</b>
+              </div>
+            </div>
+          </header>
+          <div className="marketing-container case-detail-grid">
+            <div>
+              <section>
+                <span>01 · Challenge</span>
+                <h2>Why the existing workflow broke down</h2>
+                <p>{study.challenge}</p>
+              </section>
+              <section>
+                <span>02 · Decision</span>
+                <h2>What the team should do next</h2>
+                <p>{study.decision}</p>
+              </section>
+              <section>
+                <span>03 · Operating outcome</span>
+                <h2>What becomes measurable</h2>
+                {study.outcome.map(item => <p className="case-check" key={item}><CheckCircle weight="fill" />{item}</p>)}
+              </section>
+            </div>
+            <aside>
+              {study.metrics.map(([value, label]) => <div key={label}><strong>{value}</strong><span>{label}</span></div>)}
+              <Link className="button button-dark" href="/apply">Apply this workflow <ArrowRight /></Link>
+            </aside>
+          </div>
+        </article>
+      </main>
+      <MarketingFooter />
+    </div>
+  );
+}
