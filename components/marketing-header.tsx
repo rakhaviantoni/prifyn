@@ -24,7 +24,7 @@ const menus = [
     { label: "Case Studies", copy: "See operating problems translated into decisions.", href: "/case-studies", icon: ChartLineUp },
   ], featured: { eyebrow: "Latest field note", title: "Growth without readiness is an expensive illusion.", copy: "6 min read · Growth operations", href: "/blog/growth-without-operational-readiness" } },
   { label: "Start", items: [
-    { label: "Book appointment", copy: "Guided walkthrough before workspace setup.", href: "/book", icon: CalendarCheck },
+    { label: "Book appointment", copy: "Guided walkthrough before setup.", href: "/book", icon: CalendarCheck },
     { label: "Apply online", copy: "Share your growth workflow first.", href: "/apply", icon: ClipboardText },
     { label: "Create workspace", copy: "Start self-serve when you are ready.", href: "/auth/sign-up", icon: Storefront },
   ], featured: { eyebrow: "Assisted setup", title: "If the workflow is messy, start with a human map.", copy: "Brief → execution → data → reports → next action.", href: "/book" } },

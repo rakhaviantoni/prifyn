@@ -23,7 +23,7 @@ const routes = [
   ["/pricing", "Start with decisions"],
   ["/book", "Start with a walkthrough"],
   ["/apply", "Tell us your growth problem first"],
-  ["/docs", "How Growth OS works"],
+  ["/docs", "How PRIFYN works"],
   ["/growth", "See the whole growth system"],
   ["/solutions/brands", "Know when to scale"],
   ["/solutions/agencies", "Operate every client clearly"],

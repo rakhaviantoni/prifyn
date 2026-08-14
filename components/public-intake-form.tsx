@@ -48,7 +48,7 @@ export function PublicIntakeForm({ type }: { type: IntakeType }) {
   return <section className="surface public-intake-card">
     <div className="intake-form-head">
       <span>{isAppointment ? <CalendarCheck weight="duotone" /> : <ClipboardText weight="duotone" />}</span>
-      <div><small>{isAppointment ? "Guided onboarding" : "Apply online"}</small><h2>{isAppointment ? "Book a Growth OS walkthrough" : "Tell us what you want PRIFYN to operate first"}</h2><p>{isAppointment ? "Best if you want a human to map your campaign, reporting, and data flow before creating a workspace." : "Best if you already know your campaign/channel problem and want PRIFYN to prepare the right starting workspace."}</p></div>
+      <div><small>{isAppointment ? "Guided onboarding" : "Apply online"}</small><h2>{isAppointment ? "Book a PRIFYN walkthrough" : "Tell us what you want PRIFYN to help with first"}</h2><p>{isAppointment ? "Best if you want someone to map your campaign, creator, report, and lead follow-up flow before setup." : "Best if you already know the campaign or channel problem and want PRIFYN to recommend the right first step."}</p></div>
     </div>
     <form className="public-intake-form" action={submit}>
       <div className="field-row"><label className="field"><span>Name</span><input name="name" required placeholder="Your name" /></label><label className="field"><span>Work email</span><input name="email" required type="email" placeholder="you@company.com" /></label></div>
@@ -59,7 +59,7 @@ export function PublicIntakeForm({ type }: { type: IntakeType }) {
       <label className="field"><span>Main problem</span><textarea name="problem" required placeholder="Example: we run Meta Ads and KOL manually, but reports are late and we cannot see which campaign creates leads/orders." /></label>
       <button className="button button-dark button-large" type="submit" disabled={submitting || submitted}>{submitted ? "Saved" : submitting ? "Saving…" : isAppointment ? "Book appointment" : "Submit application"} <ArrowRight weight="bold" /></button>
     </form>
-    {submitted && <div className="intake-success" role="status"><CheckCircle weight="fill" /><span><strong>Request saved.</strong><small>PRIFYN received this lead. We will review the workflow and follow up from the PRIFYN workspace.</small></span></div>}
+    {submitted && <div className="intake-success" role="status"><CheckCircle weight="fill" /><span><strong>Request received.</strong><small>PRIFYN will review your current flow and follow up with the best next step.</small></span></div>}
     {error && <div className="intake-success error" role="alert"><ClipboardText weight="fill" /><span><strong>Could not save request.</strong><small>{error}</small></span></div>}
   </section>;
 }
