@@ -6,6 +6,7 @@ import { listAppointmentSlots } from "@/lib/appointment-slots";
 
 const SlotPayload = z.object({
   label: z.string().trim().min(2).max(80),
+  availableDate: z.string().trim().max(24).optional().nullable(),
   startTime: z.string().trim().min(4).max(16),
   endTime: z.string().trim().min(4).max(16),
   timezone: z.string().trim().min(3).max(80).default("Asia/Jakarta"),
@@ -26,6 +27,7 @@ export async function POST(request: Request) {
   const payload = SlotPayload.parse(await request.json());
   const [slot] = await getDb().insert(appointmentSlots).values({
     label: payload.label,
+    availableDate: payload.availableDate || null,
     startTime: payload.startTime,
     endTime: payload.endTime,
     timezone: payload.timezone,

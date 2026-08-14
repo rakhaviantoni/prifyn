@@ -6,6 +6,7 @@ import { getAdminSession } from "@/lib/admin/access";
 
 const SlotUpdatePayload = z.object({
   label: z.string().trim().min(2).max(80).optional(),
+  availableDate: z.string().trim().max(24).optional().nullable(),
   startTime: z.string().trim().min(4).max(16).optional(),
   endTime: z.string().trim().min(4).max(16).optional(),
   timezone: z.string().trim().min(3).max(80).optional(),

@@ -243,6 +243,7 @@ export const leads = pgTable("leads", {
 export const appointmentSlots = pgTable("appointment_slots", {
   id: uuid("id").defaultRandom().primaryKey(),
   label: text("label").notNull(),
+  availableDate: text("available_date"),
   startTime: text("start_time").notNull(),
   endTime: text("end_time").notNull(),
   timezone: text("timezone").default("Asia/Jakarta").notNull(),
