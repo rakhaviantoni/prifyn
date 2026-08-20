@@ -5,6 +5,7 @@ import handler from "vinext/server/app-router-entry";
 interface Env {
   ASSETS: Fetcher;
   DB: D1Database;
+  HYPERDRIVE?: { connectionString: string };
   IMAGES: {
     input(stream: ReadableStream): {
       transform(options: Record<string, unknown>): {
@@ -27,6 +28,7 @@ interface ExecutionContext {
 // const imageConfig: ImageConfig = { dangerouslyAllowSVG: true };
 
 function hydrateProcessEnv(env: Env) {
+  (globalThis as typeof globalThis & { __PRIFYN_WORKER_ENV__?: Env }).__PRIFYN_WORKER_ENV__ = env;
   if (typeof process === "undefined" || !process.env) return;
   for (const [key, value] of Object.entries(env)) {
     if (typeof value === "string" && process.env[key] === undefined) {

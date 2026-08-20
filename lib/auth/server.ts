@@ -1,12 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { organization as organizationPlugin } from "better-auth/plugins";
-import { getDb } from "@/db";
+import { getDatabaseConnectionSource, getDb } from "@/db";
 import * as schema from "@/db/schema";
 import { getAuthAllowedHosts, getAuthFallbackOrigin, getAuthTrustedOrigins } from "./url";
 
 export function isAuthConfigured() {
-  return Boolean(process.env.DATABASE_URL && process.env.BETTER_AUTH_SECRET);
+  return Boolean(getDatabaseConnectionSource().url && process.env.BETTER_AUTH_SECRET);
 }
 
 export function isGoogleAuthConfigured() {
