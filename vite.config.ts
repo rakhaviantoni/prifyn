@@ -10,10 +10,22 @@ const { d1, r2 } = hostingConfig;
 
 // macOS Seatbelt blocks FSEvents, so Codex previews need polling for HMR.
 const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
+const hyperdriveId =
+  process.env.CLOUDFLARE_HYPERDRIVE_ID ??
+  process.env.HYPERDRIVE_ID ??
+  process.env.PRIFYN_HYPERDRIVE_ID;
 
 const localBindingConfig = {
   main: "./worker/index.ts",
   compatibility_flags: ["nodejs_compat"],
+  hyperdrive: hyperdriveId
+    ? [
+        {
+          binding: "HYPERDRIVE",
+          id: hyperdriveId,
+        },
+      ]
+    : [],
   d1_databases: d1
     ? [
         {
