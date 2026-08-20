@@ -1,4 +1,5 @@
 const DEFAULT_LOCAL_ORIGINS = ["http://localhost:3000", "http://localhost:8888"];
+const DEFAULT_ROOT_HOSTS = ["prifyn.my.id", "prifyn.rakhaviantoni.com", "rakhaviantoni.com"];
 const DEFAULT_APP_HOSTS = ["app.prifyn.my.id", "app.prifyn.rakhaviantoni.com"];
 const DEFAULT_CREATOR_HOSTS = ["creator.prifyn.my.id", "creator.prifyn.rakhaviantoni.com"];
 
@@ -48,6 +49,7 @@ function hostsFromList(value?: string | null) {
 export function getAuthTrustedOrigins() {
   const origins = [
     ...DEFAULT_LOCAL_ORIGINS,
+    ...DEFAULT_ROOT_HOSTS.map(host => `https://${host}`),
     ...DEFAULT_APP_HOSTS.map(host => `https://${host}`),
     ...DEFAULT_CREATOR_HOSTS.map(host => `https://${host}`),
     toOrigin(process.env.BETTER_AUTH_URL),
@@ -67,6 +69,9 @@ export function getAuthAllowedHosts() {
     "localhost:3000",
     "localhost:8888",
     "127.0.0.1:3000",
+    ...DEFAULT_ROOT_HOSTS,
+    "*.prifyn.my.id",
+    "*.prifyn.rakhaviantoni.com",
     ...DEFAULT_APP_HOSTS,
     ...DEFAULT_CREATOR_HOSTS,
     ...hostsFromList(process.env.PRIFYN_APP_HOSTNAME),

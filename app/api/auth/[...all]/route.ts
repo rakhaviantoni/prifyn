@@ -7,10 +7,20 @@ async function unavailable() {
 
 export async function GET(request: Request) {
   if (!isAuthConfigured()) return unavailable();
-  return toNextJsHandler(getAuth()).GET(request);
+  try {
+    return await toNextJsHandler(getAuth()).GET(request);
+  } catch (error) {
+    console.error("PRIFYN auth GET failed", error);
+    return Response.json({ code: "AUTH_HANDLER_FAILED", message: "Sign-in is not available right now. Please try again in a few minutes." }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
   if (!isAuthConfigured()) return unavailable();
-  return toNextJsHandler(getAuth()).POST(request);
+  try {
+    return await toNextJsHandler(getAuth()).POST(request);
+  } catch (error) {
+    console.error("PRIFYN auth POST failed", error);
+    return Response.json({ code: "AUTH_HANDLER_FAILED", message: "Google sign-in could not be started. Please try again in a few minutes." }, { status: 500 });
+  }
 }
