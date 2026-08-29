@@ -41,7 +41,7 @@ export async function GET() {
       where table_schema = 'public'
         and table_name in ('users', 'sessions', 'accounts', 'verifications', 'user_profiles')
     `);
-    const columns = Array.isArray(columnsResult) ? columnsResult : [];
+    const columns = (Array.isArray(columnsResult) ? columnsResult : []) as Array<{ table_name: string; column_name: string }>;
     const columnsByTable = new Map<string, Set<string>>();
     for (const row of columns) {
       const tableColumns = columnsByTable.get(row.table_name) ?? new Set<string>();
