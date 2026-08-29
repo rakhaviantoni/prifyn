@@ -68,6 +68,14 @@ See [`docs/growth-os-mvp-blueprint.md`](docs/growth-os-mvp-blueprint.md) for the
 
 ## Credentials to provide later
 
+PRIFYN Copilot should use the project-bound AZEKHA agent in production:
+
+- `AZEKHA_AI_GATEWAY_URL`
+- `AZEKHA_AI_GATEWAY_API_KEY`
+- `AZEKHA_AI_MODEL` (defaults to the project agent model)
+
+The legacy direct provider variables remain a rollout fallback. Never expose either provider or AZEKHA project keys to browser code.
+
 Copy `.env.example` to `.env.local` and populate the relevant values when available:
 
 - Google OAuth client ID and secret

@@ -34,6 +34,12 @@ function chatCompletionsUrl(baseURL: string) {
   return clean.endsWith("/chat/completions") ? clean : `${clean}/chat/completions`;
 }
 
+function azekhaAgentUrl(baseURL: string) {
+  const clean = baseURL.trim().replace(/^['"]|['"]$/g, "").replace(/\/$/, "");
+  if (clean.endsWith("/public/v1/agents/default/chat/completions")) return clean;
+  return `${clean}/public/v1/agents/default/chat/completions`;
+}
+
 function normalizeInsightPayload(value: unknown) {
   const object = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const confidenceRaw = String(object.confidence ?? "medium").toLowerCase();
@@ -114,21 +120,25 @@ function offline(question: string, context: InsightContext): InsightResponse {
 
 export async function generateInsight(question: string, suppliedContext?: InsightContext): Promise<InsightResponse> {
   const context = suppliedContext ?? { brand: "Selected brand", period: "Last 7 days", route: "/app/copilot" };
-  const apiKey = envValue("DEEPSEEK_API_KEY");
-  const model = envValue("DEEPSEEK_MODEL") || "deepseek-chat";
+  const azekhaApiKey = envValue("AZEKHA_AI_GATEWAY_API_KEY");
+  const apiKey = azekhaApiKey || envValue("DEEPSEEK_API_KEY");
+  const model = azekhaApiKey ? envValue("AZEKHA_AI_MODEL") : envValue("DEEPSEEK_MODEL") || "deepseek-chat";
   if (!apiKey || !model) return offline(question, context);
 
-  const baseURL = envValue("DEEPSEEK_BASE_URL") || "https://api.deepseek.com";
+  const baseURL = azekhaApiKey
+    ? envValue("AZEKHA_AI_GATEWAY_URL") || "https://azekha-ai-gateway.viantonirakha.workers.dev"
+    : envValue("DEEPSEEK_BASE_URL") || "https://api.deepseek.com";
+  const url = azekhaApiKey ? azekhaAgentUrl(baseURL) : chatCompletionsUrl(baseURL);
   let response: Response;
   try {
-    response = await fetch(chatCompletionsUrl(baseURL), {
+    response = await fetch(url, {
     method: "POST",
     headers: { authorization: `Bearer ${apiKey}`, "content-type": "application/json" },
     body: JSON.stringify({
-      model,
+      ...(model ? { model } : {}),
       temperature: 0.2,
       max_tokens: 900,
-      response_format: { type: "json_object" },
+      ...(!azekhaApiKey ? { response_format: { type: "json_object" } } : {}),
       messages: [
         { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Prefer PRIFYN-supported sources: Meta/TikTok/Google ads exports, GA4, Shopee/Tokopedia order exports, affiliate/coupon reports, creator proof, and UTM links. Do not recommend Shopify or Stripe unless the supplied evidence mentions them. Keep answers concise, operational, and action-oriented." },
         { role: "user", content: `Question: ${question}\nContext: ${JSON.stringify(context)}\nEvidence bundle: ${JSON.stringify(context.evidence ?? { instruction: "Use only imported reports, connected accounts, and campaign activity supplied by PRIFYN. If evidence is missing, say what to connect or import next." })}` },
