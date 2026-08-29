@@ -2,6 +2,7 @@ import Link from "next/link";
 import { AuthForm } from "./auth-form";
 import { Brand } from "./brand";
 import { LanguageToggle } from "./language";
+import { canonicalAuthUrl } from "@/lib/portal-url";
 
 export type AuthAudience = "app" | "creator" | "admin";
 
@@ -47,5 +48,7 @@ export function AuthPage({ mode, audience = "app" }: { mode: "sign-in" | "sign-u
   const signUp = mode === "sign-up";
   const copy = authCopy[audience];
   const initialAccountType = audience === "creator" ? "creator" : "brand";
-  return <main className={`auth-page auth-page-${audience}`}><section className="auth-brand-panel"><Brand inverse /><div className="auth-quote"><blockquote>{copy.quote}</blockquote><p>{copy.body}</p></div><span className="auth-foot">{copy.foot}</span></section><section className="auth-form-panel"><div className="auth-language"><LanguageToggle /></div><div className="auth-form-wrap"><div className="auth-mobile-brand"><Brand /></div><span className="auth-context-pill">{audience === "admin" ? "Admin" : audience === "creator" ? "Creator" : "Workspace"}</span><h1>{signUp ? copy.signUpTitle : copy.signInTitle}</h1><p>{signUp ? <>Already operating with PRIFYN? <Link href={`/auth/sign-in${audience === "admin" ? "?returnTo=/admin" : ""}`}>Sign in</Link></> : audience === "admin" ? <>Need access? Ask a PRIFYN owner to approve your account.</> : <>New to PRIFYN? <Link href="/auth/sign-up">Create an account</Link></>}</p><p className="auth-context-note">{signUp ? copy.signUpSubtitle : copy.signInSubtitle}</p><AuthForm mode={mode} initialAccountType={initialAccountType} /></div></section></main>;
+  const signInHref = audience === "admin" ? "/auth/sign-in?returnTo=/admin" : canonicalAuthUrl("sign-in", audience, audience === "creator" ? "/creator" : "/app");
+  const signUpHref = audience === "creator" ? canonicalAuthUrl("sign-up", "creator", "/creator") : canonicalAuthUrl("sign-up", "app", "/app");
+  return <main className={`auth-page auth-page-${audience}`}><section className="auth-brand-panel"><Brand inverse /><div className="auth-quote"><blockquote>{copy.quote}</blockquote><p>{copy.body}</p></div><span className="auth-foot">{copy.foot}</span></section><section className="auth-form-panel"><div className="auth-language"><LanguageToggle /></div><div className="auth-form-wrap"><div className="auth-mobile-brand"><Brand /></div><span className="auth-context-pill">{audience === "admin" ? "Admin" : audience === "creator" ? "Creator" : "Workspace"}</span><h1>{signUp ? copy.signUpTitle : copy.signInTitle}</h1><p>{signUp ? <>Already operating with PRIFYN? <Link href={signInHref}>Sign in</Link></> : audience === "admin" ? <>Need access? Ask a PRIFYN owner to approve your account.</> : <>New to PRIFYN? <Link href={signUpHref}>Create an account</Link></>}</p><p className="auth-context-note">{signUp ? copy.signUpSubtitle : copy.signInSubtitle}</p><AuthForm mode={mode} initialAccountType={initialAccountType} /></div></section></main>;
 }

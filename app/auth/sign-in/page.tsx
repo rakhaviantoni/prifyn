@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
 import { AuthAudience, AuthPage } from "@/components/auth-page";
+import { canonicalAuthUrl, isPortalHost } from "@/lib/portal-url";
 
 export const metadata: Metadata = { title: "Sign in" };
 
@@ -14,5 +16,8 @@ export default async function SignInPage({ searchParams }: { searchParams?: Prom
   const requestHeaders = await headers();
   const host = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   const params = await searchParams;
-  return <AuthPage mode="sign-in" audience={inferAudience(host, params?.returnTo)} />;
+  const audience = inferAudience(host, params?.returnTo);
+  if (audience === "app" && !isPortalHost(host, "app")) redirect(canonicalAuthUrl("sign-in", "app", params?.returnTo ?? "/app"));
+  if (audience === "creator" && !isPortalHost(host, "creator")) redirect(canonicalAuthUrl("sign-in", "creator", params?.returnTo ?? "/creator"));
+  return <AuthPage mode="sign-in" audience={audience} />;
 }

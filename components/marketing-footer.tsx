@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { ArrowUpRight } from "@phosphor-icons/react/dist/ssr";
 import { Brand } from "./brand";
+import { canonicalAuthUrl } from "@/lib/portal-url";
 
 const groups = [
   ["Product", [["Growth OS overview", "/growth"], ["Features", "/features"], ["Pricing", "/pricing"], ["Product demo", "/demo"]]],
   ["Solutions", [["For Brands", "/solutions/brands"], ["For Agencies", "/solutions/agencies"], ["For Creators", "/solutions/creators"]]],
-  ["Start", [["Book appointment", "/book"], ["Apply online", "/apply"], ["Create workspace", "/auth/sign-up"]]],
+  ["Start", [["Book appointment", "/book"], ["Apply online", "/apply"], ["Create workspace", canonicalAuthUrl("sign-up", "app", "/app")]]],
   ["Resources", [["Docs", "/docs"], ["Blog", "/blog"], ["Case Studies", "/case-studies"], ["Security", "/features#trust"], ["Contact", "mailto:hello@prifyn.com"]]],
 ];
 

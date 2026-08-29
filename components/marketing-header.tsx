@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Brand } from "./brand";
 import { LanguageToggle } from "./language";
+import { canonicalAuthUrl } from "@/lib/portal-url";
 
 const menus = [
   { label: "Product", items: [
@@ -26,13 +27,13 @@ const menus = [
   { label: "Start", items: [
     { label: "Book appointment", copy: "Guided walkthrough before setup.", href: "/book", icon: CalendarCheck },
     { label: "Apply online", copy: "Share your growth workflow first.", href: "/apply", icon: ClipboardText },
-    { label: "Create workspace", copy: "Start self-serve when you are ready.", href: "/auth/sign-up", icon: Storefront },
+    { label: "Create workspace", copy: "Start self-serve when you are ready.", href: canonicalAuthUrl("sign-up", "app", "/app"), icon: Storefront },
   ], featured: { eyebrow: "Assisted setup", title: "If the workflow is messy, start with a human map.", copy: "Brief → execution → data → reports → next action.", href: "/book" } },
 ] as const;
 
 const signInOptions = [
-  { label: "Workspace login", copy: "For brand, agency, and operator teams.", href: "/auth/sign-in?returnTo=/app", icon: Storefront },
-  { label: "Creator login", copy: "For creators managing applications and submissions.", href: "/auth/sign-in?returnTo=/creator", icon: UserCircle },
+  { label: "Workspace login", copy: "For brand, agency, and operator teams.", href: canonicalAuthUrl("sign-in", "app", "/app"), icon: Storefront },
+  { label: "Creator login", copy: "For creators managing applications and submissions.", href: canonicalAuthUrl("sign-in", "creator", "/creator"), icon: UserCircle },
 ] as const;
 
 export function MarketingHeader() {

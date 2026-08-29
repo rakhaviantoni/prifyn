@@ -4,6 +4,7 @@
 import { Buildings, Info, UserCircle, UsersThree } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { canonicalAuthUrl } from "@/lib/portal-url";
 
 type AccountType = "brand" | "agency" | "creator";
 
@@ -71,6 +72,10 @@ export function AuthForm({ mode, initialAccountType = "brand" }: { mode: "sign-i
     setLoading(true);
     setMessage(null);
     try {
+      if (mode === "sign-up" && accountType === "creator" && !isCreatorHost(window.location.hostname)) {
+        window.location.assign(canonicalAuthUrl("sign-up", "creator", "/creator"));
+        return;
+      }
       const response = await fetch("/api/auth/configured");
       const readiness = await response.json().catch(() => ({})) as { reason?: string };
       if (!response.ok) {
@@ -119,6 +124,10 @@ export function AuthForm({ mode, initialAccountType = "brand" }: { mode: "sign-i
     const formWorkspaceName = String(form.get("workspaceName") || "").trim();
     void (async () => {
       try {
+        if (mode === "sign-up" && accountType === "creator" && !isCreatorHost(window.location.hostname)) {
+          window.location.assign(canonicalAuthUrl("sign-up", "creator", "/creator"));
+          return;
+        }
         const { authClient } = await import("@/lib/auth/auth-client");
         const callbackURL = getProductionCallbackUrl(mode === "sign-up" ? accountType : undefined);
         const result = mode === "sign-in"
