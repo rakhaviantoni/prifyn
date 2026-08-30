@@ -38,11 +38,20 @@ Add secrets through **Site configuration → Environment variables**. Do not com
 | `PRIFYN_ADMIN_EMAILS` | Comma-separated emails allowed to open PRIFYN Business Manager, for example `privynindonesia@gmail.com` |
 | `REPORT_SCHEDULE_SECRET` | Bearer token used by the scheduled report runner |
 | `WEBHOOK_DELIVERY_SECRET` | Bearer token used by the webhook delivery runner |
-| `DEEPSEEK_BASE_URL` | `https://api.deepseek.com` unless the provider specifies another OpenAI-compatible endpoint |
-| `DEEPSEEK_API_KEY` | DeepSeek API key for Ask PRIFYN |
-| `DEEPSEEK_MODEL` | Enabled model identifier, such as `deepseek-chat` |
+| `AZEKHA_AI_GATEWAY_URL` | AZEKHA gateway origin, currently `https://azekha-ai-gateway.viantonirakha.workers.dev` |
+| `AZEKHA_AI_GATEWAY_API_KEY` | Server-only PRIFYN project key issued by AZEKHA |
+| `AZEKHA_AI_MODEL` | Optional model override; defaults to the model configured on PRIFYN's AZEKHA agent |
+| `DEEPSEEK_BASE_URL` | Legacy direct-provider fallback endpoint |
+| `DEEPSEEK_API_KEY` | Legacy direct-provider fallback key |
+| `DEEPSEEK_MODEL` | Legacy direct-provider fallback model |
 
 Do not put `/app` or `/api/auth` in `BETTER_AUTH_URL`; it must be the site origin only. Do not include a trailing slash. If app and creator run on subdomains, include every production origin in `BETTER_AUTH_TRUSTED_ORIGINS` and every hostname in `BETTER_AUTH_ALLOWED_HOSTS`.
+
+Ask PRIFYN uses its project-bound AZEKHA agent when all three `AZEKHA_AI_*`
+variables are configured. AZEKHA owns provider attribution, project knowledge,
+usage reporting, and response-cache invalidation. Keep the legacy `DEEPSEEK_*`
+variables only as a controlled rollout fallback, and never expose either key to
+browser code.
 
 Brand logo uploads use Supabase Storage. Create the configured bucket before
 deploying upload features. If the bucket is public, PRIFYN stores public object
