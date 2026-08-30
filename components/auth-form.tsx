@@ -4,7 +4,7 @@
 import { Buildings, Info, UserCircle, UsersThree } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { canonicalAuthUrl } from "@/lib/portal-url";
+import { canonicalAuthUrl, portalUrl } from "@/lib/portal-url";
 
 type AccountType = "brand" | "agency" | "creator";
 
@@ -33,11 +33,22 @@ function subdomainPath(pathname: string, hostType: "app" | "creator") {
   return pathname;
 }
 
+function requestedPortal(accountType?: AccountType) {
+  if (typeof window === "undefined") return "app";
+  const requestedReturnTo = safeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
+  if (requestedReturnTo?.startsWith("/admin")) return "admin";
+  if (requestedReturnTo?.startsWith("/creator") || accountType === "creator" || isCreatorHost(window.location.hostname)) return "creator";
+  return "app";
+}
+
 function getProductionCallbackUrl(accountType?: AccountType) {
   if (typeof window === "undefined") return "/app";
   const requestedReturnTo = safeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
   const hostname = window.location.hostname;
-  const defaultPath = accountType === "creator" ? "/creator" : isCreatorHost(hostname) ? "/" : "/app";
+  const portal = requestedPortal(accountType);
+  if (portal === "creator" && !isCreatorHost(hostname)) return portalUrl("creator", requestedReturnTo ?? "/creator");
+  if (portal === "app" && !isAppHost(hostname)) return portalUrl("app", requestedReturnTo ?? "/app");
+  const defaultPath = portal === "creator" ? "/creator" : isCreatorHost(hostname) ? "/" : "/app";
   const url = new URL(requestedReturnTo ?? defaultPath, window.location.origin);
   if (isAppHost(hostname)) url.pathname = subdomainPath(url.pathname, "app");
   if (isCreatorHost(hostname)) url.pathname = subdomainPath(url.pathname, "creator");
@@ -56,6 +67,14 @@ export function AuthForm({ mode, initialAccountType = "brand" }: { mode: "sign-i
   useEffect(() => {
     const invite = new URLSearchParams(window.location.search).get("invite");
     if (invite) window.localStorage.setItem("prifyn-pending-invite", invite);
+    const requestedReturnTo = safeReturnTo(new URLSearchParams(window.location.search).get("returnTo"));
+    const portal = requestedPortal(initialAccountType);
+    if (portal === "app" && !isAppHost(window.location.hostname)) {
+      window.location.replace(canonicalAuthUrl(mode, "app", requestedReturnTo ?? "/app"));
+    }
+    if (portal === "creator" && !isCreatorHost(window.location.hostname)) {
+      window.location.replace(canonicalAuthUrl(mode, "creator", requestedReturnTo ?? "/creator"));
+    }
   }, []);
 
   async function completeWorkspaceOnboarding(input: { accountType: AccountType; workspaceName: string; displayName?: string }) {
