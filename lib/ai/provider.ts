@@ -121,14 +121,12 @@ function offline(question: string, context: InsightContext): InsightResponse {
 export async function generateInsight(question: string, suppliedContext?: InsightContext): Promise<InsightResponse> {
   const context = suppliedContext ?? { brand: "Selected brand", period: "Last 7 days", route: "/app/copilot" };
   const azekhaApiKey = envValue("AZEKHA_AI_GATEWAY_API_KEY");
-  const apiKey = azekhaApiKey || envValue("DEEPSEEK_API_KEY");
-  const model = azekhaApiKey ? envValue("AZEKHA_AI_MODEL") : envValue("DEEPSEEK_MODEL") || "deepseek-chat";
+  const apiKey = azekhaApiKey;
+  const model = envValue("AZEKHA_AI_MODEL") || "deepseek-v4-flash-0731:netra";
   if (!apiKey || !model) return offline(question, context);
 
-  const baseURL = azekhaApiKey
-    ? envValue("AZEKHA_AI_GATEWAY_URL") || "https://azekha-ai-gateway.viantonirakha.workers.dev"
-    : envValue("DEEPSEEK_BASE_URL") || "https://api.deepseek.com";
-  const url = azekhaApiKey ? azekhaAgentUrl(baseURL) : chatCompletionsUrl(baseURL);
+  const baseURL = envValue("AZEKHA_AI_GATEWAY_URL") || "https://azekha-ai-gateway.viantonirakha.workers.dev";
+  const url = azekhaAgentUrl(baseURL);
   let response: Response;
   try {
     response = await fetch(url, {
@@ -138,7 +136,6 @@ export async function generateInsight(question: string, suppliedContext?: Insigh
       ...(model ? { model } : {}),
       temperature: 0.2,
       max_tokens: 900,
-      ...(!azekhaApiKey ? { response_format: { type: "json_object" } } : {}),
       messages: [
         { role: "system", content: "You are PRIFYN, an evidence-grounded Growth Operating System for brands, agencies, and creators. Return strict JSON with answer, why, confidence (low|medium|high), and limitations. Never invent metrics, creators, campaigns, connected accounts, or revenue. If evidence is missing, say exactly what data to import/connect next. Prefer PRIFYN-supported sources: Meta/TikTok/Google ads exports, GA4, Shopee/Tokopedia order exports, affiliate/coupon reports, creator proof, and UTM links. Do not recommend Shopify or Stripe unless the supplied evidence mentions them. Keep answers concise, operational, and action-oriented." },
         { role: "user", content: `Question: ${question}\nContext: ${JSON.stringify(context)}\nEvidence bundle: ${JSON.stringify(context.evidence ?? { instruction: "Use only imported reports, connected accounts, and campaign activity supplied by PRIFYN. If evidence is missing, say what to connect or import next." })}` },
